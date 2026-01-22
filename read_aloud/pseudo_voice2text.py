@@ -3,230 +3,258 @@ from typing import Any, Dict, List
 WORD_PESUDO =[
   {
     "type": "word",
-    "start": 1.28,
+    "start": 1.52,
     "end": 2.16,
-    "value": "Health"
+    "value": "Higher"
   },
   {
     "type": "word",
-    "start": 2.48,
-    "end": 3.2800000000000002,
-    "value": "Maintaining"
+    "start": 2.16,
+    "end": 2.8000000000000003,
+    "value": "education"
   },
   {
     "type": "word",
-    "start": 3.2800000000000002,
-    "end": 3.7600000000000002,
-    "value": "physical"
+    "start": 2.8000000000000003,
+    "end": 3.44,
+    "value": "prepares"
   },
   {
     "type": "word",
-    "start": 3.7600000000000002,
-    "end": 4.16,
-    "value": "health"
+    "start": 3.44,
+    "end": 4.08,
+    "value": "students"
   },
   {
     "type": "word",
-    "start": 4.16,
-    "end": 5.04,
-    "value": "requires"
+    "start": 4.08,
+    "end": 4.32,
+    "value": "for"
   },
   {
     "type": "word",
-    "start": 5.04,
-    "end": 5.6000000000000005,
-    "value": "regular"
+    "start": 4.32,
+    "end": 5.12,
+    "value": "profession"
   },
   {
     "type": "word",
-    "start": 5.6000000000000005,
-    "end": 6.32,
-    "value": "exercise,"
+    "start": 5.12,
+    "end": 5.68,
+    "value": "challenges"
+  },
+  {
+    "type": "word",
+    "start": 5.68,
+    "end": 5.92,
+    "value": "by"
+  },
+  {
+    "type": "word",
+    "start": 5.92,
+    "end": 6.48,
+    "value": "developing"
   },
   {
     "type": "word",
     "start": 6.48,
-    "end": 7.04,
-    "value": "balanced"
+    "end": 7.44,
+    "value": "analytical"
   },
   {
     "type": "word",
-    "start": 7.04,
-    "end": 7.6000000000000005,
-    "value": "nutrition,"
+    "start": 7.44,
+    "end": 7.76,
+    "value": "and"
   },
   {
     "type": "word",
     "start": 7.76,
-    "end": 8.0,
-    "value": "and"
-  },
-  {
-    "type": "word",
-    "start": 8.0,
     "end": 8.56,
-    "value": "adequate"
+    "value": "communication"
   },
   {
     "type": "word",
     "start": 8.56,
-    "end": 9.040000000000001,
-    "value": "sleep."
+    "end": 9.52,
+    "value": "skills."
   },
   {
     "type": "word",
-    "start": 9.36,
-    "end": 9.92,
-    "value": "Medical"
+    "start": 9.84,
+    "end": 10.48,
+    "value": "Online"
   },
   {
     "type": "word",
-    "start": 9.92,
-    "end": 10.8,
-    "value": "professionals"
+    "start": 10.48,
+    "end": 11.120000000000001,
+    "value": "platforms"
   },
   {
     "type": "word",
-    "start": 10.8,
-    "end": 11.28,
-    "value": "warn"
+    "start": 11.120000000000001,
+    "end": 11.52,
+    "value": "offer"
   },
   {
     "type": "word",
-    "start": 11.44,
-    "end": 11.68,
-    "value": "that"
-  },
-  {
-    "type": "word",
-    "start": 11.68,
-    "end": 12.48,
-    "value": "sedentary"
+    "start": 11.52,
+    "end": 12.32,
+    "value": "flexibility"
   },
   {
     "type": "word",
     "start": 12.48,
-    "end": 13.200000000000001,
-    "value": "lifestyles"
+    "end": 12.8,
+    "value": "but"
   },
   {
     "type": "word",
-    "start": 13.200000000000001,
-    "end": 13.68,
-    "value": "increase"
+    "start": 12.8,
+    "end": 13.76,
+    "value": "curriculum"
   },
   {
     "type": "word",
-    "start": 13.68,
-    "end": 13.84,
-    "value": "the"
+    "start": 14.0,
+    "end": 14.72,
+    "value": "quality"
   },
   {
     "type": "word",
-    "start": 13.84,
-    "end": 14.16,
-    "value": "risk"
+    "start": 14.72,
+    "end": 15.120000000000001,
+    "value": "must"
   },
   {
     "type": "word",
-    "start": 14.16,
-    "end": 14.4,
-    "value": "of"
+    "start": 15.120000000000001,
+    "end": 15.76,
+    "value": "remain"
   },
   {
     "type": "word",
-    "start": 14.4,
-    "end": 14.88,
-    "value": "chronic"
+    "start": 15.76,
+    "end": 16.64,
+    "value": "consistent."
   },
   {
     "type": "word",
-    "start": 14.88,
-    "end": 15.6,
-    "value": "diseases."
+    "start": 16.96,
+    "end": 17.92,
+    "value": "Universities"
   },
   {
     "type": "word",
-    "start": 15.92,
-    "end": 16.48,
-    "value": "Public"
+    "start": 17.92,
+    "end": 18.72,
+    "value": "emphasize"
   },
   {
     "type": "word",
-    "start": 16.48,
-    "end": 17.04,
-    "value": "awareness"
+    "start": 18.72,
+    "end": 19.2,
+    "value": "research,"
   },
   {
     "type": "word",
-    "start": 17.04,
-    "end": 17.2,
+    "start": 19.28,
+    "end": 20.080000000000002,
+    "value": "innovation"
+  },
+  {
+    "type": "word",
+    "start": 20.32,
+    "end": 20.64,
     "value": "and"
   },
   {
     "type": "word",
-    "start": 17.2,
-    "end": 17.84,
-    "value": "prevention"
+    "start": 20.64,
+    "end": 21.76,
+    "value": "collaboration"
   },
   {
     "type": "word",
-    "start": 17.84,
-    "end": 18.32,
-    "value": "programs"
+    "start": 21.76,
+    "end": 22.32,
+    "value": "across"
   },
   {
     "type": "word",
-    "start": 18.400000000000002,
-    "end": 18.56,
-    "value": "are"
+    "start": 22.32,
+    "end": 23.6,
+    "value": "disciplines."
   },
   {
     "type": "word",
-    "start": 18.56,
-    "end": 19.28,
-    "value": "essential."
+    "start": 24.240000000000002,
+    "end": 24.8,
+    "value": "UBI"
+  },
+  {
+    "type": "word",
+    "start": 24.88,
+    "end": 25.28,
+    "value": "Demoid."
   }
 ]
 CHAR_PESUDO =[
   {
     "type": "char",
-    "start": 1.28,
-    "end": 1.52,
-    "value": [
-      "He"
-    ]
-  },
-  {
-    "type": "char",
     "start": 1.52,
-    "end": 1.68,
+    "end": 1.76,
     "value": [
-      "al"
+      "H"
     ]
   },
   {
     "type": "char",
-    "start": 1.84,
+    "start": 1.76,
+    "end": 1.92,
+    "value": [
+      "ig"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 1.92,
     "end": 2.16,
     "value": [
-      "th"
+      "her"
     ]
   },
   {
     "type": "char",
-    "start": 2.48,
-    "end": 2.64,
+    "start": 2.16,
+    "end": 2.24,
     "value": [
-      "M"
+      ""
     ]
   },
   {
     "type": "char",
-    "start": 2.64,
+    "start": 2.24,
+    "end": 2.4,
+    "value": [
+      "ed"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 2.4,
+    "end": 2.56,
+    "value": [
+      "uc"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 2.56,
     "end": 2.8000000000000003,
     "value": [
-      "ain"
+      "ation"
     ]
   },
   {
@@ -234,135 +262,143 @@ CHAR_PESUDO =[
     "start": 2.8000000000000003,
     "end": 2.96,
     "value": [
-      "t"
+      "pre"
     ]
   },
   {
     "type": "char",
     "start": 2.96,
-    "end": 3.12,
+    "end": 3.04,
     "value": [
-      "ain"
+      "p"
     ]
   },
   {
     "type": "char",
-    "start": 3.12,
-    "end": 3.2800000000000002,
+    "start": 3.04,
+    "end": 3.2,
     "value": [
-      "ing"
+      "a"
     ]
   },
   {
     "type": "char",
-    "start": 3.2800000000000002,
-    "end": 3.36,
-    "value": [
-      "ph"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 3.36,
-    "end": 3.52,
-    "value": [
-      "ys"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 3.52,
-    "end": 3.7600000000000002,
-    "value": [
-      "ical"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 3.7600000000000002,
-    "end": 3.84,
-    "value": [
-      "he"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 3.84,
-    "end": 4.0,
-    "value": [
-      "al"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 4.0,
-    "end": 4.16,
-    "value": [
-      "th"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 4.16,
-    "end": 4.4,
-    "value": [
-      "re"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 4.4,
-    "end": 4.5600000000000005,
-    "value": [
-      "qu"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 4.5600000000000005,
-    "end": 4.8,
-    "value": [
-      "i"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 4.8,
-    "end": 5.04,
+    "start": 3.2,
+    "end": 3.44,
     "value": [
       "res"
     ]
   },
   {
     "type": "char",
-    "start": 5.04,
-    "end": 5.36,
+    "start": 3.44,
+    "end": 3.7600000000000002,
     "value": [
-      "reg"
+      "stud"
     ]
   },
   {
     "type": "char",
-    "start": 5.36,
-    "end": 5.6000000000000005,
+    "start": 3.7600000000000002,
+    "end": 4.08,
     "value": [
-      "ular"
+      "ents"
     ]
   },
   {
     "type": "char",
-    "start": 5.6000000000000005,
-    "end": 5.84,
+    "start": 4.08,
+    "end": 4.32,
     "value": [
-      "ex"
+      "for"
     ]
   },
   {
     "type": "char",
-    "start": 5.84,
+    "start": 4.32,
+    "end": 4.5600000000000005,
+    "value": [
+      "pro"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 4.5600000000000005,
+    "end": 4.72,
+    "value": [
+      "f"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 4.72,
+    "end": 4.88,
+    "value": [
+      "ess"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 4.88,
+    "end": 5.12,
+    "value": [
+      "ion"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.12,
+    "end": 5.2,
+    "value": [
+      "ch"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.2,
+    "end": 5.28,
+    "value": [
+      "all"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.28,
+    "end": 5.44,
+    "value": [
+      "en"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.44,
+    "end": 5.5200000000000005,
+    "value": [
+      "g"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.5200000000000005,
+    "end": 5.68,
+    "value": [
+      "es"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.68,
+    "end": 5.92,
+    "value": [
+      "by"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 5.92,
     "end": 6.0,
     "value": [
-      "er"
+      "de"
     ]
   },
   {
@@ -370,7 +406,7 @@ CHAR_PESUDO =[
     "start": 6.0,
     "end": 6.16,
     "value": [
-      "c"
+      "vel"
     ]
   },
   {
@@ -378,39 +414,31 @@ CHAR_PESUDO =[
     "start": 6.16,
     "end": 6.32,
     "value": [
-      "ise"
+      "op"
     ]
   },
   {
     "type": "char",
     "start": 6.32,
-    "end": 6.32,
+    "end": 6.48,
     "value": [
-      ","
+      "ing"
     ]
   },
   {
     "type": "char",
     "start": 6.48,
-    "end": 6.5600000000000005,
-    "value": [
-      "b"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 6.5600000000000005,
-    "end": 6.72,
-    "value": [
-      "al"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 6.72,
-    "end": 6.8,
+    "end": 6.640000000000001,
     "value": [
       "an"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 6.640000000000001,
+    "end": 6.8,
+    "value": [
+      "al"
     ]
   },
   {
@@ -418,183 +446,135 @@ CHAR_PESUDO =[
     "start": 6.8,
     "end": 6.96,
     "value": [
-      "c"
+      "y"
     ]
   },
   {
     "type": "char",
     "start": 6.96,
-    "end": 7.04,
-    "value": [
-      "ed"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 7.04,
     "end": 7.12,
     "value": [
-      "n"
+      "t"
     ]
   },
   {
     "type": "char",
     "start": 7.12,
-    "end": 7.28,
-    "value": [
-      "ut"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 7.28,
     "end": 7.44,
-    "value": [
-      "r"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 7.44,
-    "end": 7.6000000000000005,
-    "value": [
-      "ition"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 7.6000000000000005,
-    "end": 7.6000000000000005,
-    "value": [
-      ","
-    ]
-  },
-  {
-    "type": "char",
-    "start": 7.76,
-    "end": 8.0,
-    "value": [
-      "and"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.0,
-    "end": 8.16,
-    "value": [
-      "ad"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.16,
-    "end": 8.24,
-    "value": [
-      "e"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.24,
-    "end": 8.4,
-    "value": [
-      "qu"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.4,
-    "end": 8.56,
-    "value": [
-      "ate"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.56,
-    "end": 8.64,
-    "value": [
-      "s"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.64,
-    "end": 8.88,
-    "value": [
-      "le"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 8.88,
-    "end": 9.040000000000001,
-    "value": [
-      "ep"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 9.040000000000001,
-    "end": 9.040000000000001,
-    "value": [
-      "."
-    ]
-  },
-  {
-    "type": "char",
-    "start": 9.36,
-    "end": 9.52,
-    "value": [
-      "M"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 9.52,
-    "end": 9.68,
-    "value": [
-      "ed"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 9.68,
-    "end": 9.92,
     "value": [
       "ical"
     ]
   },
   {
     "type": "char",
-    "start": 9.92,
+    "start": 7.44,
+    "end": 7.76,
+    "value": [
+      "and"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 7.76,
+    "end": 8.08,
+    "value": [
+      "commun"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 8.08,
+    "end": 8.32,
+    "value": [
+      "ic"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 8.32,
+    "end": 8.56,
+    "value": [
+      "ation"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 8.56,
+    "end": 8.72,
+    "value": [
+      "s"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 8.72,
+    "end": 8.96,
+    "value": [
+      "k"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 8.96,
+    "end": 9.200000000000001,
+    "value": [
+      "ill"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 9.200000000000001,
+    "end": 9.52,
+    "value": [
+      "s"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 9.52,
+    "end": 9.52,
+    "value": [
+      "."
+    ]
+  },
+  {
+    "type": "char",
+    "start": 9.84,
+    "end": 10.0,
+    "value": [
+      "O"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 10.0,
     "end": 10.16,
     "value": [
-      "pro"
+      "n"
     ]
   },
   {
     "type": "char",
     "start": 10.16,
-    "end": 10.24,
+    "end": 10.32,
     "value": [
-      "f"
+      "l"
     ]
   },
   {
     "type": "char",
-    "start": 10.24,
-    "end": 10.4,
+    "start": 10.32,
+    "end": 10.48,
     "value": [
-      "ess"
+      "ine"
     ]
   },
   {
     "type": "char",
-    "start": 10.4,
+    "start": 10.48,
     "end": 10.56,
     "value": [
-      "ion"
+      "pl"
     ]
   },
   {
@@ -602,7 +582,7 @@ CHAR_PESUDO =[
     "start": 10.56,
     "end": 10.8,
     "value": [
-      "als"
+      "at"
     ]
   },
   {
@@ -610,7 +590,7 @@ CHAR_PESUDO =[
     "start": 10.8,
     "end": 10.96,
     "value": [
-      "w"
+      "form"
     ]
   },
   {
@@ -618,39 +598,55 @@ CHAR_PESUDO =[
     "start": 10.96,
     "end": 11.120000000000001,
     "value": [
-      "ar"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 11.120000000000001,
-    "end": 11.28,
-    "value": [
-      "n"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 11.44,
-    "end": 11.68,
-    "value": [
-      "that"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 11.68,
-    "end": 11.84,
-    "value": [
       "s"
     ]
   },
   {
     "type": "char",
-    "start": 11.84,
+    "start": 11.120000000000001,
+    "end": 11.36,
+    "value": [
+      "off"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 11.36,
+    "end": 11.52,
+    "value": [
+      "er"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 11.52,
+    "end": 11.6,
+    "value": [
+      "f"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 11.6,
+    "end": 11.76,
+    "value": [
+      "le"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 11.76,
+    "end": 11.92,
+    "value": [
+      "x"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 11.92,
     "end": 12.08,
     "value": [
-      "ed"
+      "ib"
     ]
   },
   {
@@ -658,143 +654,87 @@ CHAR_PESUDO =[
     "start": 12.08,
     "end": 12.32,
     "value": [
-      "ent"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 12.32,
-    "end": 12.48,
-    "value": [
-      "ary"
+      "ility"
     ]
   },
   {
     "type": "char",
     "start": 12.48,
-    "end": 12.56,
+    "end": 12.8,
     "value": [
-      "li"
+      "but"
     ]
   },
   {
     "type": "char",
-    "start": 12.56,
-    "end": 12.72,
+    "start": 12.8,
+    "end": 12.96,
     "value": [
-      "f"
+      "c"
     ]
   },
   {
     "type": "char",
-    "start": 12.72,
-    "end": 12.88,
+    "start": 12.96,
+    "end": 13.120000000000001,
     "value": [
-      "est"
+      "ur"
     ]
   },
   {
     "type": "char",
-    "start": 12.88,
-    "end": 13.040000000000001,
-    "value": [
-      "y"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 13.040000000000001,
+    "start": 13.120000000000001,
     "end": 13.200000000000001,
     "value": [
-      "les"
+      "r"
     ]
   },
   {
     "type": "char",
     "start": 13.200000000000001,
-    "end": 13.36,
+    "end": 13.280000000000001,
     "value": [
-      "inc"
+      "ic"
     ]
   },
   {
     "type": "char",
-    "start": 13.36,
-    "end": 13.52,
+    "start": 13.280000000000001,
+    "end": 13.44,
     "value": [
-      "re"
+      "ul"
     ]
   },
   {
     "type": "char",
-    "start": 13.52,
-    "end": 13.68,
+    "start": 13.6,
+    "end": 13.76,
     "value": [
-      "ase"
+      "um"
     ]
   },
   {
     "type": "char",
-    "start": 13.68,
-    "end": 13.84,
+    "start": 14.0,
+    "end": 14.24,
     "value": [
-      "the"
+      "qu"
     ]
   },
   {
     "type": "char",
-    "start": 13.84,
-    "end": 13.92,
-    "value": [
-      "r"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 13.92,
-    "end": 14.08,
-    "value": [
-      "is"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 14.08,
-    "end": 14.16,
-    "value": [
-      "k"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 14.16,
-    "end": 14.4,
-    "value": [
-      "of"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 14.4,
+    "start": 14.24,
     "end": 14.48,
     "value": [
-      "ch"
+      "al"
     ]
   },
   {
     "type": "char",
     "start": 14.48,
-    "end": 14.64,
-    "value": [
-      "r"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 14.64,
     "end": 14.72,
     "value": [
-      "on"
+      "ity"
     ]
   },
   {
@@ -802,7 +742,7 @@ CHAR_PESUDO =[
     "start": 14.72,
     "end": 14.88,
     "value": [
-      "ic"
+      "m"
     ]
   },
   {
@@ -810,228 +750,411 @@ CHAR_PESUDO =[
     "start": 14.88,
     "end": 15.120000000000001,
     "value": [
-      "dis"
+      "ust"
     ]
   },
   {
     "type": "char",
     "start": 15.120000000000001,
-    "end": 15.280000000000001,
-    "value": [
-      "e"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 15.280000000000001,
     "end": 15.44,
     "value": [
-      "as"
+      "rem"
     ]
   },
   {
     "type": "char",
     "start": 15.44,
-    "end": 15.6,
+    "end": 15.76,
     "value": [
-      "es"
+      "ain"
     ]
   },
   {
     "type": "char",
-    "start": 15.6,
-    "end": 15.6,
-    "value": [
-      "."
-    ]
-  },
-  {
-    "type": "char",
-    "start": 15.92,
+    "start": 15.76,
     "end": 16.080000000000002,
     "value": [
-      "P"
+      "cons"
     ]
   },
   {
     "type": "char",
     "start": 16.080000000000002,
-    "end": 16.240000000000002,
+    "end": 16.4,
     "value": [
-      "ub"
+      "ist"
     ]
   },
   {
     "type": "char",
-    "start": 16.240000000000002,
-    "end": 16.48,
-    "value": [
-      "lic"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 16.48,
-    "end": 16.56,
-    "value": [
-      "a"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 16.56,
-    "end": 16.72,
-    "value": [
-      "w"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 16.72,
-    "end": 16.8,
-    "value": [
-      "are"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 16.8,
-    "end": 17.04,
-    "value": [
-      "ness"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.04,
-    "end": 17.2,
-    "value": [
-      "and"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.2,
-    "end": 17.36,
-    "value": [
-      "pre"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.36,
-    "end": 17.52,
-    "value": [
-      "v"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.52,
-    "end": 17.84,
-    "value": [
-      "ention"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.84,
-    "end": 17.92,
-    "value": [
-      "pro"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 17.92,
-    "end": 18.080000000000002,
-    "value": [
-      "gr"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.080000000000002,
-    "end": 18.16,
-    "value": [
-      "am"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.16,
-    "end": 18.32,
-    "value": [
-      "s"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.400000000000002,
-    "end": 18.56,
-    "value": [
-      "are"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.56,
-    "end": 18.72,
-    "value": [
-      ""
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.72,
-    "end": 18.96,
-    "value": [
-      "ess"
-    ]
-  },
-  {
-    "type": "char",
-    "start": 18.96,
-    "end": 19.12,
+    "start": 16.4,
+    "end": 16.64,
     "value": [
       "ent"
     ]
   },
   {
     "type": "char",
-    "start": 19.12,
-    "end": 19.28,
+    "start": 16.64,
+    "end": 16.64,
     "value": [
-      "ial"
+      "."
+    ]
+  },
+  {
+    "type": "char",
+    "start": 16.96,
+    "end": 17.12,
+    "value": [
+      "U"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 17.12,
+    "end": 17.28,
+    "value": [
+      "n"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 17.28,
+    "end": 17.44,
+    "value": [
+      "i"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 17.44,
+    "end": 17.68,
+    "value": [
+      "vers"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 17.68,
+    "end": 17.92,
+    "value": [
+      "ities"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 17.92,
+    "end": 18.16,
+    "value": [
+      "em"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 18.16,
+    "end": 18.240000000000002,
+    "value": [
+      "ph"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 18.240000000000002,
+    "end": 18.400000000000002,
+    "value": [
+      "as"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 18.400000000000002,
+    "end": 18.72,
+    "value": [
+      "ize"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 18.72,
+    "end": 18.88,
+    "value": [
+      "re"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 18.88,
+    "end": 19.04,
+    "value": [
+      "se"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.04,
+    "end": 19.2,
+    "value": [
+      "arch"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.2,
+    "end": 19.2,
+    "value": [
+      ","
     ]
   },
   {
     "type": "char",
     "start": 19.28,
-    "end": 19.28,
+    "end": 19.44,
+    "value": [
+      "in"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.44,
+    "end": 19.52,
+    "value": [
+      "n"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.52,
+    "end": 19.68,
+    "value": [
+      "o"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.68,
+    "end": 19.84,
+    "value": [
+      "v"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 19.84,
+    "end": 20.080000000000002,
+    "value": [
+      "ation"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 20.32,
+    "end": 20.64,
+    "value": [
+      "and"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 20.64,
+    "end": 20.96,
+    "value": [
+      "co"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 20.96,
+    "end": 21.12,
+    "value": [
+      "ll"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 21.12,
+    "end": 21.36,
+    "value": [
+      "ab"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 21.36,
+    "end": 21.52,
+    "value": [
+      "or"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 21.52,
+    "end": 21.76,
+    "value": [
+      "ation"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 21.76,
+    "end": 22.0,
+    "value": [
+      "ac"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.0,
+    "end": 22.16,
+    "value": [
+      "ro"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.16,
+    "end": 22.32,
+    "value": [
+      "ss"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.32,
+    "end": 22.48,
+    "value": [
+      "dis"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.48,
+    "end": 22.72,
+    "value": [
+      "ci"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.72,
+    "end": 22.96,
+    "value": [
+      "pl"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 22.96,
+    "end": 23.28,
+    "value": [
+      "in"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 23.28,
+    "end": 23.6,
+    "value": [
+      "es"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 23.6,
+    "end": 23.6,
+    "value": [
+      "."
+    ]
+  },
+  {
+    "type": "char",
+    "start": 24.240000000000002,
+    "end": 24.400000000000002,
+    "value": [
+      "U"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 24.560000000000002,
+    "end": 24.64,
+    "value": [
+      "B"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 24.72,
+    "end": 24.8,
+    "value": [
+      "I"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 24.88,
+    "end": 24.96,
+    "value": [
+      "D"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 24.96,
+    "end": 25.04,
+    "value": [
+      "em"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 25.12,
+    "end": 25.2,
+    "value": [
+      "o"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 25.2,
+    "end": 25.28,
+    "value": [
+      "id"
+    ]
+  },
+  {
+    "type": "char",
+    "start": 25.28,
+    "end": 25.28,
     "value": [
       "."
     ]
   }
 ]
+
 SEGMENT_PESUDO =[
   {
     "type": "segment",
-    "start": 1.28,
-    "end": 9.040000000000001,
-    "value": "Health Maintaining physical health requires regular exercise, balanced nutrition, and adequate sleep."
+    "start": 1.52,
+    "end": 9.52,
+    "value": "Higher education prepares students for profession challenges by developing analytical and communication skills."
   },
   {
     "type": "segment",
-    "start": 9.36,
-    "end": 15.6,
-    "value": "Medical professionals warn that sedentary lifestyles increase the risk of chronic diseases."
+    "start": 9.84,
+    "end": 16.64,
+    "value": "Online platforms offer flexibility but curriculum quality must remain consistent."
   },
   {
     "type": "segment",
-    "start": 15.92,
-    "end": 19.28,
-    "value": "Public awareness and prevention programs are essential."
+    "start": 16.96,
+    "end": 23.6,
+    "value": "Universities emphasize research, innovation and collaboration across disciplines."
+  },
+  {
+    "type": "segment",
+    "start": 24.240000000000002,
+    "end": 25.28,
+    "value": "UBI Demoid."
   }
 ]
 
