@@ -15,11 +15,24 @@ except ImportError as e:
     )
 
 
-# Phoneme mapping for English (simplified - you may want to use CMU dict)
+# Phoneme mapping for English (fallback if CMUdict unavailable)
 PHONEME_MAP: Dict[str, List[str]] = {
-    # Add common word mappings here
+    # Add common word mappings here as fallback
     # Example: "bicycle": ["B", "AY", "S", "IH", "K", "AH", "L"]
 }
+
+# Try to import CMUdict
+try:
+    from phonetics.cmudict import load_cmudict, text_to_phonemes, ensure_cmudict_available
+    CMUDICT_AVAILABLE = True
+except ImportError:
+    CMUDICT_AVAILABLE = False
+    load_cmudict = None  # type: ignore
+    text_to_phonemes = None  # type: ignore
+    ensure_cmudict_available = None  # type: ignore
+
+# Cache for CMUdict
+_CMUDICT_CACHE: Optional[Any] = None
 
 # CTC blank token
 CTC_BLANK = "<blank>"
@@ -44,9 +57,22 @@ def _load_audio(wav_path: str) -> tuple[np.ndarray, int]:
 
 def _text_to_phonemes(text: str, phoneme_dict: Optional[Dict[str, List[str]]] = None) -> List[str]:
     """
-    Convert text to phoneme sequence.
-    This is a simplified version - in practice, use a proper pronunciation dictionary.
+    Convert text to phoneme sequence using CMUdict if available, otherwise fallback.
     """
+    global _CMUDICT_CACHE
+    
+    # Try CMUdict first if available
+    if CMUDICT_AVAILABLE and text_to_phonemes and ensure_cmudict_available:
+        try:
+            if ensure_cmudict_available():
+                if _CMUDICT_CACHE is None:
+                    _CMUDICT_CACHE = load_cmudict()
+                return text_to_phonemes(text, _CMUDICT_CACHE)
+        except Exception:
+            # Fallback to old behavior
+            pass
+    
+    # Fallback: use provided dict or default PHONEME_MAP
     if phoneme_dict is None:
         phoneme_dict = PHONEME_MAP
 
@@ -57,7 +83,6 @@ def _text_to_phonemes(text: str, phoneme_dict: Optional[Dict[str, List[str]]] = 
             phonemes.extend(phoneme_dict[word])
         else:
             # Fallback: map each letter (very rough approximation)
-            # In practice, use CMU dict or similar
             phonemes.extend(list(word))
 
     return phonemes

@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from audio_quality import is_audio_clear
-from mfa_pronunciation import assess_pronunciation_mfa
+from mfa import assess_pronunciation_mfa
 from report_generator import generate_final_report
 from voice2text import voice2text
 from wavlm_pronunciation import assess_pronunciation_wavlm
-from word_level_matcher import word_level_matcher
+from scorer.word_level_matcher import word_level_matcher
 
 
 def assess_pte(
