@@ -52,7 +52,7 @@ def assess_pronunciation_mfa(
     reference_text: str,
     *,
     confidence_threshold: float = 0.75,
-    acoustic_model: str = "english_us_arpa",
+    acoustic_model: str = " ",
     dictionary: str = "english_us_arpa",
     asr_words: Optional[List[Dict[str, Any]]] = None,
     use_cmudict: bool = True,

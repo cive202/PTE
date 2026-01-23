@@ -1,0 +1,42 @@
+# PTE Read Aloud – dependencies
+# Install: pip install -r requirements.txt
+
+# -----------------------------------------------------------------------------
+# Core (required for word-level matcher, alignment, pause scoring, report)
+# -----------------------------------------------------------------------------
+numpy>=1.20.0
+
+# Audio I/O (audio_quality, wavlm)
+soundfile>=0.10.0
+
+# -----------------------------------------------------------------------------
+# WavLM pronunciation (noisy-audio fallback)
+# -----------------------------------------------------------------------------
+torch>=1.9.0
+transformers>=4.20.0
+
+# -----------------------------------------------------------------------------
+# MFA pronunciation (clear-audio path)
+# -----------------------------------------------------------------------------
+# MFA itself: install via conda, not pip:
+#   conda install -c conda-forge montreal-forced-aligner
+praat-textgrids>=1.0.0
+
+# -----------------------------------------------------------------------------
+# Optional: scipy (audio_quality fallback if soundfile fails)
+# -----------------------------------------------------------------------------
+scipy>=1.7.0
+
+# -----------------------------------------------------------------------------
+# CMU Pronouncing Dictionary (for expected phonemes)
+# -----------------------------------------------------------------------------
+nltk>=3.8
+# After installing, download CMUdict:
+#   python -c "import nltk; nltk.download('cmudict')"
+
+# -----------------------------------------------------------------------------
+# Optional: NeMo ASR (voice2text.py – Parakeet)
+# Heavy; install separately if using real ASR instead of pseudo_voice2text.
+#   pip install nemo_toolkit[asr]
+# -----------------------------------------------------------------------------
+# nemo_toolkit[asr]
