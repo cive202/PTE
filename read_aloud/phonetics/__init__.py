@@ -1,4 +1,10 @@
 """Phonetics package for pronunciation dictionaries and phone mapping."""
+from .accent_tolerance import (
+    find_best_match,
+    is_accent_equivalent,
+    phoneme_cost,
+    phoneme_similarity,
+)
 from .cmudict import (
     ensure_cmudict_available,
     get_word_phonemes,
@@ -16,4 +22,8 @@ __all__ = [
     "ensure_cmudict_available",
     "arpabet_to_mfa",
     "convert_phone_sequence",
+    "phoneme_similarity",
+    "phoneme_cost",
+    "is_accent_equivalent",
+    "find_best_match",
 ]

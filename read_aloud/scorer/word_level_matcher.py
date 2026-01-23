@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from ..alignment.aligner import align_reference_to_asr
-from ..alignment.normalizer import is_punctuation
-from ..asr.lazy_loader import get_words_timestamps
-from ..pause.pause_evaluator import evaluate_pause
-from ..pause.speech_rate import calculate_speech_rate_scale
-from ..pause.hesitation import apply_hesitation_clustering
-from ..pause.rules import PAUSE_PUNCTUATION
+from alignment.aligner import align_reference_to_asr
+from alignment.normalizer import is_punctuation
+from asr.lazy_loader import get_words_timestamps
+from pause.pause_evaluator import evaluate_pause
+from pause.speech_rate import calculate_speech_rate_scale
+from pause.hesitation import apply_hesitation_clustering
+from pause.rules import PAUSE_PUNCTUATION
 
 
 def word_level_matcher(file_path: str, reference_text: str) -> List[Dict[str, Any]]:

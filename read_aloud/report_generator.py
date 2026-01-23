@@ -2,6 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from pause.hesitation import aggregate_pause_penalty
+from pause.rules import MAX_PUNCTUATION_PENALTY, PAUSE_PUNCTUATION
+from pte_pronunciation import (
+    pronunciation_score_0_100,
+    pte_pronunciation_band,
+    generate_feedback_strings,
+)
+
 
 def merge_content_and_pronunciation(
     content_results: List[Dict[str, Any]],
@@ -87,15 +95,19 @@ def merge_content_and_pronunciation(
                 start = content.get("start") or pron_result.get("start")
                 end = content.get("end") or pron_result.get("end")
 
-                unified.append(
-                    {
-                        "word": word,
-                        "status": pron_status,  # "correct" or "mispronounced"
-                        "start": start,
-                        "end": end,
-                        "confidence": confidence,
-                    }
-                )
+                merged: Dict[str, Any] = {
+                    "word": word,
+                    "status": pron_status,  # "aligned"/"mispronounced" from MFA; treated as pronunciation label
+                    "start": start,
+                    "end": end,
+                    "confidence": confidence,
+                }
+                # Preserve any extra, explainable fields from pronunciation backend (DP, PTE summary, etc.)
+                for k, v in pron_result.items():
+                    if k in {"word", "status", "start", "end", "confidence"}:
+                        continue
+                    merged[k] = v
+                unified.append(merged)
             else:
                 # Word aligned but no pronunciation result - default to correct
                 unified.append(
@@ -130,6 +142,11 @@ def generate_final_report(
     """
     words = merge_content_and_pronunciation(content_results, pronunciation_results)
 
+    # Rhythm score from pause penalties (if punctuation tokens exist)
+    pause_results = [w for w in words if w.get("word") in PAUSE_PUNCTUATION]
+    pause_penalty = aggregate_pause_penalty(pause_results, max_penalty=MAX_PUNCTUATION_PENALTY)
+    rhythm_score = max(0.0, min(1.0, 1.0 - (pause_penalty / MAX_PUNCTUATION_PENALTY))) if MAX_PUNCTUATION_PENALTY > 0 else 1.0
+
     # Calculate statistics
     total_words = len(words)
     correct = sum(1 for w in words if w.get("status") == "correct")
@@ -157,7 +174,36 @@ def generate_final_report(
         "substituted": substituted,
         "accuracy": (correct / total_words * 100.0) if total_words > 0 else 0.0,
         "average_confidence": avg_confidence,
+        "rhythm_score": rhythm_score,
+        "pause_penalty": pause_penalty,
     }
+
+    # If MFA pronunciation attached a PTE summary, update it with rhythm and recompute final score/band/feedback.
+    pte_summary = None
+    for w in words:
+        if isinstance(w.get("pte_summary"), dict):
+            pte_summary = w["pte_summary"]
+            break
+
+    if isinstance(pte_summary, dict):
+        pte_summary = dict(pte_summary)  # copy
+        pte_summary["rhythm"] = rhythm_score
+        score_pte = pronunciation_score_0_100(
+            phone=float(pte_summary.get("phone", 0.0) or 0.0),
+            stress=float(pte_summary.get("stress", 0.0) or 0.0),
+            rhythm=float(pte_summary.get("rhythm", 1.0) or 1.0),
+            consistency_bonus=float(pte_summary.get("consistency_bonus", 0.0) or 0.0),
+        )
+        pte_summary["score_pte"] = score_pte  # PTE scale: 10-90
+        pte_summary["pte_band"] = pte_pronunciation_band(score_pte)
+        pte_summary["feedback"] = generate_feedback_strings(pte_summary)
+
+        summary["pte_pronunciation"] = pte_summary
+
+        # Keep words' embedded pte_summary in sync
+        for w in words:
+            if "pte_summary" in w and isinstance(w["pte_summary"], dict):
+                w["pte_summary"] = pte_summary
 
     return {"words": words, "summary": summary}
 

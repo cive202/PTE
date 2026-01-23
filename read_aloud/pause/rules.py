@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # Re-export PAUSE_PUNCTUATION from alignment.normalizer for convenience
-from ..alignment.normalizer import PAUSE_PUNCTUATION
+from alignment.normalizer import PAUSE_PUNCTUATION
 
 # Base pause thresholds in seconds: (min_pause, max_pause)
 # These will be scaled based on speech rate

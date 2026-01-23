@@ -129,8 +129,9 @@ def get_word_phonemes(
         except (ImportError, LookupError):
             return {}
     
-    # Tokenize text (extract words, handle punctuation)
-    words = re.findall(r"\b\w+\b", text.lower())
+    # Tokenize text (extract words, handle contractions)
+    # Use [A-Za-z']+ to handle contractions like "don't", "it's", "I'm"
+    words = re.findall(r"[A-Za-z']+", text.lower())
     
     result: Dict[str, List[str]] = {}
     for word in words:
@@ -163,7 +164,8 @@ def text_to_phonemes(
             return []
     
     # Tokenize and get phones for each word
-    words = re.findall(r"\b\w+\b", text.lower())
+    # Use [A-Za-z']+ to handle contractions like "don't", "it's", "I'm"
+    words = re.findall(r"[A-Za-z']+", text.lower())
     phonemes: List[str] = []
     
     for word in words:

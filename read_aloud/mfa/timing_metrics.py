@@ -1,7 +1,7 @@
 """Word and phone duration metrics for timing and rhythm analysis."""
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 def calculate_word_duration(word_alignments: List[Dict[str, Any]]) -> Dict[str, float]:
@@ -148,3 +148,74 @@ def detect_hesitation(
             })
     
     return hesitations
+
+
+def calculate_relative_vowel_duration(
+    phones: List[Dict[str, Any]],
+    baseline: Dict[str, float],
+) -> Dict[str, float]:
+    """Calculate vowel duration relative to speaker's baseline.
+    
+    Args:
+        phones: List of phone alignments: {label, start, end, duration}
+        baseline: Speaker baseline dict from analyze_speaker_baseline()
+        
+    Returns:
+        Dict with:
+            - median_relative_duration: Median vowel duration / baseline median
+            - avg_relative_duration: Average vowel duration / baseline median
+            - vowel_count: Number of vowels
+    """
+    vowels = {"AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER", "EY", 
+              "IH", "IY", "OW", "OY", "UH", "UW"}
+    
+    vowel_durations: List[float] = []
+    baseline_median = baseline.get("median_vowel_duration", 0.10)
+    
+    for phone in phones:
+        label = phone.get("label", "").strip().upper()
+        if label in ("SP", "SIL", ""):
+            continue
+        
+        normalized = label.rstrip("012")
+        if normalized in vowels:
+            duration = phone.get("duration", 0.0)
+            if duration > 0:
+                relative_duration = duration / baseline_median if baseline_median > 0 else 1.0
+                vowel_durations.append(relative_duration)
+    
+    if not vowel_durations:
+        return {
+            "median_relative_duration": 1.0,
+            "avg_relative_duration": 1.0,
+            "vowel_count": 0,
+        }
+    
+    import statistics
+    return {
+        "median_relative_duration": statistics.median(vowel_durations),
+        "avg_relative_duration": statistics.mean(vowel_durations),
+        "vowel_count": len(vowel_durations),
+    }
+
+
+def calculate_relative_speech_rate(
+    phones: List[Dict[str, Any]],
+    baseline: Dict[str, float],
+) -> float:
+    """Calculate speech rate relative to speaker's baseline.
+    
+    Args:
+        phones: List of phone alignments: {label, start, end, duration}
+        baseline: Speaker baseline dict
+        
+    Returns:
+        Relative speech rate (current_rate / baseline_rate)
+    """
+    baseline_rate = baseline.get("speech_rate", 10.0)
+    current_rate = calculate_phone_rate(phones)
+    
+    if baseline_rate == 0:
+        return 1.0
+    
+    return current_rate / baseline_rate
