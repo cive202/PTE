@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from pause.hesitation import aggregate_pause_penalty
-from pause.rules import MAX_PUNCTUATION_PENALTY, PAUSE_PUNCTUATION
-from pte_pronunciation import (
+from pte_core.pause.hesitation import aggregate_pause_penalty
+from pte_core.pause.rules import MAX_PUNCTUATION_PENALTY, PAUSE_PUNCTUATION
+from read_aloud.pte_pronunciation import (
     pronunciation_score_0_100,
     pte_pronunciation_band,
     generate_feedback_strings,

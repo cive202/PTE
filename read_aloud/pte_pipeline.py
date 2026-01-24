@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+import sys
+from pathlib import Path
 
-from audio_quality import is_audio_clear
-from mfa import assess_pronunciation_mfa
-from report_generator import generate_final_report
-from voice2text import voice2text
-from wavlm_pronunciation import assess_pronunciation_wavlm
-from scorer.word_level_matcher import word_level_matcher
+# Add project root to path
+ROOT_DIR = Path(__file__).parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from pte_tools import (
+    voice2text,
+    assess_pronunciation_mfa,
+    is_audio_clear,
+    generate_final_report,
+    assess_pronunciation_wavlm,
+    word_level_matcher
+)
 
 
 def assess_pte(

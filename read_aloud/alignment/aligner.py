@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Tuple
 
-from models.aligned_word import AlignedWord
+from read_aloud.models.aligned_word import AlignedWord
 from .edit_distance import align_sequences
 from .normalizer import normalize_token
 from .tokenizer import tokenize_reference

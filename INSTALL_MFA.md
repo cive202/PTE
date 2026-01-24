@@ -1,7 +1,163 @@
 # Installing MFA for PTE Pipeline
 
 ## Current Status
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from google.colab import files as colab_files
 
+# --- 1. Install MFA & Download Models ---
+print("⏳ Installing Montreal Forced Aligner (this takes ~2-3 minutes)...")
+# Install MFA and required dependencies
+!mamba install -q -y -c conda-forge montreal-forced-aligner openblas
+
+print("⬇️ Downloading English models...")
+!mfa model download dictionary english_us_arpa
+!mfa model download acoustic english_us_arpa
+
+# --- 2. Setup Directories ---
+base_dir = "/content"
+input_dir = os.path.join(base_dir, "input_files")
+corpus_dir = os.path.join(base_dir, "corpus")
+output_dir = os.path.join(base_dir, "mfa_output")
+
+# Clean and recreate directories
+if os.path.exists(corpus_dir): shutil.rmtree(corpus_dir)
+if os.path.exists(output_dir): shutil.rmtree(output_dir)
+os.makedirs(input_dir, exist_ok=True)
+os.makedirs(corpus_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
+
+# --- 3. Upload & Organize Files ---
+print(f"\n📂 Created input folder at: {input_dir}")
+print("👉 Please upload your .wav and .txt files into the 'input_files' folder on the left file panel now.")
+input("⌨️  Press ENTER after you have finished uploading your files...")
+
+print("🔄 Organizing corpus structure...")
+files = os.listdir(input_dir)
+wav_files = [f for f in files if f.endswith('.wav')]
+
+if not wav_files:
+    print("❌ No .wav files found! Please upload files to /content/input_files")
+else:
+    count = 0
+    for wav_file in wav_files:
+        audio_id = Path(wav_file).stem
+        txt_file = f"{audio_id}.txt"
+        
+        if txt_file not in files:
+            print(f"⚠️ Warning: Missing text file for {wav_file} (expected {txt_file})")
+            continue
+            
+        # Create structure: corpus/audio_id/
+        # This matches the structure expected by your project's aligner.py
+        sample_dir = os.path.join(corpus_dir, audio_id)
+        os.makedirs(sample_dir, exist_ok=True)
+        
+        shutil.copy2(os.path.join(input_dir, wav_file), os.path.join(sample_dir, wav_file))
+        shutil.copy2(os.path.join(input_dir, txt_file), os.path.join(sample_dir, txt_file))
+        count += 1
+
+    if count > 0:
+        # --- 4. Run Alignment ---
+        print(f"🚀 Running MFA alignment on {count} samples...")
+        # Flags match your project: --clean, --single_speaker, outputting JSON
+        cmd = f"mfa align {corpus_dir} english_us_arpa english_us_arpa {output_dir} --clean --single_speaker --output_format json"
+        
+        process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if process.returncode == 0:
+            print("✅ Alignment Complete!")
+            
+            # Zip results
+            shutil.make_archive("/content/mfa_results", 'zip', output_dir)
+            print("📦 Results zipped.")
+            colab_files.download("/content/mfa_results.zip")
+        else:
+            print("❌ MFA Alignment Failed:")
+            print(process.stdout)
+            print(process.stderr)
+    else:
+        print("❌ No valid wav/txt pairs found to align.")import os
+import shutil
+import subprocess
+from pathlib import Path
+from google.colab import files as colab_files
+
+# --- 1. Install MFA & Download Models ---
+print("⏳ Installing Montreal Forced Aligner (this takes ~2-3 minutes)...")
+# Install MFA and required dependencies
+!mamba install -q -y -c conda-forge montreal-forced-aligner openblas
+
+print("⬇️ Downloading English models...")
+!mfa model download dictionary english_us_arpa
+!mfa model download acoustic english_us_arpa
+
+# --- 2. Setup Directories ---
+base_dir = "/content"
+input_dir = os.path.join(base_dir, "input_files")
+corpus_dir = os.path.join(base_dir, "corpus")
+output_dir = os.path.join(base_dir, "mfa_output")
+
+# Clean and recreate directories
+if os.path.exists(corpus_dir): shutil.rmtree(corpus_dir)
+if os.path.exists(output_dir): shutil.rmtree(output_dir)
+os.makedirs(input_dir, exist_ok=True)
+os.makedirs(corpus_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
+
+# --- 3. Upload & Organize Files ---
+print(f"\n📂 Created input folder at: {input_dir}")
+print("👉 Please upload your .wav and .txt files into the 'input_files' folder on the left file panel now.")
+input("⌨️  Press ENTER after you have finished uploading your files...")
+
+print("🔄 Organizing corpus structure...")
+files = os.listdir(input_dir)
+wav_files = [f for f in files if f.endswith('.wav')]
+
+if not wav_files:
+    print("❌ No .wav files found! Please upload files to /content/input_files")
+else:
+    count = 0
+    for wav_file in wav_files:
+        audio_id = Path(wav_file).stem
+        txt_file = f"{audio_id}.txt"
+        
+        if txt_file not in files:
+            print(f"⚠️ Warning: Missing text file for {wav_file} (expected {txt_file})")
+            continue
+            
+        # Create structure: corpus/audio_id/
+        # This matches the structure expected by your project's aligner.py
+        sample_dir = os.path.join(corpus_dir, audio_id)
+        os.makedirs(sample_dir, exist_ok=True)
+        
+        shutil.copy2(os.path.join(input_dir, wav_file), os.path.join(sample_dir, wav_file))
+        shutil.copy2(os.path.join(input_dir, txt_file), os.path.join(sample_dir, txt_file))
+        count += 1
+
+    if count > 0:
+        # --- 4. Run Alignment ---
+        print(f"🚀 Running MFA alignment on {count} samples...")
+        # Flags match your project: --clean, --single_speaker, outputting JSON
+        cmd = f"mfa align {corpus_dir} english_us_arpa english_us_arpa {output_dir} --clean --single_speaker --output_format json"
+        
+        process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if process.returncode == 0:
+            print("✅ Alignment Complete!")
+            
+            # Zip results
+            shutil.make_archive("/content/mfa_results", 'zip', output_dir)
+            print("📦 Results zipped.")
+            colab_files.download("/content/mfa_results.zip")
+        else:
+            print("❌ MFA Alignment Failed:")
+            print(process.stdout)
+            print(process.stderr)
+    else:
+        print("❌ No valid wav/txt pairs found to align.")
 Based on your terminal output:
 - ❌ **`env_aloud`**: MFA not installed
 - ⚠️ **`aligner`**: MFA installed but broken (DLL error with `_kalpy`)
