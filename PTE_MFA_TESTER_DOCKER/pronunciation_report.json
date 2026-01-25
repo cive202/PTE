@@ -1,0 +1,4870 @@
+{
+  "correct_words_list": [
+    [
+      "higher",
+      5
+    ],
+    [
+      "education",
+      5
+    ],
+    [
+      "prepares",
+      5
+    ],
+    [
+      "students",
+      5
+    ],
+    [
+      "for",
+      5
+    ],
+    [
+      "professional",
+      5
+    ],
+    [
+      "challenges",
+      5
+    ],
+    [
+      "by",
+      5
+    ],
+    [
+      "developing",
+      5
+    ],
+    [
+      "analytical",
+      5
+    ],
+    [
+      "and",
+      5
+    ],
+    [
+      "communication",
+      5
+    ],
+    [
+      "skills",
+      5
+    ],
+    [
+      "online",
+      5
+    ],
+    [
+      "platforms",
+      5
+    ],
+    [
+      "offer",
+      5
+    ],
+    [
+      "flexibility",
+      5
+    ],
+    [
+      "but",
+      5
+    ],
+    [
+      "curriculum",
+      5
+    ],
+    [
+      "quality",
+      5
+    ],
+    [
+      "must",
+      5
+    ],
+    [
+      "remain",
+      5
+    ],
+    [
+      "consistent",
+      5
+    ],
+    [
+      "universities",
+      5
+    ],
+    [
+      "emphasize",
+      5
+    ],
+    [
+      "research",
+      5
+    ],
+    [
+      "innovation",
+      5
+    ],
+    [
+      "and",
+      5
+    ],
+    [
+      "collaboration",
+      5
+    ],
+    [
+      "across",
+      5
+    ],
+    [
+      "disciplines",
+      5
+    ]
+  ],
+  "wrong_words_list": [],
+  "correct_words_details": [
+    {
+      "word": "higher",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "h",
+              "aj",
+              "ə",
+              "ɾ"
+            ],
+            [
+              "h",
+              "aj",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "h",
+            "aj",
+            "ə"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "h",
+              "aj",
+              "a"
+            ]
+          ],
+          "spoken": [
+            "h",
+            "aj",
+            "a"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "h",
+              "aɪ",
+              "ɝ"
+            ]
+          ],
+          "spoken": [
+            "h",
+            "aɪ",
+            "ɝ"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "h",
+              "aj",
+              "ɚ"
+            ]
+          ],
+          "spoken": [
+            "h",
+            "aj",
+            "ɚ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "h",
+              "aj",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "h",
+            "aj",
+            "ə"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "education",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "c",
+              "eː",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "ɛ",
+              "ɖ",
+              "ʊ",
+              "c",
+              "eː",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "dʒ",
+            "ʊ",
+            "c",
+            "eː",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "dʲ",
+              "ʊ",
+              "cʰ",
+              "e",
+              "ʃ",
+              "ɔ",
+              "n"
+            ],
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "cʰ",
+              "e",
+              "ʃ",
+              "ɔ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "dʲ",
+            "ʊ",
+            "cʰ",
+            "e",
+            "ʃ",
+            "ɔ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "dʒ",
+              "ə",
+              "k",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "ɛ",
+              "dʒ",
+              "j",
+              "u",
+              "k",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "dʒ",
+            "ə",
+            "k",
+            "eɪ",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "n̩"
+            ],
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "dʒ",
+            "ʊ",
+            "cʰ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "dʲ",
+              "ʊ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "ɛ",
+              "dʒ",
+              "ʊ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "n̩"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "dʒ",
+            "ʊ",
+            "cʰ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "prepares",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [],
+          "spoken": [
+            "spn"
+          ],
+          "remark": "Match (SPN - Spoken Noise)"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [],
+          "spoken": [
+            "spn"
+          ],
+          "remark": "Match (SPN - Spoken Noise)"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "r",
+              "i",
+              "p",
+              "ɛ",
+              "r",
+              "z"
+            ],
+            [
+              "p",
+              "ɝ",
+              "p",
+              "ɛ",
+              "r",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "r",
+            "i",
+            "p",
+            "ɛ",
+            "r",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "pʰ",
+              "ɛ",
+              "ɹ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ə",
+            "pʰ",
+            "ɛ",
+            "ɹ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ɪ",
+              "pʰ",
+              "ɛː",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ɪ",
+            "pʰ",
+            "ɛː",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "students",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "ʈʲ",
+              "ʉː",
+              "ɖ",
+              "ə",
+              "n",
+              "s"
+            ],
+            [
+              "s",
+              "ʈʲ",
+              "ʉː",
+              "ɖ",
+              "ə",
+              "n",
+              "ʈ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "ʈʲ",
+            "ʉː",
+            "ɖ",
+            "ə",
+            "n",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "tʲ",
+              "uː",
+              "d",
+              "ɛ",
+              "n",
+              "s"
+            ],
+            [
+              "s",
+              "tʲ",
+              "uː",
+              "d",
+              "ɛ",
+              "n",
+              "t",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "tʲ",
+            "uː",
+            "d",
+            "ɛ",
+            "n",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "t",
+              "u",
+              "d",
+              "ə",
+              "n",
+              "t",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "t",
+            "u",
+            "d",
+            "ə",
+            "n",
+            "t",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "tʲ",
+              "ʉː",
+              "d",
+              "n̩",
+              "s"
+            ],
+            [
+              "s",
+              "tʲ",
+              "ʉː",
+              "d",
+              "n̩",
+              "t",
+              "s"
+            ],
+            [
+              "s",
+              "tʲ",
+              "ʉː",
+              "ɾ",
+              "ə",
+              "n",
+              "t",
+              "s"
+            ],
+            [
+              "s",
+              "tʲ",
+              "ʉː",
+              "d",
+              "ə",
+              "n",
+              "t",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "tʲ",
+            "ʉː",
+            "d",
+            "ə",
+            "n",
+            "t",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "tʲ",
+              "ʉː",
+              "d",
+              "ə",
+              "n",
+              "t",
+              "s"
+            ],
+            [
+              "s",
+              "tʃ",
+              "ʉː",
+              "d",
+              "n̩",
+              "s"
+            ],
+            [
+              "s",
+              "tʃ",
+              "ʉː",
+              "d",
+              "ə",
+              "n",
+              "t",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "tʲ",
+            "ʉː",
+            "d",
+            "ə",
+            "n",
+            "t",
+            "s"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "for",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "ɒː"
+            ],
+            [
+              "f",
+              "aː"
+            ],
+            [
+              "f",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "aː"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "ɔ"
+            ],
+            [
+              "f",
+              "a"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "a"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "ɔ",
+              "r"
+            ],
+            [
+              "f",
+              "ɝ"
+            ],
+            [
+              "f",
+              "r",
+              "ɝ"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "ɔ",
+            "r"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "ɒ",
+              "ɹ"
+            ],
+            [
+              "f",
+              "ɚ"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "ɒ",
+            "ɹ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "ɒː"
+            ],
+            [
+              "f",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "ə"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "professional",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ə",
+              "n",
+              "ə",
+              "l"
+            ],
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "n",
+              "ə",
+              "l"
+            ],
+            [
+              "p",
+              "ɾ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "n",
+              "ə",
+              "l"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ə",
+            "f",
+            "ɛ",
+            "ʃ",
+            "ə",
+            "n",
+            "ə",
+            "l"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ɔ",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ɔ",
+              "n",
+              "a",
+              "ɫ"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ɔ",
+            "f",
+            "ɛ",
+            "ʃ",
+            "ɔ",
+            "n",
+            "a",
+            "ɫ"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "r",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ə",
+              "n",
+              "ə",
+              "l"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "r",
+            "ə",
+            "f",
+            "ɛ",
+            "ʃ",
+            "ə",
+            "n",
+            "ə",
+            "l"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ə",
+              "n",
+              "ə",
+              "ɫ"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ə",
+            "f",
+            "ɛ",
+            "ʃ",
+            "ə",
+            "n",
+            "ə",
+            "ɫ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "n",
+              "ɫ̩"
+            ],
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ə",
+              "n",
+              "ɫ̩"
+            ],
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "n",
+              "ə",
+              "ɫ"
+            ],
+            [
+              "p",
+              "ɹ",
+              "ə",
+              "f",
+              "ɛ",
+              "ʃ",
+              "ə",
+              "n",
+              "ə",
+              "ɫ"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "ɹ",
+            "ə",
+            "f",
+            "ɛ",
+            "ʃ",
+            "n",
+            "ə",
+            "ɫ"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "challenges",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "tʃ",
+              "a",
+              "l",
+              "ə",
+              "n",
+              "dʒ",
+              "ɪ",
+              "dʒ"
+            ],
+            [
+              "tʃ",
+              "a",
+              "l",
+              "ə",
+              "n",
+              "dʒ",
+              "ɪ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "tʃ",
+            "a",
+            "l",
+            "ə",
+            "n",
+            "dʒ",
+            "ɪ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "tʃ",
+              "a",
+              "l",
+              "ɛ",
+              "n",
+              "dʒ",
+              "ɛ",
+              "s"
+            ],
+            [
+              "tʃ",
+              "a",
+              "l",
+              "ɛ",
+              "n",
+              "dʒ",
+              "ɛ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "tʃ",
+            "a",
+            "l",
+            "ɛ",
+            "n",
+            "dʒ",
+            "ɛ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "tʃ",
+              "æ",
+              "l",
+              "ə",
+              "n",
+              "dʒ",
+              "ɪ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "tʃ",
+            "æ",
+            "l",
+            "ə",
+            "n",
+            "dʒ",
+            "ɪ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "tʃ",
+              "æ",
+              "ʎ",
+              "ɪ",
+              "n",
+              "dʒ",
+              "ɪ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "tʃ",
+            "æ",
+            "ʎ",
+            "ɪ",
+            "n",
+            "dʒ",
+            "ɪ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "tʃ",
+              "a",
+              "l",
+              "ə",
+              "n",
+              "dʒ",
+              "ɪ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "tʃ",
+            "a",
+            "l",
+            "ə",
+            "n",
+            "dʒ",
+            "ɪ",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "by",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "aj"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "aj"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "aj"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "aj"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "aɪ"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "aɪ"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "aj"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "aj"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "aj"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "aj"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "developing",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɖ",
+              "ɪ",
+              "ʋ",
+              "ɛ",
+              "l",
+              "ə",
+              "p",
+              "ɪ",
+              "ŋ"
+            ],
+            [
+              "ɖ",
+              "ɪ",
+              "ʋ",
+              "ɛ",
+              "l",
+              "ə",
+              "p",
+              "ɪ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɖ",
+            "ɪ",
+            "ʋ",
+            "ɛ",
+            "l",
+            "ə",
+            "p",
+            "ɪ",
+            "ŋ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "d",
+              "ɛ",
+              "v",
+              "ɛ",
+              "l",
+              "ɔ",
+              "pʲ",
+              "i",
+              "ŋ",
+              "ɡ"
+            ],
+            [
+              "d",
+              "ɛ",
+              "v",
+              "ɛ",
+              "l",
+              "ɔ",
+              "pʲ",
+              "i",
+              "ŋ"
+            ]
+          ],
+          "spoken": [
+            "d",
+            "ɛ",
+            "v",
+            "ɛ",
+            "l",
+            "ɔ",
+            "pʲ",
+            "i",
+            "ŋ",
+            "ɡ"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "d",
+              "ɪ",
+              "v",
+              "ɛ",
+              "l",
+              "ə",
+              "p",
+              "ɪ",
+              "ŋ"
+            ]
+          ],
+          "spoken": [
+            "d",
+            "ɪ",
+            "v",
+            "ɛ",
+            "l",
+            "ə",
+            "p",
+            "ɪ",
+            "ŋ"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "dʲ",
+              "ɪ",
+              "v",
+              "ɛ",
+              "l",
+              "ə",
+              "pʲ",
+              "ɪ",
+              "ŋ"
+            ]
+          ],
+          "spoken": [
+            "dʲ",
+            "ɪ",
+            "v",
+            "ɛ",
+            "l",
+            "ə",
+            "pʲ",
+            "ɪ",
+            "ŋ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "dʲ",
+              "ɪ",
+              "v",
+              "ɛ",
+              "l",
+              "ə",
+              "p",
+              "ɪ",
+              "ŋ"
+            ]
+          ],
+          "spoken": [
+            "dʲ",
+            "ɪ",
+            "v",
+            "ɛ",
+            "l",
+            "ə",
+            "p",
+            "ɪ",
+            "ŋ"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "analytical",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "a",
+              "n",
+              "ə",
+              "ʎ",
+              "ɪ",
+              "ʈʲ",
+              "ɪ",
+              "k",
+              "ə",
+              "l"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "ə",
+            "ʎ",
+            "ɪ",
+            "ʈʲ",
+            "ɪ",
+            "k",
+            "ə",
+            "l"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [],
+          "spoken": [
+            "spn"
+          ],
+          "remark": "Match (SPN - Spoken Noise)"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "æ",
+              "n",
+              "ə",
+              "l",
+              "ɪ",
+              "t",
+              "ɪ",
+              "k",
+              "ə",
+              "l"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "ə",
+            "l",
+            "ɪ",
+            "t",
+            "ɪ",
+            "k",
+            "ə",
+            "l"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "æ",
+              "n",
+              "ə",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "ɪ",
+              "k",
+              "ə",
+              "ɫ"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "ə",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "ɪ",
+            "k",
+            "ə",
+            "ɫ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "a",
+              "n",
+              "ə",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "ɪ",
+              "k",
+              "ə",
+              "ɫ"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "ə",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "ɪ",
+            "k",
+            "ə",
+            "ɫ"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "and",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "ɖ"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "a",
+              "n",
+              "ɖ"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "ɖ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "a",
+              "n",
+              "d"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "ɛ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "æ",
+              "n",
+              "d"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "n̩",
+              "d"
+            ],
+            [
+              "æ",
+              "n",
+              "t"
+            ],
+            [
+              "æ",
+              "n",
+              "d"
+            ],
+            [
+              "æ",
+              "n"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "n̩"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "n̩"
+            ],
+            [
+              "a",
+              "n",
+              "d"
+            ],
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "n̩",
+              "d"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "communication",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "mʲ",
+              "ʉː",
+              "ɲ",
+              "ɪ",
+              "c",
+              "eː",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "mʲ",
+            "ʉː",
+            "ɲ",
+            "ɪ",
+            "c",
+            "eː",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ɔ",
+              "mʲ",
+              "uː",
+              "ɲ",
+              "i",
+              "cʰ",
+              "e",
+              "ʃ",
+              "ɔ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ɔ",
+            "mʲ",
+            "uː",
+            "ɲ",
+            "i",
+            "cʰ",
+            "e",
+            "ʃ",
+            "ɔ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "m",
+              "j",
+              "u",
+              "n",
+              "ə",
+              "k",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "m",
+            "j",
+            "u",
+            "n",
+            "ə",
+            "k",
+            "eɪ",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "mʲ",
+              "ʉː",
+              "ɲ",
+              "ɪ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "mʲ",
+            "ʉː",
+            "ɲ",
+            "ɪ",
+            "cʰ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "mʲ",
+              "ʉː",
+              "ɲ",
+              "ɪ",
+              "cʰ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "mʲ",
+            "ʉː",
+            "ɲ",
+            "ɪ",
+            "cʰ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "skills",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "c",
+              "ɪ",
+              "l",
+              "z"
+            ],
+            [
+              "s",
+              "c",
+              "ɪ",
+              "l",
+              "dʒ"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "c",
+            "ɪ",
+            "l",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "c",
+              "i",
+              "ɫ",
+              "z"
+            ],
+            [
+              "s",
+              "c",
+              "i",
+              "ɫ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "c",
+            "i",
+            "ɫ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "k",
+              "ɪ",
+              "l",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "k",
+            "ɪ",
+            "l",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "c",
+              "ɪ",
+              "ɫ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "c",
+            "ɪ",
+            "ɫ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "s",
+              "c",
+              "ɪ",
+              "ɫ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "s",
+            "c",
+            "ɪ",
+            "ɫ",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "online",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɒ",
+              "n",
+              "l",
+              "aj",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɒ",
+            "n",
+            "l",
+            "aj",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɔ",
+              "n",
+              "l",
+              "aj",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɔ",
+            "n",
+            "l",
+            "aj",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɔ",
+              "n",
+              "l",
+              "aɪ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɔ",
+            "n",
+            "l",
+            "aɪ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɑ",
+              "n",
+              "l",
+              "aj",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɑ",
+            "n",
+            "l",
+            "aj",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɒ",
+              "n",
+              "l",
+              "aj",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɒ",
+            "n",
+            "l",
+            "aj",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "platforms",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "l",
+              "a",
+              "ʈ",
+              "f",
+              "ɒː",
+              "m",
+              "z"
+            ],
+            [
+              "p",
+              "l",
+              "a",
+              "ʈ",
+              "f",
+              "ɒː",
+              "m",
+              "dʒ"
+            ],
+            [
+              "p",
+              "l",
+              "a",
+              "ʈ",
+              "f",
+              "aː",
+              "m",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "l",
+            "a",
+            "ʈ",
+            "f",
+            "aː",
+            "m",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "l",
+              "a",
+              "t",
+              "f",
+              "ɔ",
+              "m",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "l",
+            "a",
+            "t",
+            "f",
+            "ɔ",
+            "m",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "l",
+              "æ",
+              "t",
+              "f",
+              "ɔ",
+              "r",
+              "m",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "l",
+            "æ",
+            "t",
+            "f",
+            "ɔ",
+            "r",
+            "m",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "l",
+              "æ",
+              "t",
+              "f",
+              "ɒ",
+              "ɹ",
+              "m",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "l",
+            "æ",
+            "t",
+            "f",
+            "ɒ",
+            "ɹ",
+            "m",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "p",
+              "l",
+              "a",
+              "t",
+              "f",
+              "ɒː",
+              "m",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "p",
+            "l",
+            "a",
+            "t",
+            "f",
+            "ɒː",
+            "m",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "offer",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɒː",
+              "f",
+              "ə"
+            ],
+            [
+              "ɒː",
+              "f",
+              "ə",
+              "ɾ"
+            ]
+          ],
+          "spoken": [
+            "ɒː",
+            "f",
+            "ə",
+            "ɾ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɔ",
+              "f",
+              "a"
+            ]
+          ],
+          "spoken": [
+            "ɔ",
+            "f",
+            "a"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɔ",
+              "f",
+              "ɝ"
+            ]
+          ],
+          "spoken": [
+            "ɔ",
+            "f",
+            "ɝ"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɑ",
+              "f",
+              "ɚ"
+            ],
+            [
+              "ɒ",
+              "f",
+              "ɚ"
+            ]
+          ],
+          "spoken": [
+            "ɑ",
+            "f",
+            "ɚ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɒ",
+              "f",
+              "ə"
+            ],
+            [
+              "ɒː",
+              "f",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "ɒː",
+            "f",
+            "ə"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "flexibility",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "l",
+              "ɛ",
+              "k",
+              "s",
+              "ə",
+              "bʲ",
+              "ɪ",
+              "ʎ",
+              "ɪ",
+              "ʈʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "l",
+            "ɛ",
+            "k",
+            "s",
+            "ə",
+            "bʲ",
+            "ɪ",
+            "ʎ",
+            "ɪ",
+            "ʈʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "l",
+              "ɛ",
+              "k",
+              "s",
+              "i",
+              "bʲ",
+              "i",
+              "ʎ",
+              "i",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "l",
+            "ɛ",
+            "k",
+            "s",
+            "i",
+            "bʲ",
+            "i",
+            "ʎ",
+            "i",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "l",
+              "ɛ",
+              "k",
+              "s",
+              "ə",
+              "b",
+              "ɪ",
+              "l",
+              "ə",
+              "t",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "l",
+            "ɛ",
+            "k",
+            "s",
+            "ə",
+            "b",
+            "ɪ",
+            "l",
+            "ə",
+            "t",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "l",
+              "ɛ",
+              "k",
+              "s",
+              "ə",
+              "bʲ",
+              "ɪ",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "l",
+            "ɛ",
+            "k",
+            "s",
+            "ə",
+            "bʲ",
+            "ɪ",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "f",
+              "l",
+              "ɛ",
+              "k",
+              "s",
+              "ə",
+              "bʲ",
+              "ɪ",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "f",
+            "l",
+            "ɛ",
+            "k",
+            "s",
+            "ə",
+            "bʲ",
+            "ɪ",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "but",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "ə",
+              "ʈ"
+            ],
+            [
+              "b",
+              "ə"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "ə",
+            "ʈ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "a"
+            ],
+            [
+              "b",
+              "a",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "a",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "ə",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "ə",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "ɐ",
+              "t"
+            ],
+            [
+              "b",
+              "ɐ"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "ɐ",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "b",
+              "ɐ",
+              "t"
+            ],
+            [
+              "b",
+              "ɐ"
+            ],
+            [
+              "b",
+              "ɐ",
+              "ʔ"
+            ]
+          ],
+          "spoken": [
+            "b",
+            "ɐ",
+            "t"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "curriculum",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "ɾ",
+              "ɪ",
+              "c",
+              "ə",
+              "l",
+              "ə",
+              "m"
+            ],
+            [
+              "k",
+              "ə",
+              "ɹ",
+              "ɪ",
+              "c",
+              "ə",
+              "l",
+              "ə",
+              "m"
+            ],
+            [
+              "k",
+              "ɜː",
+              "ɹ",
+              "ɪ",
+              "c",
+              "ʉː",
+              "l",
+              "ə",
+              "m"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "ɾ",
+            "ɪ",
+            "c",
+            "ə",
+            "l",
+            "ə",
+            "m"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "u",
+              "ɹ",
+              "i",
+              "c",
+              "u",
+              "l",
+              "u",
+              "m"
+            ],
+            [
+              "kʰ",
+              "aː",
+              "ɹ",
+              "i",
+              "cʰ",
+              "uː",
+              "l",
+              "u",
+              "m"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "aː",
+            "ɹ",
+            "i",
+            "cʰ",
+            "uː",
+            "l",
+            "u",
+            "m"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ɝ",
+              "ɪ",
+              "k",
+              "j",
+              "ə",
+              "l",
+              "ə",
+              "m"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ɝ",
+            "ɪ",
+            "k",
+            "j",
+            "ə",
+            "l",
+            "ə",
+            "m"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "ɹ",
+              "ɪ",
+              "c",
+              "ə",
+              "l",
+              "ə",
+              "m"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "ɹ",
+            "ɪ",
+            "c",
+            "ə",
+            "l",
+            "ə",
+            "m"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "ɹ",
+              "ɪ",
+              "c",
+              "ə",
+              "l",
+              "ə",
+              "m"
+            ],
+            [
+              "kʰ",
+              "ɜː",
+              "ɹ",
+              "ɪ",
+              "cʰ",
+              "ʉː",
+              "l",
+              "ə",
+              "m"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "ɹ",
+            "ɪ",
+            "c",
+            "ə",
+            "l",
+            "ə",
+            "m"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "quality",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʷ",
+              "ɒ",
+              "ʎ",
+              "ɪ",
+              "ʈʲ",
+              "i"
+            ],
+            [
+              "kʷ",
+              "a",
+              "ʎ",
+              "ɪ",
+              "ʈʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "kʷ",
+            "ɒ",
+            "ʎ",
+            "ɪ",
+            "ʈʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʷ",
+              "ɔ",
+              "ʎ",
+              "i",
+              "tʲ",
+              "i"
+            ],
+            [
+              "kʷ",
+              "a",
+              "ʎ",
+              "i",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "kʷ",
+            "a",
+            "ʎ",
+            "i",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "w",
+              "ɑ",
+              "l",
+              "ə",
+              "t",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "w",
+            "ɑ",
+            "l",
+            "ə",
+            "t",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "kʷ",
+              "ɑː",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "kʷ",
+            "ɑː",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "kʷ",
+              "ɒ",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "i"
+            ],
+            [
+              "kʷ",
+              "a",
+              "ʎ",
+              "ɪ",
+              "tʲ",
+              "i"
+            ]
+          ],
+          "spoken": [
+            "kʷ",
+            "a",
+            "ʎ",
+            "ɪ",
+            "tʲ",
+            "i"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "must",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "m",
+              "ə",
+              "s",
+              "ʈ"
+            ],
+            [
+              "m",
+              "ə",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "m",
+            "ə",
+            "s",
+            "ʈ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "m",
+              "ɔ",
+              "s"
+            ],
+            [
+              "m",
+              "ɔ",
+              "s",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "m",
+            "ɔ",
+            "s",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "m",
+              "ə",
+              "s",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "m",
+            "ə",
+            "s",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "m",
+              "ə",
+              "s"
+            ],
+            [
+              "m",
+              "ɐ",
+              "s",
+              "t"
+            ],
+            [
+              "m",
+              "ɐ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "m",
+            "ɐ",
+            "s",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "m",
+              "ɐ",
+              "s",
+              "t"
+            ],
+            [
+              "m",
+              "ɐ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "m",
+            "ɐ",
+            "s",
+            "t"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "remain",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "ɪ",
+              "m",
+              "eː",
+              "n"
+            ],
+            [
+              "ɾ",
+              "ɪ",
+              "m",
+              "eː",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɾ",
+            "ɪ",
+            "m",
+            "eː",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "i",
+              "m",
+              "e",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "i",
+            "m",
+            "e",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "r",
+              "ɪ",
+              "m",
+              "eɪ",
+              "n"
+            ],
+            [
+              "r",
+              "i",
+              "m",
+              "eɪ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "r",
+            "i",
+            "m",
+            "eɪ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "ɪ",
+              "m",
+              "ej",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "ɪ",
+            "m",
+            "ej",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "ɪ",
+              "m",
+              "ej",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "ɪ",
+            "m",
+            "ej",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "consistent",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "n",
+              "s",
+              "ɪ",
+              "s",
+              "ʈ",
+              "ə",
+              "n",
+              "ʈ"
+            ],
+            [
+              "k",
+              "ə",
+              "n",
+              "s",
+              "ɪ",
+              "s",
+              "ʈ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "n",
+            "s",
+            "ɪ",
+            "s",
+            "ʈ",
+            "ə",
+            "n",
+            "ʈ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ɔ",
+              "n",
+              "s",
+              "i",
+              "s",
+              "t",
+              "ɛ",
+              "n",
+              "t"
+            ],
+            [
+              "kʰ",
+              "ɔ",
+              "n",
+              "s",
+              "i",
+              "s",
+              "t",
+              "ɛ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ɔ",
+            "n",
+            "s",
+            "i",
+            "s",
+            "t",
+            "ɛ",
+            "n",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "n",
+              "s",
+              "ɪ",
+              "s",
+              "t",
+              "ə",
+              "n",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "n",
+            "s",
+            "ɪ",
+            "s",
+            "t",
+            "ə",
+            "n",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "n",
+              "s",
+              "ɪ",
+              "s",
+              "t",
+              "ə",
+              "n",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "n",
+            "s",
+            "ɪ",
+            "s",
+            "t",
+            "ə",
+            "n",
+            "t"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "n",
+              "s",
+              "ɪ",
+              "s",
+              "t",
+              "ə",
+              "n",
+              "t"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "n",
+            "s",
+            "ɪ",
+            "s",
+            "t",
+            "ə",
+            "n",
+            "t"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "universities",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "j",
+              "ʉː",
+              "ɲ",
+              "ɪ",
+              "ʋ",
+              "ɜː",
+              "s",
+              "ə",
+              "ʈʲ",
+              "i",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "j",
+            "ʉː",
+            "ɲ",
+            "ɪ",
+            "ʋ",
+            "ɜː",
+            "s",
+            "ə",
+            "ʈʲ",
+            "i",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "j",
+              "uː",
+              "ɲ",
+              "i",
+              "v",
+              "aː",
+              "s",
+              "a",
+              "tʰ",
+              "i",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "j",
+            "uː",
+            "ɲ",
+            "i",
+            "v",
+            "aː",
+            "s",
+            "a",
+            "tʰ",
+            "i",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "j",
+              "u",
+              "n",
+              "ə",
+              "v",
+              "ɝ",
+              "s",
+              "ə",
+              "t",
+              "i",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "j",
+            "u",
+            "n",
+            "ə",
+            "v",
+            "ɝ",
+            "s",
+            "ə",
+            "t",
+            "i",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "j",
+              "ʉ",
+              "ɲ",
+              "ɪ",
+              "v",
+              "ɝ",
+              "s",
+              "ɪ",
+              "tʲ",
+              "i",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "j",
+            "ʉ",
+            "ɲ",
+            "ɪ",
+            "v",
+            "ɝ",
+            "s",
+            "ɪ",
+            "tʲ",
+            "i",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "j",
+              "ʉː",
+              "ɲ",
+              "ɪ",
+              "v",
+              "ɜː",
+              "s",
+              "ə",
+              "tʲ",
+              "i",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "j",
+            "ʉː",
+            "ɲ",
+            "ɪ",
+            "v",
+            "ɜː",
+            "s",
+            "ə",
+            "tʲ",
+            "i",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "emphasize",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "m",
+              "f",
+              "ə",
+              "s",
+              "aj",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "m",
+            "f",
+            "ə",
+            "s",
+            "aj",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [],
+          "spoken": [
+            "spn"
+          ],
+          "remark": "Match (SPN - Spoken Noise)"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "m",
+              "f",
+              "ə",
+              "s",
+              "aɪ",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "m",
+            "f",
+            "ə",
+            "s",
+            "aɪ",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "m",
+              "f",
+              "ə",
+              "s",
+              "aj",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "m",
+            "f",
+            "ə",
+            "s",
+            "aj",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɛ",
+              "m",
+              "f",
+              "ə",
+              "s",
+              "aj",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "ɛ",
+            "m",
+            "f",
+            "ə",
+            "s",
+            "aj",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "research",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "ɪ",
+              "s",
+              "ɜː",
+              "tʃ"
+            ],
+            [
+              "ɾ",
+              "ɪ",
+              "s",
+              "ɜː",
+              "tʃ"
+            ],
+            [
+              "ɾ",
+              "iː",
+              "s",
+              "ɜː",
+              "tʃ"
+            ],
+            [
+              "ɹ",
+              "iː",
+              "s",
+              "ɜː",
+              "tʃ"
+            ]
+          ],
+          "spoken": [
+            "ɾ",
+            "iː",
+            "s",
+            "ɜː",
+            "tʃ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "i",
+              "s",
+              "aː",
+              "tʃ"
+            ],
+            [
+              "ɹ",
+              "iː",
+              "s",
+              "aː",
+              "tʃ"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "i",
+            "s",
+            "aː",
+            "tʃ"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "r",
+              "i",
+              "s",
+              "ɝ",
+              "tʃ"
+            ],
+            [
+              "r",
+              "i",
+              "s",
+              "ɝ",
+              "tʃ"
+            ]
+          ],
+          "spoken": [
+            "r",
+            "i",
+            "s",
+            "ɝ",
+            "tʃ"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "i",
+              "s",
+              "ɝ",
+              "tʃ"
+            ],
+            [
+              "ɹ",
+              "i",
+              "s",
+              "ɚ",
+              "tʃ"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "i",
+            "s",
+            "ɝ",
+            "tʃ"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɹ",
+              "iː",
+              "s",
+              "ɜː",
+              "tʃ"
+            ],
+            [
+              "ɹ",
+              "ɪ",
+              "s",
+              "ɜː",
+              "tʃ"
+            ]
+          ],
+          "spoken": [
+            "ɹ",
+            "iː",
+            "s",
+            "ɜː",
+            "tʃ"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "innovation",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɪ",
+              "n",
+              "ə",
+              "ʋ",
+              "eː",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɪ",
+            "n",
+            "ə",
+            "ʋ",
+            "eː",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "i",
+              "n",
+              "ɔ",
+              "v",
+              "e",
+              "ʃ",
+              "ɔ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "i",
+            "n",
+            "ɔ",
+            "v",
+            "e",
+            "ʃ",
+            "ɔ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɪ",
+              "n",
+              "ə",
+              "v",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "ɪ",
+              "n",
+              "oʊ",
+              "v",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɪ",
+            "n",
+            "oʊ",
+            "v",
+            "eɪ",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ɪ",
+              "n",
+              "ə",
+              "v",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɪ",
+            "n",
+            "ə",
+            "v",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ɪ",
+              "n",
+              "ə",
+              "v",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "ɪ",
+            "n",
+            "ə",
+            "v",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "and",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "ɖ"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "a",
+              "n",
+              "ɖ"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "ɖ"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "a",
+              "n",
+              "d"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "ɛ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "æ",
+              "n",
+              "d"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "n̩",
+              "d"
+            ],
+            [
+              "æ",
+              "n",
+              "t"
+            ],
+            [
+              "æ",
+              "n",
+              "d"
+            ],
+            [
+              "æ",
+              "n"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "n̩"
+            ]
+          ],
+          "spoken": [
+            "æ",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "n̩"
+            ],
+            [
+              "a",
+              "n",
+              "d"
+            ],
+            [
+              "ə",
+              "n"
+            ],
+            [
+              "ə",
+              "n",
+              "d"
+            ],
+            [
+              "ɛ",
+              "n"
+            ],
+            [
+              "a",
+              "n"
+            ],
+            [
+              "n̩",
+              "d"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "n",
+            "d"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "collaboration",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "l",
+              "a",
+              "b",
+              "ə",
+              "ɹ",
+              "eː",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "l",
+            "a",
+            "b",
+            "ə",
+            "ɹ",
+            "eː",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ɔ",
+              "l",
+              "a",
+              "b",
+              "ɔ",
+              "ɹ",
+              "e",
+              "ʃ",
+              "ɔ",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ɔ",
+            "l",
+            "a",
+            "b",
+            "ɔ",
+            "ɹ",
+            "e",
+            "ʃ",
+            "ɔ",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "k",
+              "ə",
+              "l",
+              "æ",
+              "b",
+              "ɝ",
+              "eɪ",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "k",
+            "ə",
+            "l",
+            "æ",
+            "b",
+            "ɝ",
+            "eɪ",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "l",
+              "æ",
+              "b",
+              "ə",
+              "ɹ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ],
+            [
+              "kʰ",
+              "ə",
+              "l",
+              "æ",
+              "b",
+              "ɹ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "l",
+            "æ",
+            "b",
+            "ɹ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "kʰ",
+              "ə",
+              "l",
+              "a",
+              "b",
+              "ə",
+              "ɹ",
+              "ej",
+              "ʃ",
+              "ə",
+              "n"
+            ]
+          ],
+          "spoken": [
+            "kʰ",
+            "ə",
+            "l",
+            "a",
+            "b",
+            "ə",
+            "ɹ",
+            "ej",
+            "ʃ",
+            "ə",
+            "n"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "across",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ],
+            [
+              "ə",
+              "k",
+              "ɹ",
+              "a",
+              "s"
+            ],
+            [
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ],
+            [
+              "ə",
+              "k",
+              "ɾ",
+              "ɒ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "ə",
+            "k",
+            "ɹ",
+            "ɒ",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "a",
+              "k",
+              "ɹ",
+              "ɔ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "a",
+            "k",
+            "ɹ",
+            "ɔ",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "k",
+              "r",
+              "ɔ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "ə",
+            "k",
+            "r",
+            "ɔ",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ],
+            [
+              "ə",
+              "k",
+              "ɹ",
+              "ɑ",
+              "s"
+            ],
+            [
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "ə",
+            "k",
+            "ɹ",
+            "ɑ",
+            "s"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "ə",
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ],
+            [
+              "k",
+              "ɹ",
+              "ɒ",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "ə",
+            "k",
+            "ɹ",
+            "ɒ",
+            "s"
+          ],
+          "remark": "Match"
+        }
+      }
+    },
+    {
+      "word": "disciplines",
+      "status": "correct",
+      "matched_accents": [
+        "Indian",
+        "Nigerian",
+        "US_ARPA",
+        "US_MFA",
+        "UK"
+      ],
+      "accents": {
+        "Indian": {
+          "status": "match",
+          "expected": [
+            [
+              "ɖ",
+              "ɪ",
+              "s",
+              "ɪ",
+              "p",
+              "ʎ",
+              "ɪ",
+              "n",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "ɖ",
+            "ɪ",
+            "s",
+            "ɪ",
+            "p",
+            "ʎ",
+            "ɪ",
+            "n",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "Nigerian": {
+          "status": "match",
+          "expected": [
+            [
+              "dʲ",
+              "i",
+              "s",
+              "i",
+              "p",
+              "ʎ",
+              "i",
+              "n",
+              "z"
+            ],
+            [
+              "dʲ",
+              "i",
+              "s",
+              "i",
+              "p",
+              "ʎ",
+              "i",
+              "n",
+              "s"
+            ]
+          ],
+          "spoken": [
+            "dʲ",
+            "i",
+            "s",
+            "i",
+            "p",
+            "ʎ",
+            "i",
+            "n",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_ARPA": {
+          "status": "match",
+          "expected": [
+            [
+              "d",
+              "ɪ",
+              "s",
+              "ə",
+              "p",
+              "l",
+              "ə",
+              "n",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "d",
+            "ɪ",
+            "s",
+            "ə",
+            "p",
+            "l",
+            "ə",
+            "n",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "US_MFA": {
+          "status": "match",
+          "expected": [
+            [
+              "dʲ",
+              "ɪ",
+              "s",
+              "ə",
+              "pʲ",
+              "ʎ",
+              "ɪ",
+              "n",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "dʲ",
+            "ɪ",
+            "s",
+            "ə",
+            "pʲ",
+            "ʎ",
+            "ɪ",
+            "n",
+            "z"
+          ],
+          "remark": "Match"
+        },
+        "UK": {
+          "status": "match",
+          "expected": [
+            [
+              "dʲ",
+              "ɪ",
+              "s",
+              "ɪ",
+              "p",
+              "ʎ",
+              "ɪ",
+              "n",
+              "z"
+            ]
+          ],
+          "spoken": [
+            "dʲ",
+            "ɪ",
+            "s",
+            "ɪ",
+            "p",
+            "ʎ",
+            "ɪ",
+            "n",
+            "z"
+          ],
+          "remark": "Match"
+        }
+      }
+    }
+  ],
+  "wrong_words_details": []
+}

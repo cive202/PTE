@@ -1,0 +1,2 @@
+file,begin,end,speaker,overall_log_likelihood,speech_log_likelihood,phone_duration_deviation,snr
+Education,0.0,25.6,data,-60.47186279296875,-61.848762531570976,4.247104833854585,11.144953521985656

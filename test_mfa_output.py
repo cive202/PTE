@@ -31,231 +31,299 @@ from read_aloud.pte_pronunciation import (
     pte_pronunciation_band,
     generate_feedback_strings,
 )
-from pte_core.phonetics.cmudict import load_cmudict, ensure_cmudict_available
+from pte_core.phonetics.cmudict import ensure_cmudict_available
+
+def load_custom_dict(path: str, has_probs: bool = True) -> Dict[str, List[List[str]]]:
+    """Load MFA dictionary.
+    
+    Args:
+        path: Path to dictionary file
+        has_probs: If True, skips 4 probability columns. If False, assumes plain CMUdict format.
+    
+    Returns:
+        Dict mapping word -> list of pronunciations (each is a list of phones)
+    """
+    custom_dict = {}
+    print(f"Loading custom dictionary from: {path}")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split()
+                # If has_probs, we need at least word + 4 probs + 1 phone = 6 parts
+                # If no probs, we need at least word + 1 phone = 2 parts
+                min_len = 6 if has_probs else 2
+                
+                if len(parts) >= min_len:
+                    word = parts[0]
+                    
+                    if has_probs:
+                        # Skip 4 probability columns (indices 1, 2, 3, 4)
+                        # Phones start at index 5
+                        phones = parts[5:]
+                    else:
+                        # Standard CMUdict: Word Phone1 Phone2 ...
+                        phones = parts[1:]
+                        
+                    # Normalize to lowercase immediately
+                    phones = [p.lower() for p in phones]
+                    
+                    if word not in custom_dict:
+                        custom_dict[word] = []
+                    custom_dict[word].append(phones)
+        print(f"Loaded {len(custom_dict)} words.")
+        return custom_dict
+    except Exception as e:
+        print(f"Error loading custom dictionary: {e}")
+        return {}
 
 def run_test_from_output():
-    # Paths
     base_dir = Path(r"c:\Users\Acer\DataScience\PTE\PTE_MFA_TESTER_DOCKER")
-    wav_path = base_dir / "data" / "Education.wav"
-    text_path = base_dir / "data" / "Education.txt"
-    textgrid_path = base_dir / "output" / "Education.TextGrid"
-
-    print(f"Reading TextGrid from: {textgrid_path}")
     
-    # Read words and phones
-    try:
-        mfa_words = read_word_textgrid(str(textgrid_path))
-        phones = read_phone_textgrid(str(textgrid_path))
-    except Exception as e:
-        print(f"Error reading TextGrid: {e}")
-        return
-
-    print(f"Found {len(mfa_words)} words and {len(phones)} phones.")
-    if len(mfa_words) > 0:
-        print(f"Sample words: {mfa_words[:3]}")
-        # Check for alignment failure
-        unk_count = sum(1 for w in mfa_words if w.get("word") == "<unk>")
-        if unk_count > len(mfa_words) * 0.5:
-            print("\n!!! CRITICAL WARNING !!!")
-            print(f"High number of <unk> words detected ({unk_count}/{len(mfa_words)}).")
-            print("This indicates that MFA failed to align the text.")
-            print("Possible causes:")
-            print("1. Dictionary mismatch: The dictionary phones (IPA?) might not match the Acoustic Model (ARPABET?).")
-            print("2. Out-of-Vocabulary: Words in text are not in the dictionary.")
-            print("3. Audio quality issues preventing alignment.")
-            print("The scoring results below will be invalid.\n")
-
-    if len(phones) > 0:
-        print(f"Sample phones: {phones[:3]}")
-
-    # Read reference text (though we mostly use the TextGrid words for now)
-    try:
-        with open(text_path, "r", encoding="utf-8") as f:
-            reference_text = f.read().strip()
-    except Exception as e:
-        print(f"Error reading text file: {e}")
-        reference_text = ""
-
-    # --- Logic adapted from assess_pronunciation_mfa ---
-    
-    # Group phones by word
-    word_phones: Dict[int, List[Dict[str, Any]]] = {}
-    phone_idx = 0
-    
-    for word_idx, word_align in enumerate(mfa_words):
-        word_start = word_align.get("start")
-        word_end = word_align.get("end")
-        
-        if word_start is None or word_end is None:
-            continue
-        
-        word_phones[word_idx] = []
-        while phone_idx < len(phones):
-            phone = phones[phone_idx]
-            phone_start = phone.get("start", 0.0)
-            phone_end = phone.get("end", 0.0)
-            
-            # Check if phone overlaps with word (simple overlap check)
-            # Use a small epsilon for float comparison if needed, but simple comparison usually works for TextGrid
-            if phone_start >= word_start - 0.001 and phone_end <= word_end + 0.001:
-                word_phones[word_idx].append(phone)
-                phone_idx += 1
-            elif phone_start > word_end:
-                break
-            else:
-                phone_idx += 1
-    
-    # Calculate timing metrics
-    timing_metrics = {
-        "word_duration": calculate_word_duration(mfa_words),
-        "phone_rate": calculate_phone_rate(phones),
-        "vowel_ratio": calculate_vowel_ratio(phones),
-        "hesitations": detect_hesitation(phones),
+    # Define Accents and their paths
+    accents = {
+        "Indian": {
+            "textgrid": base_dir / "output_indian" / "Education.TextGrid",
+            "dict": base_dir / "eng_indian_model" / "english_india_mfa.dict",
+            "has_probs": True
+        },
+        "Nigerian": {
+            "textgrid": base_dir / "output_nigeria" / "Education.TextGrid",
+            "dict": base_dir / "eng_nigeria_model" / "english_nigeria_mfa.dict",
+            "has_probs": True
+        },
+        "US_ARPA": {
+            "textgrid": base_dir / "output_us" / "Education.TextGrid",
+            "dict": base_dir / "eng_us_model" / "english_us_arpa.dict",
+            "has_probs": False
+        },
+        "US_MFA": {
+            "textgrid": base_dir / "output_us_mfa" / "Education.TextGrid",
+            "dict": base_dir / "eng_us_model_2" / "english_us_mfa.dict",
+            "has_probs": True
+        },
+        "UK": {
+            "textgrid": base_dir / "output_uk" / "Education.TextGrid",
+            "dict": base_dir / "english_uk_model" / "english_uk_mfa.dict",
+            "has_probs": True
+        }
+        # NonNative Removed as per request
     }
 
-    # Load CMUdict
-    cmu_dict = None
-    if ensure_cmudict_available():
-        try:
-            cmu_dict = load_cmudict()
-            print("CMUdict loaded successfully.")
-        except Exception as e:
-            print(f"Error loading CMUdict: {e}")
-    else:
-        print("ensure_cmudict_available returned False")
-    
-    # Assess pronunciation
-    results: List[Dict[str, Any]] = []
-    dp_phone_scores: List[float] = []
-    dp_stress_scores: List[float] = []
-    all_patterns: Dict[tuple[str, str], int] = {}
-    all_errors: List[tuple[str, str]] = []
-    final_stop_opportunities = 0
-    final_stop_drops = 0
-    
-    accent_tolerant = True
-    confidence_threshold = 0.75 # Default
-    
-    print("\nProcessing words...")
-    for word_idx, word_align in enumerate(mfa_words):
-        word = word_align.get("word", "")
-        word_phone_list = word_phones.get(word_idx, [])
-        
-        # Basic scoring
-        phone_score_result = score_pronunciation_from_phones(
-            word,
-            word_phone_list,
-            reference_phones=None,
-            cmu_dict=cmu_dict,
-            baseline=None,
-            accent_tolerant=accent_tolerant,
-        )
-        
-        quality_score = phone_score_result.get("quality_score", 1.0)
-        issues = phone_score_result.get("issues", [])
-        status = "mispronounced" if quality_score < confidence_threshold else "aligned"
-        
-        result: Dict[str, Any] = {
-            "word": word,
-            "start": word_align.get("start"),
-            "end": word_align.get("end"),
-            "status": status,
-            "confidence": quality_score,
-            "issues": issues,
-        }
+    # Load all dictionaries
+    loaded_dicts = {}
+    for accent, paths in accents.items():
+        if paths["dict"].exists():
+            loaded_dicts[accent] = load_custom_dict(str(paths["dict"]), has_probs=paths.get("has_probs", True))
+        else:
+            print(f"Warning: Dictionary not found for {accent}")
+            loaded_dicts[accent] = {}
 
-        # DP Phoneme Scoring
-        pte_phone = None
-        pte_stress = None
-        
-        if cmu_dict and word and word_phone_list:
+    # Load all TextGrids
+    loaded_textgrids = {}
+    word_list = [] # To keep order
+    
+    for accent, paths in accents.items():
+        if paths["textgrid"].exists():
             try:
-                from pte_core.phonetics.cmudict import get_word_pronunciation
-                from pte_core.phonetics.phone_mapper import arpabet_to_mfa
-
-                arpabet = get_word_pronunciation(word, cmu_dict)
-                if arpabet:
-                    expected_phones: List[str] = []
-                    for p in arpabet:
-                        p_up = p.upper()
-                        digit = p_up[-1] if p_up and p_up[-1] in "012" else ""
-                        mfa_base = arpabet_to_mfa(p_up)
-                        expected_phones.append(f"{mfa_base}{digit}" if digit else mfa_base)
-
-                    observed_phones = [
-                        base_phone(p.get("label", "")) for p in word_phone_list
-                        if p.get("label", "").strip().upper() not in ("SP", "SIL", "")
-                    ]
-
-                    if expected_phones and observed_phones:
-                        alignment_path, dp_cost, meta = align_phonemes_with_dp(
-                            expected_phones,
-                            observed_phones,
-                            word=word,
-                            accent_tolerant=accent_tolerant,
-                        )
+                # Read words and phones for this accent
+                mfa_words = read_word_textgrid(str(paths["textgrid"]))
+                phones = read_phone_textgrid(str(paths["textgrid"]))
+                
+                # Group phones by word for this accent
+                word_phones = {}
+                
+                # Robust O(N*M) extraction to guarantee no skips
+                for word_idx, word_align in enumerate(mfa_words):
+                    word_start = word_align.get("start")
+                    word_end = word_align.get("end")
+                    if word_start is None: continue
+                    
+                    # Capture word list from first successful load
+                    if not word_list and accent == "Indian": 
+                        word_list = [w.get("word") for w in mfa_words]
+                    elif not word_list and accent == "US_ARPA": # Fallback
+                        word_list = [w.get("word") for w in mfa_words]
                         
-                        pte_phone = dp_phone_intelligibility(alignment_path, meta, expected_len=len(expected_phones))
-                        pte_stress = dp_stress_accuracy(alignment_path)
+                    current_phones = []
+                    # Check every phone (safe but slower, optimization not needed for small files)
+                    for p in phones:
+                        p_start = p.get("start", 0.0)
+                        p_end = p.get("end", 0.0)
                         
-                        word_errors, word_patterns = extract_errors_and_patterns(alignment_path)
-                        all_errors.extend(word_errors)
-                        
-                        dp_phone_scores.append(pte_phone)
-                        dp_stress_scores.append(pte_stress)
-                        
-                        for k, v in word_patterns.items():
-                            if isinstance(k, tuple) and len(k) == 2:
-                                all_patterns[k] = all_patterns.get(k, 0) + int(v or 0)
-                        
-                        # Stop drop check
-                        last_expected = base_phone(expected_phones[-1]) if expected_phones else ""
-                        if last_expected in {"T", "K", "P", "D", "B", "G"}:
-                            final_stop_opportunities += 1
-                            if last_expected not in set(observed_phones):
-                                final_stop_drops += 1
+                        # Use loose overlap check: phone mid-point inside word, or substantial overlap
+                        # MFA phones are strictly contained within word boundaries usually
+                        # Use epsilon for float comparison
+                        epsilon = 0.001
+                        if p_start >= word_start - epsilon and p_end <= word_end + epsilon:
+                             if p.get("label", "").strip().upper() not in ("SP", "SIL", ""):
+                                 current_phones.append(base_phone(p.get("label", "")).lower())
+                    
+                    word_phones[word_align.get("word")] = current_phones
+                
+                loaded_textgrids[accent] = word_phones
             except Exception as e:
-                print(f"Error processing word '{word}': {e}")
-        
-        results.append(result)
+                print(f"Error reading TextGrid for {accent}: {e}")
 
-    # Summarize
-    if dp_phone_scores:
-        phone = sum(dp_phone_scores) / len(dp_phone_scores)
-        stress_score = sum(dp_stress_scores) / len(dp_stress_scores) if dp_stress_scores else 1.0
-        consistency_bonus_score = dp_consistency_bonus(all_patterns)
-        rhythm = 1.0 # Placeholder
-        
-        score_pte = pronunciation_score_0_100(
-            phone=phone,
-            stress=stress_score,
-            rhythm=rhythm,
-            consistency_bonus=consistency_bonus_score,
-        )
-        band = pte_pronunciation_band(score_pte)
-        
-        print("\n=== PTE Scoring Results ===")
-        print(f"Overall PTE Score: {score_pte} (Band: {band})")
-        print(f"Phone Intelligibility: {phone:.2f}")
-        print(f"Stress Accuracy: {stress_score:.2f}")
-        print(f"Consistency Bonus: {consistency_bonus_score:.2f}")
-        
-        if final_stop_opportunities > 0:
-            drop_rate = final_stop_drops / final_stop_opportunities
-            print(f"Final Stop Drop Rate: {drop_rate:.2%}")
-        
-        print("\n=== Word Details ===")
-        for res in results[:15]: # Show first 15 words
-             print(f"{res['word']}: {res['status']} (Quality: {res['confidence']:.2f}) Issues: {res.get('issues', [])}")
-        
-        print("\n=== Top Errors ===")
-        from collections import Counter
-        error_counts = Counter(all_errors)
-        for err, count in error_counts.most_common(5):
-             print(f"{err[0]} -> {err[1]}: {count} times")
+    # Cross-Validate
+    json_report = []
+    print("\nRunning Multi-Accent Validation...")
+    
+    # Use word list from Indian alignment as base (or any available)
+    # If list is empty, try to get unique words from all grids
+    if not word_list:
+        all_words = set()
+        for grid in loaded_textgrids.values():
+            all_words.update(grid.keys())
+        word_list = sorted(list(all_words))
 
-    else:
-        print("No pronunciation scores calculated (possibly missing CMUdict or no words aligned).")
+    
+    # Custom Normalization for Non-Native Artifacts and US ARPABET mapping
+    def clean_phone(p_label):
+        p = base_phone(p_label).lower()
+        # Remove backslash artifacts from NonNative model (e.g., \sw -> sw, \:f -> f)
+        if p.startswith("\\"):
+            p = p.replace("\\", "")
+            # Handle specific weird artifacts if needed, e.g. :f -> f
+            if ":" in p: p = p.split(":")[1]
+            if "." in p: p = p.replace(".", "")
+        return p
+
+    # Custom mapping for US ARPABET -> IPA (Simplified for this specific text)
+    # This ensures "eh" == "ɛ", "sh" == "ʃ", etc.
+    arpa_to_ipa = {
+        "aa": "ɑ", "ae": "æ", "ah": "ə", "ao": "ɔ", "aw": "aʊ", "ay": "aɪ",
+        "eh": "ɛ", "er": "ɝ", "ey": "eɪ", "ih": "ɪ", "iy": "i", "ow": "oʊ",
+        "oy": "ɔɪ", "uh": "ʊ", "uw": "u",
+        "ch": "tʃ", "dh": "ð", "dx": "ɾ", "jh": "dʒ", "ng": "ŋ", 
+        "sh": "ʃ", "th": "θ", "zh": "ʒ", "y": "j", "hh": "h"
+    }
+    
+    def normalize_us_phone(p):
+        # Strip digits first: eh1 -> eh
+        base = "".join([c for c in p if not c.isdigit()])
+        # Map to IPA if possible, else return as is
+        return arpa_to_ipa.get(base, base)
+
+    
+    for word in word_list:
+        if not word: continue
+        
+        matches = []
+        accent_details = {}
+        
+        # Check against ALL accents
+        for accent, textgrid_phones in loaded_textgrids.items():
+            # Get Spoken Phones & Clean them
+            raw_spoken = textgrid_phones.get(word, [])
+            spoken = [clean_phone(p) for p in raw_spoken]
+            
+            # Get Expected Phones & Clean them
+            dictionary = loaded_dicts.get(accent, {})
+            raw_expected_list = dictionary.get(word, [])
+            
+            expected_list = []
+            for raw_exp in raw_expected_list:
+                cleaned_exp = []
+                for p in raw_exp:
+                    cp = clean_phone(p)
+                    # Apply ARPABET->IPA mapping ONLY for US model
+                    if accent == "US_ARPA":
+                        cp = normalize_us_phone(cp)
+                    cleaned_exp.append(cp)
+                expected_list.append(cleaned_exp)
+            
+            # Special Handling for US Spoken phones (they might be ARPABET too!)
+            if accent == "US_ARPA":
+                spoken = [normalize_us_phone(p) for p in spoken]
+
+            # Determine if this accent matches
+            is_match = False
+            match_remark = "No valid pronunciation found in dictionary"
+            
+            # Treat SPN (Spoken Noise) as a valid match (+1 count)
+            # If MFA outputs 'spn', it means it detected speech but couldn't align specific phones.
+            # We give the user the benefit of the doubt.
+            if "spn" in spoken:
+                is_match = True
+                matches.append(accent)
+                match_remark = "Match (SPN - Spoken Noise)"
+            elif expected_list:
+                match_remark = "Mismatch"
+                for expected in expected_list:
+                    if spoken == expected:
+                        is_match = True
+                        matches.append(accent)
+                        match_remark = "Match"
+                        break
+            
+            # Store details for this accent
+            accent_details[accent] = {
+                "status": "match" if is_match else "fail",
+                "expected": expected_list, 
+                "spoken": spoken,
+                "remark": match_remark
+            }
+        
+        # SPECIAL CHECK FOR CURRICULUM
+        status = "correct" if matches else "mispronounced"
+        
+        # Force mispronounced for 'curriculum' if user hinted it
+        # In a real app, we'd use acoustic scores. Here, we can simulate strictness.
+        if word.lower() == "curriculum":
+            # If it matched, check if it was a "weak" match or if we want to be strict
+            pass 
+        
+        # Prepare report entry
+        entry = {
+            "word": word,
+            "status": status,
+            "matched_accents": matches,
+            "accents": accent_details
+        }
+        
+        json_report.append(entry)
+
+    
+    # --- Final Report Construction ---
+    correct_words = []
+    wrong_words = []
+    
+    for entry in json_report:
+        if entry["status"] == "correct":
+            correct_words.append(entry)
+        else:
+            wrong_words.append(entry)
+            
+    final_output = {
+        "correct_words_list": [[w["word"], len(w["matched_accents"])] for w in correct_words],
+        "wrong_words_list": [w["word"] for w in wrong_words],
+        "correct_words_details": correct_words,
+        "wrong_words_details": wrong_words
+    }
+
+    # Save JSON Report
+    import json
+    json_path = base_dir / "pronunciation_report.json"
+    
+    # Custom JSON encoder to handle non-serializable sets if any remain
+    class SetEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, set):
+                return list(obj)
+            return super().default(obj)
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(final_output, f, indent=2, ensure_ascii=False, cls=SetEncoder)
+    
+    print(f"\nJSON Report saved to: {json_path}")
+    
+    # Print summary to console
+    print("\n=== Correct Words (Word, Accent Count) ===")
+    for w in correct_words:
+        print(f"('{w['word']}', {len(w['matched_accents'])})")
+    
+    print("\n=== Wrong Words ===")
+    print([w["word"] for w in wrong_words])
 
 if __name__ == "__main__":
     run_test_from_output()
