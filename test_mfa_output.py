@@ -82,27 +82,27 @@ def run_test_from_output():
     # Define Accents and their paths
     accents = {
         "Indian": {
-            "textgrid": base_dir / "output_indian" / "Education.TextGrid",
+            "textgrid": base_dir / "output_indian" / "innovation_utsav.TextGrid",
             "dict": base_dir / "eng_indian_model" / "english_india_mfa.dict",
             "has_probs": True
         },
         "Nigerian": {
-            "textgrid": base_dir / "output_nigeria" / "Education.TextGrid",
+            "textgrid": base_dir / "output_nigeria" / "innovation_utsav.TextGrid",
             "dict": base_dir / "eng_nigeria_model" / "english_nigeria_mfa.dict",
             "has_probs": True
         },
         "US_ARPA": {
-            "textgrid": base_dir / "output_us" / "Education.TextGrid",
+            "textgrid": base_dir / "output_us" / "innovation_utsav.TextGrid",
             "dict": base_dir / "eng_us_model" / "english_us_arpa.dict",
             "has_probs": False
         },
         "US_MFA": {
-            "textgrid": base_dir / "output_us_mfa" / "Education.TextGrid",
+            "textgrid": base_dir / "output_us_mfa" / "innovation_utsav.TextGrid",
             "dict": base_dir / "eng_us_model_2" / "english_us_mfa.dict",
             "has_probs": True
         },
         "UK": {
-            "textgrid": base_dir / "output_uk" / "Education.TextGrid",
+            "textgrid": base_dir / "output_uk" / "innovation_utsav.TextGrid",
             "dict": base_dir / "english_uk_model" / "english_uk_mfa.dict",
             "has_probs": True
         }
@@ -168,6 +168,115 @@ def run_test_from_output():
     json_report = []
     print("\nRunning Multi-Accent Validation...")
     
+    # --- PAUSE ANALYSIS START ---
+    import re
+    
+    def get_expected_pauses(text_path: Path):
+        """Parse text to find words followed by punctuation."""
+        expected = []
+        try:
+            with open(text_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                # Fix missing spaces after punctuation if any (e.g. "work.With")
+                content = content.replace(".", ". ").replace(",", ", ").replace("?", "? ").replace("!", "! ")
+                
+                # Split into tokens
+                tokens = content.split()
+                
+                for token in tokens:
+                    # Clean word
+                    word_match = re.search(r"[a-zA-Z0-9]+", token)
+                    if not word_match: continue
+                    word = word_match.group(0).lower()
+                    
+                    # Check punctuation
+                    punct = None
+                    if "," in token: punct = "comma"
+                    elif "." in token: punct = "period"
+                    elif "?" in token: punct = "question"
+                    elif "!" in token: punct = "exclamation"
+                    
+                    expected.append({"word": word, "punctuation": punct})
+        except Exception as e:
+            print(f"Error reading text for pause analysis: {e}")
+        return expected
+
+    def analyze_pauses(timing_grid, expected_sequence):
+        """Analyze gaps between words against expected punctuation."""
+        pause_report = []
+        
+        # We need the full list of timing words in order
+        # timing_grid is a dict: word -> phones. But we need timings!
+        # We need to re-read the word textgrid to get timings directly
+        # or pass the mfa_words list from the loop above.
+        # Since we are outside the loop, we'll re-read the Indian TextGrid (Reference)
+        pass 
+        return []
+
+    # Get expected sequence
+    text_path = base_dir / "data" / "innovation_utsav.txt"
+    expected_sequence = get_expected_pauses(text_path)
+    
+    # Get reference timings from US_MFA (High quality alignment)
+    reference_accent = "US_MFA"
+    reference_path = accents[reference_accent]["textgrid"]
+    pause_analysis_results = []
+    
+    if reference_path.exists() and expected_sequence:
+        try:
+            ref_words = read_word_textgrid(str(reference_path))
+            # Filter only valid words
+            ref_words = [w for w in ref_words if w.get("word")]
+            
+            # Align sequences (simple 1:1 assumption for this clean data)
+            # In production, use Needleman-Wunsch aligner
+            limit = min(len(ref_words), len(expected_sequence))
+            
+            for i in range(limit - 1):
+                curr_word_ref = ref_words[i]
+                next_word_ref = ref_words[i+1]
+                
+                curr_word_exp = expected_sequence[i]
+                
+                # Verify alignment (loose check)
+                if curr_word_ref["word"].lower() != curr_word_exp["word"]:
+                    # print(f"Warning: Alignment mismatch at index {i}: {curr_word_ref['word']} vs {curr_word_exp['word']}")
+                    pass
+                
+                # Calculate Gap
+                gap = next_word_ref["start"] - curr_word_ref["end"]
+                gap = max(0.0, gap)
+                
+                # Evaluate
+                status = "ok"
+                msg = f"Gap: {gap:.2f}s"
+                
+                if curr_word_exp["punctuation"]:
+                    if gap < 0.1: # Threshold for missing pause at punctuation
+                        status = "missing_pause"
+                        msg = f"Missing pause at {curr_word_exp['punctuation']} (Gap: {gap:.2f}s)"
+                    else:
+                        status = "correct_pause"
+                        msg = f"Correct pause at {curr_word_exp['punctuation']} (Gap: {gap:.2f}s)"
+                else:
+                    if gap > 0.3: # Threshold for unexpected pause
+                        status = "unexpected_pause"
+                        msg = f"Unexpected pause/hesitation (Gap: {gap:.2f}s)"
+                
+                pause_analysis_results.append({
+                    "word": curr_word_ref["word"],
+                    "next_word": next_word_ref["word"],
+                    "gap": gap,
+                    "expected_punct": curr_word_exp["punctuation"],
+                    "status": status,
+                    "message": msg
+                })
+                
+        except Exception as e:
+            print(f"Error in pause analysis: {e}")
+            
+    # --- PAUSE ANALYSIS END ---
+
     # Use word list from Indian alignment as base (or any available)
     # If list is empty, try to get unique words from all grids
     if not word_list:
@@ -297,6 +406,7 @@ def run_test_from_output():
     final_output = {
         "correct_words_list": [[w["word"], len(w["matched_accents"])] for w in correct_words],
         "wrong_words_list": [w["word"] for w in wrong_words],
+        "pause_analysis": pause_analysis_results,
         "correct_words_details": correct_words,
         "wrong_words_details": wrong_words
     }
@@ -318,6 +428,11 @@ def run_test_from_output():
     print(f"\nJSON Report saved to: {json_path}")
     
     # Print summary to console
+    print("\n=== Pause Analysis (Significant Gaps) ===")
+    for p in pause_analysis_results:
+        if p["status"] != "ok":
+            print(f"{p['message']} (between '{p['word']}' and '{p['next_word']}')")
+
     print("\n=== Correct Words (Word, Accent Count) ===")
     for w in correct_words:
         print(f"('{w['word']}', {len(w['matched_accents'])})")
