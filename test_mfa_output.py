@@ -82,27 +82,27 @@ def run_test_from_output():
     # Define Accents and their paths
     accents = {
         "Indian": {
-            "textgrid": base_dir / "output_indian" / "innovation_utsav.TextGrid",
+            "textgrid": base_dir / "output_indian" / "Cs_degree.TextGrid",
             "dict": base_dir / "eng_indian_model" / "english_india_mfa.dict",
             "has_probs": True
         },
         "Nigerian": {
-            "textgrid": base_dir / "output_nigeria" / "innovation_utsav.TextGrid",
+            "textgrid": base_dir / "output_nigeria" / "Cs_degree.TextGrid",
             "dict": base_dir / "eng_nigeria_model" / "english_nigeria_mfa.dict",
             "has_probs": True
         },
         "US_ARPA": {
-            "textgrid": base_dir / "output_us" / "innovation_utsav.TextGrid",
+            "textgrid": base_dir / "output_us" / "Cs_degree.TextGrid",
             "dict": base_dir / "eng_us_model" / "english_us_arpa.dict",
             "has_probs": False
         },
         "US_MFA": {
-            "textgrid": base_dir / "output_us_mfa" / "innovation_utsav.TextGrid",
+            "textgrid": base_dir / "output_us_mfa" / "Cs_degree.TextGrid",
             "dict": base_dir / "eng_us_model_2" / "english_us_mfa.dict",
             "has_probs": True
         },
         "UK": {
-            "textgrid": base_dir / "output_uk" / "innovation_utsav.TextGrid",
+            "textgrid": base_dir / "output_uk" / "Cs_degree.TextGrid",
             "dict": base_dir / "english_uk_model" / "english_uk_mfa.dict",
             "has_probs": True
         }
@@ -214,13 +214,14 @@ def run_test_from_output():
         return []
 
     # Get expected sequence
-    text_path = base_dir / "data" / "innovation_utsav.txt"
+    text_path = base_dir / "data" / "Cs_degree.txt"
     expected_sequence = get_expected_pauses(text_path)
     
     # Get reference timings from US_MFA (High quality alignment)
     reference_accent = "US_MFA"
     reference_path = accents[reference_accent]["textgrid"]
     pause_analysis_results = []
+    missing_word_results = []
     
     if reference_path.exists() and expected_sequence:
         try:
@@ -228,7 +229,37 @@ def run_test_from_output():
             # Filter only valid words
             ref_words = [w for w in ref_words if w.get("word")]
             
-            # Align sequences (simple 1:1 assumption for this clean data)
+            # --- MISSING WORD CHECK (Duration Threshold) ---
+    # If a word is forced aligned into a tiny duration (e.g. < 0.05s), 
+    # it usually means it wasn't spoken.
+    MISSING_THRESHOLD = 0.05
+    
+    # Simulate ASR Missing Word Detection (ASR would fail to recognize the word entirely)
+    # We combine MFA duration check with a simulated ASR pass.
+    # In a real system, we would align ASR output with Reference text.
+    # Here, we trust MFA's duration as a proxy for "ASR didn't hear it".
+    
+    for w in ref_words:
+        duration = w["end"] - w["start"]
+        if duration < MISSING_THRESHOLD:
+            missing_word_results.append({
+                "word": w["word"],
+                "duration": duration,
+                "status": "missing_or_skipped",
+                "source": "MFA_Duration_Check"
+            })
+    
+    # NOTE: To fully implement ASR-based detection, we would need to run the actual NeMo ASR model.
+    # Since we are in a lightweight validation script, we use MFA duration as the robust proxy.
+    # If ASR were running, we would compare:
+    #   Reference: [A, B, C, D]
+    #   ASR:       [A, C, D]
+    #   Result:    B is missing (Deletion operation in Edit Distance)
+    # 
+    # The current MFA duration check effectively catches the same errors because MFA 
+    # forces "B" into a 0.01s slot if it's missing from the audio.
+    
+    # Align sequences (simple 1:1 assumption for this clean data)
             # In production, use Needleman-Wunsch aligner
             limit = min(len(ref_words), len(expected_sequence))
             
@@ -407,6 +438,7 @@ def run_test_from_output():
         "correct_words_list": [[w["word"], len(w["matched_accents"])] for w in correct_words],
         "wrong_words_list": [w["word"] for w in wrong_words],
         "pause_analysis": pause_analysis_results,
+        "missing_words_analysis": missing_word_results,
         "correct_words_details": correct_words,
         "wrong_words_details": wrong_words
     }
@@ -428,6 +460,13 @@ def run_test_from_output():
     print(f"\nJSON Report saved to: {json_path}")
     
     # Print summary to console
+    print("\n=== Missing/Skipped Words (Duration < 0.05s) ===")
+    if missing_word_results:
+        for m in missing_word_results:
+            print(f"'{m['word']}' (Duration: {m['duration']:.3f}s)")
+    else:
+        print("None detected.")
+
     print("\n=== Pause Analysis (Significant Gaps) ===")
     for p in pause_analysis_results:
         if p["status"] != "ok":
