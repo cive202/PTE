@@ -34,7 +34,18 @@ def transcribe_audio(wav_path: str, model_size: str = "medium") -> str:
             return ""
             
     except requests.exceptions.ConnectionError:
-        warnings.warn("Could not connect to ASR Service (is the Docker container running?). Returning empty transcript.")
+        warnings.warn("Could not connect to ASR Service (is the Docker container running?).")
+        
+        # Fallback to local text file if available (for testing)
+        txt_path = wav_path.replace('.wav', '.txt')
+        if os.path.exists(txt_path):
+            warnings.warn(f"Falling back to local transcript file: {txt_path}")
+            try:
+                with open(txt_path, 'r', encoding='utf-8') as f:
+                    return f.read().strip()
+            except Exception as read_err:
+                warnings.warn(f"Failed to read fallback text file: {read_err}")
+        
         return ""
     except Exception as e:
         warnings.warn(f"ASR Request failed: {str(e)}")
