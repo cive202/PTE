@@ -1,3770 +1,1901 @@
 {
-  "correct_words_list": [
-    [
-      "over",
-      4
-    ],
-    [
-      "the",
-      4
-    ],
-    [
-      "years",
-      4
-    ],
-    [
-      "it",
-      4
-    ],
-    [
-      "got",
-      5
-    ],
-    [
-      "easier",
-      5
-    ],
-    [
-      "to",
-      5
-    ],
-    [
-      "build",
-      5
-    ],
-    [
-      "such",
-      5
-    ],
-    [
-      "software",
-      5
-    ],
-    [
-      "even",
-      5
-    ],
-    [
-      "for",
-      5
-    ],
-    [
-      "non",
-      4
-    ],
-    [
-      "technical",
-      4
-    ],
-    [
-      "folk",
-      4
-    ],
-    [
-      "frontend",
-      4
-    ],
-    [
-      "technology",
-      4
-    ],
-    [
-      "evolved",
-      4
-    ],
-    [
-      "into",
-      4
-    ],
-    [
-      "something",
-      4
-    ],
-    [
-      "available",
-      4
-    ],
-    [
-      "to",
-      5
-    ],
-    [
-      "people",
-      4
-    ],
-    [
-      "who",
-      4
-    ],
-    [
-      "would",
-      4
-    ],
-    [
-      "have",
-      4
-    ],
-    [
-      "needed",
-      4
-    ],
-    [
-      "a",
-      4
-    ],
-    [
-      "cs",
-      4
-    ],
-    [
-      "degree",
-      4
-    ],
-    [
-      "before",
-      4
-    ]
+  "summary": {
+    "total_words": 31,
+    "correct_count": 30,
+    "wrong_count": 1,
+    "stress_error_count": 0,
+    "accuracy": 0.967741935483871
+  },
+  "correct_words": [
+    "over",
+    "the",
+    "years",
+    "it",
+    "got",
+    "easier",
+    "to",
+    "build",
+    "such",
+    "software",
+    "even",
+    "for",
+    "non",
+    "technical",
+    "folk",
+    "technology",
+    "evolved",
+    "into",
+    "something",
+    "available",
+    "to",
+    "people",
+    "who",
+    "would",
+    "have",
+    "needed",
+    "a",
+    "cs",
+    "degree",
+    "before"
   ],
-  "wrong_words_list": [],
+  "wrong_words": [
+    "frontend"
+  ],
+  "stress_errors": [],
+  "missing_words_detected": [],
   "pause_analysis": [
     {
-      "word": "over",
-      "next_word": "the",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
+      "type": "Hesitation",
+      "duration": 0.6499999999999999,
+      "after_word": "it",
+      "context": "it ... got"
     },
     {
-      "word": "the",
-      "next_word": "years",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
+      "type": "Hesitation",
+      "duration": 0.4800000000000004,
+      "after_word": "folk",
+      "context": "folk ... frontend"
     },
     {
-      "word": "years",
-      "next_word": "it",
-      "gap": 0.26000000000000023,
-      "expected_punct": "comma",
-      "status": "correct_pause",
-      "message": "Correct pause at comma (Gap: 0.26s)"
+      "type": "Hesitation",
+      "duration": 0.40999999999999837,
+      "after_word": "available",
+      "context": "available ... to"
     },
     {
-      "word": "it",
-      "next_word": "got",
-      "gap": 0.6499999999999999,
-      "expected_punct": null,
-      "status": "unexpected_pause",
-      "message": "Unexpected pause/hesitation (Gap: 0.65s)"
-    },
-    {
-      "word": "got",
-      "next_word": "easier",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "easier",
-      "next_word": "to",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "to",
-      "next_word": "build",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "build",
-      "next_word": "such",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "such",
-      "next_word": "software",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "software",
-      "next_word": "even",
-      "gap": 0.0,
-      "expected_punct": "comma",
-      "status": "missing_pause",
-      "message": "Missing pause at comma (Gap: 0.00s)"
-    },
-    {
-      "word": "even",
-      "next_word": "for",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "for",
-      "next_word": "non",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "non",
-      "next_word": "technical",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "technical",
-      "next_word": "folk",
-      "gap": 0.0,
-      "expected_punct": "period",
-      "status": "missing_pause",
-      "message": "Missing pause at period (Gap: 0.00s)"
-    },
-    {
-      "word": "folk",
-      "next_word": "frontend",
-      "gap": 0.4800000000000004,
-      "expected_punct": null,
-      "status": "unexpected_pause",
-      "message": "Unexpected pause/hesitation (Gap: 0.48s)"
-    },
-    {
-      "word": "frontend",
-      "next_word": "technology",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "technology",
-      "next_word": "evolved",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "evolved",
-      "next_word": "into",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "into",
-      "next_word": "something",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "something",
-      "next_word": "available",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "available",
-      "next_word": "to",
-      "gap": 0.40999999999999837,
-      "expected_punct": null,
-      "status": "unexpected_pause",
-      "message": "Unexpected pause/hesitation (Gap: 0.41s)"
-    },
-    {
-      "word": "to",
-      "next_word": "people",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "people",
-      "next_word": "who",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "who",
-      "next_word": "would",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "would",
-      "next_word": "have",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "have",
-      "next_word": "needed",
-      "gap": 0.3200000000000003,
-      "expected_punct": null,
-      "status": "unexpected_pause",
-      "message": "Unexpected pause/hesitation (Gap: 0.32s)"
-    },
-    {
-      "word": "needed",
-      "next_word": "a",
-      "gap": 0.28000000000000114,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.28s"
-    },
-    {
-      "word": "a",
-      "next_word": "cs",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
-    },
-    {
-      "word": "cs",
-      "next_word": "degree",
-      "gap": 0.0,
-      "expected_punct": null,
-      "status": "ok",
-      "message": "Gap: 0.00s"
+      "type": "Hesitation",
+      "duration": 0.3200000000000003,
+      "after_word": "have",
+      "context": "have ... needed"
     }
   ],
-  "missing_words_analysis": [],
-  "correct_words_details": [
-    {
+  "detailed_results": {
+    "0": {
       "word": "over",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "oː",
-              "ʋ",
-              "ə",
-              "ɾ"
-            ],
-            [
-              "oː",
-              "ʋ",
-              "ə"
-            ]
+          "valid": true,
+          "phones": [
+            "o\u02d0",
+            "\u028b",
+            "\u0259"
           ],
-          "spoken": [
-            "oː",
-            "ʋ",
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "o",
-              "v",
-              "a"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "o",
             "v",
             "a"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ow",
-              "v",
-              "ɚ"
-            ],
-            [
-              "ow",
-              "ɚ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "ow",
             "v",
-            "ɚ"
+            "\u025a"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "əw",
-              "v",
-              "ə"
-            ],
-            [
-              "əw",
-              "ə"
-            ]
-          ],
-          "spoken": [
-            "əw",
+          "valid": true,
+          "phones": [
+            "\u0259w",
             "v",
-            "ə"
+            "\u0259"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "1": {
       "word": "the",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "d̪",
-              "ə"
-            ],
-            [
-              "d̪",
-              "iː"
-            ],
-            [
-              "iː"
-            ],
-            [
-              "ə"
-            ]
+          "valid": true,
+          "phones": [
+            "d\u032a",
+            "\u0259"
           ],
-          "spoken": [
-            "d̪",
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "ð",
-              "e"
-            ],
-            [
-              "ð",
-              "i"
-            ],
-            [
-              "d̪",
-              "i"
-            ],
-            [
-              "ð",
-              "a"
-            ],
-            [
-              "d̪",
-              "a"
-            ],
-            [
-              "d̪",
-              "e"
-            ]
-          ],
-          "spoken": [
-            "ð",
+          "valid": true,
+          "phones": [
+            "\u00f0",
             "e"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ə"
-            ],
-            [
-              "ð",
-              "iː"
-            ],
-            [
-              "ð",
-              "ə"
-            ],
-            [
-              "d̪",
-              "ə"
-            ],
-            [
-              "d̪",
-              "iː"
-            ]
+          "valid": true,
+          "phones": [
+            "d\u032a",
+            "\u0259"
           ],
-          "spoken": [
-            "d̪",
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "iː"
-            ],
-            [
-              "ð",
-              "iː"
-            ],
-            [
-              "ð",
-              "ə"
-            ],
-            [
-              "ə"
-            ],
-            [
-              "d̪",
-              "iː"
-            ],
-            [
-              "d̪",
-              "ə"
-            ]
+          "valid": true,
+          "phones": [
+            "d\u032a",
+            "\u0259"
           ],
-          "spoken": [
-            "d̪",
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "2": {
       "word": "years",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "j",
-              "ɜː",
-              "z"
-            ],
-            [
-              "j",
-              "i",
-              "ə",
-              "z"
-            ],
-            [
-              "j",
-              "j",
-              "ə",
-              "dʒ"
-            ],
-            [
-              "j",
-              "i",
-              "ə",
-              "dʒ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "j",
             "i",
-            "ə",
+            "\u0259",
             "z"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "j",
-              "i",
-              "a",
-              "z"
-            ],
-            [
-              "j",
-              "aː",
-              "z"
-            ],
-            [
-              "j",
-              "i",
-              "a",
-              "s"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "j",
             "i",
             "a",
             "z"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "j",
-              "ɪ",
-              "ɹ",
-              "z"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "j",
-            "ɪ",
-            "ɹ",
+            "\u026a",
+            "\u0279",
             "z"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "j",
-              "i",
-              "ə",
-              "z"
-            ],
-            [
-              "j",
-              "ɜː",
-              "z"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "j",
             "i",
-            "ə",
+            "\u0259",
             "z"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "3": {
       "word": "it",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "ʈ"
-            ],
-            [
-              "ɪ"
-            ]
+          "valid": true,
+          "phones": [
+            "\u026a",
+            "\u0288"
           ],
-          "spoken": [
-            "ɪ",
-            "ʈ"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "i"
-            ],
-            [
-              "i",
-              "t"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "i"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "t"
-            ],
-            [
-              "ɪ"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "t"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "t"
-            ],
-            [
-              "ɪ"
-            ],
-            [
-              "ɪ",
-              "ʔ"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "t"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "4": {
       "word": "got",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɡ",
-              "a"
-            ],
-            [
-              "ɡ",
-              "ɒ",
-              "ʈ"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0261",
+            "\u0252",
+            "\u0288"
           ],
-          "spoken": [
-            "ɡ",
-            "ɒ",
-            "ʈ"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɡ",
-              "ɔ",
-              "t"
-            ],
-            [
-              "ɡ",
-              "ɔ"
-            ]
-          ],
-          "spoken": [
-            "ɡ",
-            "ɔ",
+          "valid": true,
+          "phones": [
+            "\u0261",
+            "\u0254",
             "t"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ɡ",
-              "ɑ"
-            ],
-            [
-              "ɡ",
-              "ɑ",
-              "t"
-            ]
-          ],
-          "spoken": [
-            "ɡ",
-            "ɑ",
+          "valid": true,
+          "phones": [
+            "\u0261",
+            "\u0251",
             "t"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɡ",
-              "ɒ",
-              "t"
-            ],
-            [
-              "ɡ",
-              "ɒ",
-              "ʔ"
-            ],
-            [
-              "ɡ",
-              "ɒ"
-            ]
-          ],
-          "spoken": [
-            "ɡ",
-            "ɒ",
+          "valid": true,
+          "phones": [
+            "\u0261",
+            "\u0252",
             "t"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "5": {
       "word": "easier",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "z",
-              "i",
-              "ə",
-              "ɾ"
-            ],
-            [
-              "iː",
-              "z",
-              "i",
-              "ə"
-            ],
-            [
-              "iː",
-              "z",
-              "j",
-              "ə"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "z",
             "i",
-            "ə"
+            "\u0259"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "z",
-              "i",
-              "a"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "z",
             "i",
             "a"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "z",
-              "i",
-              "ɚ"
-            ],
-            [
-              "iː",
-              "z",
-              "j",
-              "ɚ"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "z",
             "j",
-            "ɚ"
+            "\u025a"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "z",
-              "i",
-              "ə"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "z",
             "i",
-            "ə"
+            "\u0259"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "6": {
       "word": "to",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ʈ",
-              "ʉː"
-            ],
-            [
-              "ʈ",
-              "ə"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0288",
+            "\u0289\u02d0"
           ],
-          "spoken": [
-            "ʈ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "uː"
-            ],
-            [
-              "t",
-              "ɔ"
-            ],
-            [
-              "tʃ",
-              "uː"
-            ]
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "u\u02d0"
           ],
-          "spoken": [
-            "tʰ",
-            "uː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ʉː"
-            ],
-            [
-              "ə"
-            ],
-            [
-              "t",
-              "ə"
-            ],
-            [
-              "tʰ",
-              "ʊ"
-            ]
+          "valid": true,
+          "phones": [
+            "t",
+            "\u0259"
           ],
-          "spoken": [
-            "tʰ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "tʲ",
-              "ʉː"
-            ],
-            [
-              "t",
-              "ə"
-            ],
-            [
-              "tʰ",
-              "ʉː"
-            ],
-            [
-              "tʃ",
-              "ʉː"
-            ]
+          "valid": true,
+          "phones": [
+            "t",
+            "\u0259"
           ],
-          "spoken": [
-            "tʰ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "7": {
       "word": "build",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "ɪ",
-              "l",
-              "ɖ"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
+            "\u026a",
             "l",
-            "ɖ"
+            "\u0256"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "i",
-              "ɫ",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
             "i",
-            "ɫ",
+            "\u026b",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "ɪ",
-              "ɫ",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
-            "ɪ",
-            "ɫ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
+            "\u026a",
+            "\u026b",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "ɪ",
-              "ɫ",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
-            "ɪ",
-            "ɫ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
+            "\u026a",
+            "\u026b",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "8": {
       "word": "such",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ə",
-              "tʃ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ə",
-            "tʃ"
+            "\u0259",
+            "t\u0283"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɔ",
-              "tʃ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɔ",
-            "tʃ"
+            "\u0254",
+            "t\u0283"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɐ",
-              "tʃ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɐ",
-            "tʃ"
+            "\u0250",
+            "t\u0283"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɐ",
-              "tʃ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɐ",
-            "tʃ"
+            "\u0250",
+            "t\u0283"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "9": {
       "word": "software",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɒ",
-              "f",
-              "ʈ",
-              "ʋ",
-              "ɛː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɒ",
+            "\u0252",
             "f",
-            "ʈ",
-            "ʋ",
-            "ɛː"
+            "\u0288",
+            "\u028b",
+            "\u025b\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɔ",
-              "f",
-              "t",
-              "w",
-              "ɛː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɔ",
+            "\u0254",
             "f",
             "t",
             "w",
-            "ɛː"
+            "\u025b\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɒ",
-              "f",
-              "t",
-              "w",
-              "ɛ",
-              "ɹ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɒ",
+            "\u0252",
             "f",
             "t",
             "w",
-            "ɛ",
-            "ɹ"
+            "\u025b",
+            "\u0279"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɒ",
-              "f",
-              "t",
-              "w",
-              "ɛː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɒ",
+            "\u0252",
             "f",
             "t",
             "w",
-            "ɛː"
+            "\u025b\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "10": {
       "word": "even",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "ʋ",
-              "ə",
-              "n"
-            ],
-            [
-              "ə",
-              "ʋ",
-              "ɛ",
-              "n"
-            ],
-            [
-              "ʋ",
-              "ɛ",
-              "n"
-            ]
-          ],
-          "spoken": [
-            "iː",
-            "ʋ",
-            "ə",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
+            "\u028b",
+            "\u0259",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɛ",
-              "v",
-              "ɛ",
-              "n"
-            ],
-            [
-              "iː",
-              "v",
-              "ɛ",
-              "n"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "v",
-            "ɛ",
+            "\u025b",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "v",
-              "ə",
-              "n"
-            ],
-            [
-              "iː",
-              "ə",
-              "n"
-            ],
-            [
-              "iː",
-              "n̩"
-            ],
-            [
-              "iː",
-              "v",
-              "n̩"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "v",
-            "ə",
+            "\u0259",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "iː",
-              "v",
-              "n̩"
-            ],
-            [
-              "ə",
-              "v",
-              "ɛ",
-              "n"
-            ],
-            [
-              "iː",
-              "v",
-              "ə",
-              "n"
-            ],
-            [
-              "iː",
-              "n"
-            ]
-          ],
-          "spoken": [
-            "iː",
+          "valid": true,
+          "phones": [
+            "i\u02d0",
             "v",
-            "ə",
+            "\u0259",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "11": {
       "word": "for",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ɒː"
-            ],
-            [
-              "f",
-              "aː"
-            ],
-            [
-              "f",
-              "ə"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "ɒː"
+            "\u0252\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ɔ"
-            ],
-            [
-              "f",
-              "a"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "ɔ"
+            "\u0254"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_ARPA": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ɔ",
-              "r"
-            ],
-            [
-              "f",
-              "ɝ"
-            ],
-            [
-              "f",
-              "r",
-              "ɝ"
-            ]
+          "valid": true,
+          "phones": [
+            "F",
+            "AO1",
+            "R"
           ],
-          "spoken": [
-            "f",
-            "ɔ",
-            "r"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (With Stress)",
+          "stress_match": true
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ɒ",
-              "ɹ"
-            ],
-            [
-              "f",
-              "ɚ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "ɒ",
-            "ɹ"
+            "\u0252",
+            "\u0279"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ɒː"
-            ],
-            [
-              "f",
-              "ə"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "ɒː"
+            "\u0252\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "12": {
       "word": "non",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "n",
-              "ɒ",
-              "n"
-            ],
-            [
-              "n",
-              "a",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "n",
-            "ɒ",
+            "\u0252",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "n",
-              "ɔ",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "n",
-            "ɔ",
+            "\u0254",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "n",
-              "ɑ",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "n",
-            "ɑ",
+            "\u0251",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "n",
-              "ɒ",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "n",
-            "ɒ",
+            "\u0252",
             "n"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "13": {
       "word": "technical",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ʈ",
-              "ɛ",
-              "c",
-              "ɲ",
-              "ɪ",
-              "k",
-              "ə",
-              "l"
-            ]
-          ],
-          "spoken": [
-            "ʈ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "\u0288",
+            "\u025b",
             "c",
-            "ɲ",
-            "ɪ",
+            "\u0272",
+            "\u026a",
             "k",
-            "ə",
+            "\u0259",
             "l"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "c",
-              "ɲ",
-              "i",
-              "k",
-              "a",
-              "ɫ"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "c",
-            "ɲ",
+            "\u0272",
             "i",
             "k",
             "a",
-            "ɫ"
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "c",
-              "ɲ",
-              "ɪ",
-              "k",
-              "ə",
-              "ɫ"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "c",
-            "ɲ",
-            "ɪ",
+            "\u0272",
+            "\u026a",
             "k",
-            "ə",
-            "ɫ"
+            "\u0259",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "c",
-              "ɲ",
-              "ɪ",
-              "k",
-              "ə",
-              "ɫ"
-            ],
-            [
-              "tʰ",
-              "ɛ",
-              "c",
-              "ɲ",
-              "ɪ",
-              "k",
-              "ɫ̩"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "c",
-            "ɲ",
-            "ɪ",
+            "\u0272",
+            "\u026a",
             "k",
-            "ə",
-            "ɫ"
+            "\u0259",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "14": {
       "word": "folk",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "oː",
-              "k"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "oː",
+            "o\u02d0",
             "k"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "o",
-              "k"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
             "o",
             "k"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "ow",
-              "k"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
             "ow",
             "k"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "f",
-              "əw",
-              "k"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "f",
-            "əw",
+            "\u0259w",
             "k"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "15": {
       "word": "frontend",
-      "status": "correct",
-      "matched_accents": [
-        "Indian",
-        "Nigerian",
-        "US_MFA",
-        "UK"
-      ],
-      "accents": {
+      "correct": false,
+      "accent_matches": [],
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "UK": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         }
       }
     },
-    {
+    "16": {
       "word": "technology",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ʈ",
-              "ɛ",
-              "k",
-              "n",
-              "ɒ",
-              "l",
-              "ə",
-              "dʒ",
-              "i"
-            ],
-            [
-              "ʈ",
-              "ɛ",
-              "k",
-              "n",
-              "a",
-              "l",
-              "ə",
-              "dʒ",
-              "i"
-            ]
-          ],
-          "spoken": [
-            "ʈ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "\u0288",
+            "\u025b",
             "k",
             "n",
             "a",
             "l",
-            "ə",
-            "dʒ",
+            "\u0259",
+            "d\u0292",
             "i"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "k",
-              "n",
-              "ɔ",
-              "l",
-              "ɔ",
-              "dʒ",
-              "i"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "k",
             "n",
-            "ɔ",
+            "\u0254",
             "l",
-            "ɔ",
-            "dʒ",
+            "\u0254",
+            "d\u0292",
             "i"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "k",
-              "n",
-              "ɑ",
-              "l",
-              "ə",
-              "dʒ",
-              "i"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "k",
             "n",
-            "ɑ",
+            "\u0251",
             "l",
-            "ə",
-            "dʒ",
+            "\u0259",
+            "d\u0292",
             "i"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ɛ",
-              "k",
-              "n",
-              "ɒ",
-              "l",
-              "ə",
-              "dʒ",
-              "i"
-            ]
-          ],
-          "spoken": [
-            "tʰ",
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u025b",
             "k",
             "n",
-            "ɒ",
+            "\u0252",
             "l",
-            "ə",
-            "dʒ",
+            "\u0259",
+            "d\u0292",
             "i"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "17": {
       "word": "evolved",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "ʋ",
-              "ɒ",
-              "l",
-              "ʋ",
-              "ɖ"
-            ],
-            [
-              "ɪ",
-              "ʋ",
-              "a",
-              "l",
-              "ʋ",
-              "ɖ"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
-            "ʋ",
-            "ɒ",
+          "valid": true,
+          "phones": [
+            "\u026a",
+            "\u028b",
+            "\u0252",
             "l",
-            "ʋ",
-            "ɖ"
+            "\u028b",
+            "\u0256"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɛ",
-              "v",
-              "ɔ",
-              "ɫ",
-              "v",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "ɛ",
+          "valid": true,
+          "phones": [
+            "\u025b",
             "v",
-            "ɔ",
-            "ɫ",
+            "\u0254",
+            "\u026b",
             "v",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "v",
-              "ɑ",
-              "ɫ",
-              "v",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "v",
-            "ɑ",
-            "ɫ",
+            "\u0251",
+            "\u026b",
             "v",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "v",
-              "ɒ",
-              "ɫ",
-              "v",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "v",
-            "ɒ",
-            "ɫ",
+            "\u0252",
+            "\u026b",
             "v",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "18": {
       "word": "into",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "n",
-              "ʈ",
-              "ʉː"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "n",
-            "ʈ",
-            "ʉː"
+            "\u0288",
+            "\u0289\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "i",
-              "n",
-              "tʰ",
-              "uː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "i",
             "n",
-            "tʰ",
-            "uː"
+            "t\u02b0",
+            "u\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "n",
-              "tʰ",
-              "ʉ"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "n",
-            "tʰ",
-            "ʉ"
+            "t\u02b0",
+            "\u0289"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɪ",
-              "n",
-              "tʰ",
-              "ʉː"
-            ]
-          ],
-          "spoken": [
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u026a",
             "n",
-            "tʰ",
-            "ʉː"
+            "t\u02b0",
+            "\u0289\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "19": {
       "word": "something",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ə",
-              "m",
-              "t̪",
-              "ɪ",
-              "n"
-            ],
-            [
-              "s",
-              "ə",
-              "m",
-              "t̪",
-              "ɪ",
-              "ŋ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ə",
+            "\u0259",
             "m",
-            "t̪",
-            "ɪ",
-            "ŋ"
+            "t\u032a",
+            "\u026a",
+            "\u014b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɔ",
-              "m",
-              "t̪",
-              "i",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɔ",
-              "m",
-              "t̪",
-              "i",
-              "ŋ",
-              "ɡ"
-            ],
-            [
-              "s",
-              "ɔ",
-              "m",
-              "θ",
-              "i",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɔ",
-              "m",
-              "θ",
-              "i",
-              "ŋ",
-              "ɡ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɔ",
+            "\u0254",
             "m",
-            "t̪",
+            "t\u032a",
             "i",
-            "ŋ",
-            "ɡ"
+            "\u014b",
+            "\u0261"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɐ",
-              "m",
-              "θ",
-              "ɪ",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "p",
-              "m̩"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "t̪",
-              "ɪ",
-              "n"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "t̪",
-              "ɪ",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "θ",
-              "ɪ",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɐ",
+            "\u0250",
             "m",
-            "t̪",
-            "ɪ",
-            "ŋ"
+            "t\u032a",
+            "\u026a",
+            "\u014b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "ɐ",
-              "m",
-              "θ",
-              "ɪ",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "t̪",
-              "ɪ",
-              "ŋ"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "θ",
-              "ɪ",
-              "n"
-            ],
-            [
-              "s",
-              "ɐ",
-              "m",
-              "t̪",
-              "ɪ",
-              "n"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
-            "ɐ",
+            "\u0250",
             "m",
-            "t̪",
-            "ɪ",
-            "ŋ"
+            "t\u032a",
+            "\u026a",
+            "\u014b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "20": {
       "word": "available",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ə",
-              "ʋ",
-              "eː",
-              "l",
-              "ə",
-              "b",
-              "ə",
-              "l"
-            ],
-            [
-              "ʋ",
-              "eː",
-              "l",
-              "ə",
-              "b",
-              "ə",
-              "l"
-            ]
-          ],
-          "spoken": [
-            "ə",
-            "ʋ",
-            "eː",
+          "valid": true,
+          "phones": [
+            "\u0259",
+            "\u028b",
+            "e\u02d0",
             "l",
-            "ə",
+            "\u0259",
             "b",
-            "ə",
+            "\u0259",
             "l"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "a",
-              "v",
-              "e",
-              "l",
-              "a",
-              "b",
-              "ʊ",
-              "ɫ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "a",
             "v",
             "e",
             "l",
             "a",
             "b",
-            "ʊ",
-            "ɫ"
+            "\u028a",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ə",
-              "v",
-              "ej",
-              "l",
-              "ə",
-              "b",
-              "ə",
-              "ɫ"
-            ]
-          ],
-          "spoken": [
-            "ə",
+          "valid": true,
+          "phones": [
+            "\u0259",
             "v",
             "ej",
             "l",
-            "ə",
+            "\u0259",
             "b",
-            "ə",
-            "ɫ"
+            "\u0259",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ə",
-              "v",
-              "ej",
-              "l",
-              "ə",
-              "b",
-              "ə",
-              "ɫ"
-            ],
-            [
-              "ə",
-              "v",
-              "ej",
-              "l",
-              "ə",
-              "b",
-              "ɫ̩"
-            ]
-          ],
-          "spoken": [
-            "ə",
+          "valid": true,
+          "phones": [
+            "\u0259",
             "v",
             "ej",
             "l",
-            "ə",
+            "\u0259",
             "b",
-            "ɫ̩"
+            "\u026b\u0329"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "21": {
       "word": "to",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
-        "US_ARPA",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ʈ",
-              "ʉː"
-            ],
-            [
-              "ʈ",
-              "ə"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0288",
+            "\u0289\u02d0"
           ],
-          "spoken": [
-            "ʈ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "uː"
-            ],
-            [
-              "t",
-              "ɔ"
-            ],
-            [
-              "tʃ",
-              "uː"
-            ]
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "u\u02d0"
           ],
-          "spoken": [
-            "tʰ",
-            "uː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
-            "spn"
-          ],
-          "remark": "Match (SPN - Spoken Noise)"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "tʰ",
-              "ʉː"
-            ],
-            [
-              "ə"
-            ],
-            [
-              "t",
-              "ə"
-            ],
-            [
-              "tʰ",
-              "ʊ"
-            ]
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u0289\u02d0"
           ],
-          "spoken": [
-            "tʰ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "tʲ",
-              "ʉː"
-            ],
-            [
-              "t",
-              "ə"
-            ],
-            [
-              "tʰ",
-              "ʉː"
-            ],
-            [
-              "tʃ",
-              "ʉː"
-            ]
+          "valid": true,
+          "phones": [
+            "t\u02b0",
+            "\u0289\u02d0"
           ],
-          "spoken": [
-            "tʰ",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "22": {
       "word": "people",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "p",
-              "iː",
-              "p",
-              "ə",
-              "l"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "p",
-            "iː",
+            "i\u02d0",
             "p",
-            "ə",
+            "\u0259",
             "l"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "pʰ",
-              "iː",
-              "p",
-              "ʊ",
-              "ɫ"
-            ]
-          ],
-          "spoken": [
-            "pʰ",
-            "iː",
+          "valid": true,
+          "phones": [
+            "p\u02b0",
+            "i\u02d0",
             "p",
-            "ʊ",
-            "ɫ"
+            "\u028a",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "pʰ",
-              "i",
-              "p",
-              "ə",
-              "ɫ"
-            ],
-            [
-              "pʰ",
-              "i",
-              "p",
-              "ɫ̩"
-            ]
-          ],
-          "spoken": [
-            "pʰ",
+          "valid": true,
+          "phones": [
+            "p\u02b0",
             "i",
             "p",
-            "ɫ̩"
+            "\u026b\u0329"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "pʰ",
-              "iː",
-              "p",
-              "ə",
-              "ɫ"
-            ],
-            [
-              "pʰ",
-              "iː",
-              "p",
-              "ɫ̩"
-            ]
-          ],
-          "spoken": [
-            "pʰ",
-            "iː",
+          "valid": true,
+          "phones": [
+            "p\u02b0",
+            "i\u02d0",
             "p",
-            "ə",
-            "ɫ"
+            "\u0259",
+            "\u026b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "23": {
       "word": "who",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɖ",
-              "ə",
-              "b",
-              "ə",
-              "ʎ",
-              "ʉː",
-              "eː",
-              "tʃ",
-              "oː"
-            ],
-            [
-              "h",
-              "ʉː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
-            "ʉː"
+            "\u0289\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "uː"
-            ],
-            [
-              "d",
-              "ɔ",
-              "b",
-              "ʊ",
-              "ɫ",
-              "j",
-              "uː",
-              "e",
-              "tʃ",
-              "o"
-            ],
-            [
-              "uː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
-            "uː"
+            "u\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "d",
-              "ɐ",
-              "b",
-              "ə",
-              "ʎ",
-              "ʉː",
-              "ej",
-              "tʃ",
-              "ow"
-            ],
-            [
-              "ç",
-              "ʉː"
-            ]
+          "valid": true,
+          "phones": [
+            "\u00e7",
+            "\u0289\u02d0"
           ],
-          "spoken": [
-            "ç",
-            "ʉː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "ʉː"
-            ],
-            [
-              "d",
-              "ɐ",
-              "b",
-              "ə",
-              "ʎ",
-              "ʉː",
-              "ej",
-              "tʃ",
-              "əw"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
-            "ʉː"
+            "\u0289\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "24": {
       "word": "would",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ʋ",
-              "ʊ",
-              "ɖ"
-            ],
-            [
-              "ʋ",
-              "ə",
-              "ɖ"
-            ],
-            [
-              "ə",
-              "ɖ"
-            ]
+          "valid": true,
+          "phones": [
+            "\u028b",
+            "\u028a",
+            "\u0256"
           ],
-          "spoken": [
-            "ʋ",
-            "ʊ",
-            "ɖ"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "a",
-              "d"
-            ],
-            [
-              "w",
-              "ɔ",
-              "d"
-            ],
-            [
-              "w",
-              "ʊ",
-              "d"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "w",
-            "ʊ",
+            "\u028a",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "w",
-              "ə",
-              "d"
-            ],
-            [
-              "w",
-              "ʊ",
-              "d"
-            ],
-            [
-              "w",
-              "ʊ",
-              "ɾ"
-            ],
-            [
-              "w",
-              "ə",
-              "ɾ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "w",
-            "ʊ",
+            "\u028a",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ə",
-              "d"
-            ],
-            [
-              "w",
-              "ə",
-              "d"
-            ],
-            [
-              "w",
-              "ʊ",
-              "d"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "w",
-            "ʊ",
+            "\u028a",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "25": {
       "word": "have",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "a",
-              "ʋ"
-            ],
-            [
-              "a",
-              "ʋ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
             "a",
-            "ʋ"
+            "\u028b"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "a",
-              "v"
-            ],
-            [
-              "a",
-              "v"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
             "a",
             "v"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "æ",
-              "v"
-            ],
-            [
-              "h",
-              "ə",
-              "v"
-            ],
-            [
-              "ə"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
-            "æ",
+            "\u00e6",
             "v"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "h",
-              "a",
-              "v"
-            ],
-            [
-              "a",
-              "v"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "h",
             "a",
             "v"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "26": {
       "word": "needed",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɲ",
-              "iː",
-              "ɖ",
-              "ɪ",
-              "ɖ"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0272",
+            "i\u02d0",
+            "\u0256",
+            "\u026a",
+            "\u0256"
           ],
-          "spoken": [
-            "ɲ",
-            "iː",
-            "ɖ",
-            "ɪ",
-            "ɖ"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɲ",
-              "iː",
-              "d",
-              "ɛ",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "ɲ",
-            "iː",
+          "valid": true,
+          "phones": [
+            "\u0272",
+            "i\u02d0",
             "d",
-            "ɛ",
+            "\u025b",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ɲ",
-              "iː",
-              "ɾʲ",
-              "ɪ",
-              "ɾ"
-            ],
-            [
-              "ɲ",
-              "iː",
-              "dʲ",
-              "ɪ",
-              "ɾ"
-            ],
-            [
-              "ɲ",
-              "iː",
-              "ɾʲ",
-              "ɪ",
-              "d"
-            ],
-            [
-              "ɲ",
-              "iː",
-              "dʲ",
-              "ɪ",
-              "d"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0272",
+            "i\u02d0",
+            "d\u02b2",
+            "\u026a",
+            "\u027e"
           ],
-          "spoken": [
-            "ɲ",
-            "iː",
-            "dʲ",
-            "ɪ",
-            "ɾ"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɲ",
-              "iː",
-              "dʲ",
-              "ɪ",
-              "d"
-            ]
-          ],
-          "spoken": [
-            "ɲ",
-            "iː",
-            "dʲ",
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "\u0272",
+            "i\u02d0",
+            "d\u02b2",
+            "\u026a",
             "d"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "27": {
       "word": "a",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɑ"
-            ],
-            [
-              "ɑː"
-            ],
-            [
-              "ɒ"
-            ],
-            [
-              "ə"
-            ],
-            [
-              "a"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0259"
           ],
-          "spoken": [
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "a"
-            ],
-            [
-              "e"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "e"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "ə"
-            ],
-            [
-              "ej"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0259"
           ],
-          "spoken": [
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "ɒ"
-            ],
-            [
-              "a"
-            ],
-            [
-              "ɑ"
-            ],
-            [
-              "ə"
-            ],
-            [
-              "ɑː"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0259"
           ],
-          "spoken": [
-            "ə"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "28": {
       "word": "cs",
-      "status": "correct",
-      "matched_accents": [
-        "Indian",
-        "Nigerian",
-        "US_MFA",
-        "UK"
+      "correct": true,
+      "accent_matches": [
+        "US_MFA"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "s",
-              "i",
-              "ɛ",
-              "s"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "s",
             "i",
-            "ɛ",
+            "\u025b",
             "s"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [],
-          "spoken": [
+          "valid": false,
+          "phones": [
             "spn"
           ],
-          "remark": "Match (SPN - Spoken Noise)"
+          "msg": "OOV",
+          "stress_match": false
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "29": {
       "word": "degree",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "ɖ",
-              "ɪ",
-              "ɟ",
-              "ɹ",
-              "iː"
-            ],
-            [
-              "ɖ",
-              "ɪ",
-              "ɟ",
-              "ɾ",
-              "iː"
-            ]
+          "valid": true,
+          "phones": [
+            "\u0256",
+            "\u026a",
+            "\u025f",
+            "\u027e",
+            "i\u02d0"
           ],
-          "spoken": [
-            "ɖ",
-            "ɪ",
-            "ɟ",
-            "ɾ",
-            "iː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "d",
-              "ɛ",
-              "ɟ",
-              "ɹ",
-              "iː"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "d",
-            "ɛ",
-            "ɟ",
-            "ɹ",
-            "iː"
+            "\u025b",
+            "\u025f",
+            "\u0279",
+            "i\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
-        },
+        "US_ARPA": "Word Mismatch (Alignment Drift)",
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "dʲ",
-              "ɪ",
-              "ɟ",
-              "ɹ",
-              "iː"
-            ]
+          "valid": true,
+          "phones": [
+            "d\u02b2",
+            "\u026a",
+            "\u025f",
+            "\u0279",
+            "i\u02d0"
           ],
-          "spoken": [
-            "dʲ",
-            "ɪ",
-            "ɟ",
-            "ɹ",
-            "iː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "dʲ",
-              "ɪ",
-              "ɟ",
-              "ɹ",
-              "iː"
-            ]
+          "valid": true,
+          "phones": [
+            "d\u02b2",
+            "\u026a",
+            "\u025f",
+            "\u0279",
+            "i\u02d0"
           ],
-          "spoken": [
-            "dʲ",
-            "ɪ",
-            "ɟ",
-            "ɹ",
-            "iː"
-          ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     },
-    {
+    "30": {
       "word": "before",
-      "status": "correct",
-      "matched_accents": [
+      "correct": true,
+      "accent_matches": [
         "Indian",
         "Nigerian",
         "US_MFA",
         "UK"
       ],
-      "accents": {
+      "details": {
         "Indian": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "ɪ",
-              "f",
-              "ɒː"
-            ],
-            [
-              "bʲ",
-              "ɪ",
-              "f",
-              "aː"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
+            "\u026a",
             "f",
-            "ɒː"
+            "\u0252\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "Nigerian": {
-          "status": "match",
-          "expected": [
-            [
-              "b",
-              "ɛ",
-              "f",
-              "ɔ"
-            ]
-          ],
-          "spoken": [
+          "valid": true,
+          "phones": [
             "b",
-            "ɛ",
+            "\u025b",
             "f",
-            "ɔ"
+            "\u0254"
           ],
-          "remark": "Match"
-        },
-        "US_ARPA": {
-          "status": "fail",
-          "expected": [],
-          "spoken": [],
-          "remark": "No valid pronunciation found in dictionary"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "US_MFA": {
-          "status": "match",
-          "expected": [
-            [
-              "b",
-              "ə",
-              "f",
-              "ɒ",
-              "ɹ"
-            ],
-            [
-              "bʲ",
-              "i",
-              "f",
-              "ɒ",
-              "ɹ"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
             "i",
             "f",
-            "ɒ",
-            "ɹ"
+            "\u0252",
+            "\u0279"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         },
         "UK": {
-          "status": "match",
-          "expected": [
-            [
-              "bʲ",
-              "ɪ",
-              "f",
-              "ɒː"
-            ]
-          ],
-          "spoken": [
-            "bʲ",
-            "ɪ",
+          "valid": true,
+          "phones": [
+            "b\u02b2",
+            "\u026a",
             "f",
-            "ɒː"
+            "\u0252\u02d0"
           ],
-          "remark": "Match"
+          "msg": "Exact Match (No Stress Info)",
+          "stress_match": true
         }
-      }
+      },
+      "stress_correct": true
     }
-  ],
-  "wrong_words_details": []
+  }
 }

@@ -40,3 +40,9 @@ nltk>=3.8
 #   pip install nemo_toolkit[asr]
 # -----------------------------------------------------------------------------
 # nemo_toolkit[asr]
+
+# -----------------------------------------------------------------------------
+# Describe Image Dependencies (Client Side)
+# -----------------------------------------------------------------------------
+# Note: openai-whisper and language-tool-python are now in the Docker container.
+requests>=2.25.0

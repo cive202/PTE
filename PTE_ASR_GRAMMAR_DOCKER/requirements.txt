@@ -1,0 +1,7 @@
+
+openai-whisper
+language-tool-python
+fastapi
+uvicorn
+python-multipart
+requests

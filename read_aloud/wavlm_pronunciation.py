@@ -8,11 +8,10 @@ try:
     from transformers import WavLMForCTC, Wav2Vec2Processor  # type: ignore
     import soundfile as sf  # type: ignore
     import numpy as np
+    WAVLM_AVAILABLE = True
 except ImportError as e:
-    raise ImportError(
-        f"Required libraries not installed: {e}\n"
-        "Install with: pip install torch transformers soundfile numpy"
-    )
+    WAVLM_AVAILABLE = False
+    WAVLM_IMPORT_ERROR = str(e)
 
 
 # Phoneme mapping for English (fallback if CMUdict unavailable)
@@ -195,6 +194,12 @@ def assess_pronunciation_wavlm(
         List of dicts: {word, start, end, confidence, status}
         status: "correct" or "mispronounced"
     """
+    if not WAVLM_AVAILABLE:
+        raise ImportError(
+            f"Required libraries not installed: {WAVLM_IMPORT_ERROR}\n"
+            "Install with: pip install torch transformers soundfile numpy"
+        )
+
     model, processor = _load_wavlm_model()
 
     # Extract phonemes from audio
