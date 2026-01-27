@@ -1,5 +1,4 @@
 
-openai-whisper
 language-tool-python
 fastapi
 uvicorn
