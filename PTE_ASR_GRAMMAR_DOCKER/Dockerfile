@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # openjdk-17-jre-headless: required by language-tool-python
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    openjdk-17-jre-headless \
+    openjdk-21-jre-headless \
     curl \
     git \
     && rm -rf /var/lib/apt/lists/*

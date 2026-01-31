@@ -46,3 +46,4 @@ nltk>=3.8
 # -----------------------------------------------------------------------------
 # Note: openai-whisper and language-tool-python are now in the Docker container.
 requests>=2.25.0
+scikit-learn>=1.0.0

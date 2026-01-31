@@ -1,0 +1,16 @@
+[Unit]
+Description=PTE Platform (ASR + Flask)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=sushil
+WorkingDirectory=/home/sushil/developer/pte/PTE
+ExecStart=/home/sushil/developer/pte/PTE/test/startup.sh
+Restart=always
+RestartSec=10
+Environment=PATH=/home/sushil/developer/pte/PTE/venv/bin:/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target

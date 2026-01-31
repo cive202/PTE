@@ -1,27 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PTE Scoring Engine - Data Collection</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        textarea { width: 100%; height: 100px; margin-bottom: 1rem; }
-        .controls { margin-bottom: 1rem; }
-        button { padding: 0.5rem 1rem; cursor: pointer; }
-        #status { margin-top: 1rem; color: #666; }
-        .word { padding: 2px 4px; border-radius: 3px; display: inline-block; margin: 2px; }
-        .correct { background-color: #d4edda; color: #155724; }
-        .wrong { background-color: #f8d7da; color: #721c24; }
-        .stress-error { background-color: #fff3cd; color: #856404; border-bottom: 2px solid orange; }
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 1rem;
+            color: #666;
+        }
+
+        .word {
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .wrong {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .stress-error {
+            background-color: #fff3cd;
+            color: #856404;
+            border-bottom: 2px solid orange;
+        }
+
+        /* Progress indicator */
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .progress-text {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .breadcrumbs {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumbs a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .breadcrumbs a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
     <h1>PTE Data Collection & Validation</h1>
-    
+
     <div>
         <h3>Reference Text</h3>
-        <textarea id="ref-text" placeholder="Enter text here...">Over the years, it got easier to build such software, even for non-technical folk.</textarea>
+        <textarea id="ref-text"
+            placeholder="Enter text here...">Over the years, it got easier to build such software, even for non-technical folk.</textarea>
     </div>
 
     <div class="controls">
@@ -35,21 +139,31 @@
         <button id="btn-check" disabled>Check Pronunciation</button>
     </div>
 
+    <div id="progress-container" class="progress-container">
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div id="progress-text" class="progress-text">Initializing...</div>
+    </div>
+
     <div id="status"></div>
-    
-    <div id="transcription-box" style="margin-top: 1rem; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">
+
+    <div id="transcription-box"
+        style="margin-top: 1rem; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">
         <strong>Transcription (Whisper):</strong> <span id="transcript-text"></span>
     </div>
 
     <div id="results" style="margin-top: 1rem; line-height: 2;"></div>
 
     <h3>Raw JSON Response</h3>
-    <pre id="json-output" style="background: #eee; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; max-height: 400px; overflow-y: scroll;"></pre>
+    <pre id="json-output"
+        style="background: #eee; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; max-height: 400px; overflow-y: scroll;"></pre>
 
     <script>
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob = null;
+        let pollInterval = null;
 
         const btnRecord = document.getElementById('btn-record');
         const btnStop = document.getElementById('btn-stop');
@@ -61,15 +175,18 @@
         const transBox = document.getElementById('transcription-box');
         const transText = document.getElementById('transcript-text');
         const jsonOutput = document.getElementById('json-output');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
 
         btnRecord.onclick = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-                
+
                 mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-                
+
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     btnSave.disabled = false;
@@ -98,7 +215,7 @@
         btnSave.onclick = async () => {
             if (!audioBlob) return;
             statusDiv.innerText = "Saving...";
-            
+
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.wav');
             formData.append('text', document.getElementById('ref-text').value);
@@ -112,67 +229,125 @@
             }
         };
 
+        function displayResult(data) {
+            progressContainer.style.display = 'none';
+            jsonOutput.innerText = JSON.stringify(data, null, 2);
+
+            if (data.error) {
+                statusDiv.innerText = "Error: " + data.error;
+                return;
+            }
+
+            const accuracy = (data.summary.correct / data.summary.total * 100).toFixed(1);
+            statusDiv.innerText = `✅ Check Complete! Accuracy: ${accuracy}%`;
+
+            // Show Transcript
+            if (data.transcript) {
+                transBox.style.display = 'block';
+                transText.innerText = data.transcript;
+            }
+
+            // Render words
+            resultsDiv.innerHTML = '';
+            data.words.forEach(w => {
+                const span = document.createElement('span');
+                span.innerText = w.word;
+                span.className = 'word';
+
+                if (w.status === 'correct') {
+                    span.className += ' correct';
+                    if (w.stress_error) span.className += ' stress-error';
+                } else if (w.status === 'omitted') {
+                    span.className += ' wrong';
+                    span.style.textDecoration = 'line-through';
+                    span.style.opacity = '0.7';
+                } else if (w.status === 'inserted') {
+                    span.className += ' wrong';
+                    span.style.backgroundColor = '#cce5ff';
+                    span.style.color = '#004085';
+                } else if (w.status === 'mispronounced') {
+                    span.className += ' stress-error';
+                    span.style.border = '1px solid orange';
+                }
+
+                resultsDiv.appendChild(span);
+                resultsDiv.appendChild(document.createTextNode(" "));
+            });
+        }
+
         btnCheck.onclick = async () => {
             if (!audioBlob) return;
-            statusDiv.innerText = "Checking Content & Pronunciation (ASR + MFA)... please wait 1-2 mins.";
+
+            // Clear previous results
             resultsDiv.innerHTML = "";
             transBox.style.display = 'none';
             jsonOutput.innerText = "";
-            
+
+            // Show progress
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '5%';
+            progressText.innerText = '📤 Uploading audio...';
+            statusDiv.innerText = "";
+            btnCheck.disabled = true;
+
             const formData = new FormData();
             formData.append('audio', audioBlob, 'check.wav');
             formData.append('text', document.getElementById('ref-text').value);
 
             try {
+                // Step 1: Submit job
                 const res = await fetch('/check', { method: 'POST', body: formData });
                 const data = await res.json();
-                
-                // Print JSON immediately for debugging
-                jsonOutput.innerText = JSON.stringify(data, null, 2);
-                
+
                 if (data.error) {
+                    progressContainer.style.display = 'none';
                     statusDiv.innerText = "Error: " + data.error;
+                    btnCheck.disabled = false;
                     return;
                 }
 
-                statusDiv.innerText = `Check Complete. Accuracy: ${(data.summary.correct / data.summary.total * 100).toFixed(1)}%`;
-                
-                // Show Transcript
-                if (data.transcript) {
-                    transBox.style.display = 'block';
-                    transText.innerText = data.transcript;
-                }
+                const jobId = data.job_id;
+                progressFill.style.width = '10%';
+                progressText.innerText = '🔄 Processing... (~30 seconds)';
 
-                // Render words
-                data.words.forEach(w => {
-                    const span = document.createElement('span');
-                    span.innerText = w.word;
-                    span.className = 'word';
-                    
-                    if (w.status === 'correct') {
-                        span.className += ' correct';
-                        if (w.stress_error) span.className += ' stress-error';
-                    } else if (w.status === 'omitted') {
-                        span.className += ' wrong';
-                        span.style.textDecoration = 'line-through';
-                        span.style.opacity = '0.7';
-                    } else if (w.status === 'inserted') {
-                        span.className += ' wrong';
-                        span.style.backgroundColor = '#cce5ff'; // Blue-ish for insertion
-                        span.style.color = '#004085';
-                    } else if (w.status === 'mispronounced') {
-                        span.className += ' stress-error'; // Use yellow for mispronounced
-                        span.style.border = '1px solid orange';
+                // Step 2: Poll for result
+                let elapsed = 0;
+                const estimatedTime = data.estimated_time || 30;
+
+                pollInterval = setInterval(async () => {
+                    elapsed += 2;
+                    const progress = Math.min(10 + (elapsed / estimatedTime) * 80, 90);
+                    progressFill.style.width = progress + '%';
+                    progressText.innerText = `🔄 Analyzing pronunciation... (${elapsed}s elapsed)`;
+
+                    try {
+                        const statusRes = await fetch(`/check/status/${jobId}`);
+                        const status = await statusRes.json();
+
+                        if (status.status === 'complete') {
+                            clearInterval(pollInterval);
+                            progressFill.style.width = '100%';
+                            progressText.innerText = '✅ Complete!';
+                            setTimeout(() => displayResult(status.result), 500);
+                            btnCheck.disabled = false;
+                        } else if (status.status === 'failed') {
+                            clearInterval(pollInterval);
+                            progressContainer.style.display = 'none';
+                            statusDiv.innerText = "Error: " + status.error;
+                            btnCheck.disabled = false;
+                        }
+                    } catch (pollErr) {
+                        console.error('Poll error:', pollErr);
                     }
-                    
-                    resultsDiv.appendChild(span);
-                    resultsDiv.appendChild(document.createTextNode(" "));
-                });
+                }, 2000);
 
             } catch (err) {
+                progressContainer.style.display = 'none';
                 statusDiv.innerText = "Check failed: " + err.message;
+                btnCheck.disabled = false;
             }
         };
     </script>
 </body>
+
 </html>

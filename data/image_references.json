@@ -1,0 +1,188 @@
+{
+  "images": [
+    {
+      "id": "img001",
+      "filename": "sample_bar_chart.png",
+      "title": "Quarterly Sales Performance",
+      "difficulty": "easy",
+      "reference": "The bar chart illustrates quarterly sales performance across four quarters. The vertical axis represents sales revenue in thousands of dollars, while the horizontal axis shows the time periods from Q1 to Q4. The data reveals a consistent upward trend, with Q1 starting at approximately 45,000 dollars, followed by steady growth through Q2 and Q3, reaching 65,000 and 78,000 respectively. The final quarter, Q4, shows the highest performance at around 92,000 dollars, representing more than double the initial quarter's revenue.",
+      "keywords": [
+        "bar chart",
+        "quarterly",
+        "sales",
+        "revenue",
+        "upward trend",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+        "growth",
+        "performance"
+      ]
+    },
+    {
+      "id": "img002",
+      "filename": "sample_line_graph.png",
+      "title": "Temperature Variation Over Time",
+      "difficulty": "easy",
+      "reference": "The line graph depicts temperature variations throughout a typical day. The horizontal axis represents time from midnight to midnight in 3-hour intervals, while the vertical axis shows temperature in degrees Celsius. The temperature starts at around 12 degrees at midnight, drops to its lowest point of 8 degrees at 6 AM, then rises steadily throughout the morning and afternoon. The peak temperature of 28 degrees occurs at 3 PM, after which it gradually declines through the evening, returning to approximately 14 degrees by midnight.",
+      "keywords": [
+        "line graph",
+        "temperature",
+        "time",
+        "degrees Celsius",
+        "variation",
+        "peak",
+        "lowest point",
+        "midnight",
+        "afternoon",
+        "decline"
+      ]
+    },
+    {
+      "id": "img003",
+      "filename": "sample_pie_chart.png",
+      "title": "Market Share Distribution",
+      "difficulty": "easy",
+      "reference": "The pie chart displays market share distribution among five major companies in the technology sector. Company A holds the largest portion at 35 percent, followed by Company B with 28 percent. Company C accounts for 18 percent of the market, while Company D has 12 percent. The smallest segment belongs to Company E with 7 percent. The chart uses different colors to distinguish each company's share, making it easy to compare their relative positions in the market.",
+      "keywords": [
+        "pie chart",
+        "market share",
+        "distribution",
+        "percentage",
+        "companies",
+        "technology sector",
+        "largest",
+        "smallest",
+        "segment"
+      ]
+    },
+    {
+      "id": "img004",
+      "filename": "monthly_rainfall.png",
+      "title": "Monthly Rainfall Data",
+      "difficulty": "easy",
+      "reference": "The bar chart shows monthly rainfall measurements for a city over twelve months. January through March show moderate rainfall between 40 and 60 millimeters. April and May experience the highest precipitation, with peaks reaching 120 and 140 millimeters respectively. The summer months from June to August show a significant decrease, with rainfall dropping below 20 millimeters. September marks the beginning of increased rainfall again, gradually rising through October, November, and December to approximately 70 millimeters.",
+      "keywords": [
+        "bar chart",
+        "monthly",
+        "rainfall",
+        "millimeters",
+        "precipitation",
+        "peak",
+        "summer",
+        "decrease",
+        "seasonal"
+      ]
+    },
+    {
+      "id": "img005",
+      "filename": "student_enrollment.png",
+      "title": "Student Enrollment by Major",
+      "difficulty": "easy",
+      "reference": "The pie chart illustrates student enrollment distribution across different academic majors. Engineering represents the largest segment with 30 percent of total enrollment, followed closely by Business Administration at 25 percent. Computer Science accounts for 20 percent, while Arts and Humanities make up 15 percent. The remaining 10 percent is divided among other specialized programs. This distribution reflects current trends in higher education with strong emphasis on technical and business-oriented fields.",
+      "keywords": [
+        "pie chart",
+        "student enrollment",
+        "majors",
+        "engineering",
+        "business",
+        "computer science",
+        "percentage",
+        "distribution"
+      ]
+    },
+    {
+      "id": "img006",
+      "filename": "population_growth.png",
+      "title": "Population Growth 2000-2020",
+      "difficulty": "medium",
+      "reference": "The line graph presents population growth trends over a twenty-year period from 2000 to 2020. Starting at 5 million in 2000, the population shows steady linear growth through 2010, reaching approximately 6.5 million. Between 2010 and 2015, growth accelerates significantly, with the population climbing to 8 million. The final five years from 2015 to 2020 show a slight deceleration in growth rate, ending at around 9.2 million. The overall trend indicates consistent population increase with varying rates of growth throughout the period.",
+      "keywords": [
+        "line graph",
+        "population growth",
+        "twenty years",
+        "million",
+        "steady growth",
+        "acceleration",
+        "trend",
+        "2000",
+        "2020"
+      ]
+    },
+    {
+      "id": "img007",
+      "filename": "employment_gender.png",
+      "title": "Employment by Gender and Sector",
+      "difficulty": "medium",
+      "reference": "The dual bar chart compares employment figures between males and females across four major sectors. In the technology sector, males account for 65 percent while females represent 35 percent. Healthcare shows a reverse pattern with 70 percent female and 30 percent male employees. Education demonstrates more balance with 55 percent female and 45 percent male workers. The manufacturing sector shows 60 percent male and 40 percent female employment. These figures highlight significant gender disparities in certain industries while others show more equitable distribution.",
+      "keywords": [
+        "dual bar chart",
+        "employment",
+        "gender",
+        "male",
+        "female",
+        "sectors",
+        "technology",
+        "healthcare",
+        "education",
+        "manufacturing",
+        "percentage"
+      ]
+    },
+    {
+      "id": "img008",
+      "filename": "budget_allocation.png",
+      "title": "Government Budget Allocation",
+      "difficulty": "medium",
+      "reference": "The pie chart depicts government budget allocation across major spending categories. Education receives the largest allocation at 28 percent, followed by healthcare at 24 percent. Defense spending accounts for 18 percent of the total budget. Infrastructure development is allocated 15 percent, while social welfare programs receive 10 percent. The remaining 5 percent is distributed among other governmental functions. This allocation reflects priorities in human capital development and public services, with education and healthcare commanding over half of total expenditure.",
+      "keywords": [
+        "pie chart",
+        "government budget",
+        "allocation",
+        "education",
+        "healthcare",
+        "defense",
+        "infrastructure",
+        "percentage",
+        "spending"
+      ]
+    },
+    {
+      "id": "img009",
+      "filename": "temperature_cities.png",
+      "title": "Temperature Comparison - Three Cities",
+      "difficulty": "medium",
+      "reference": "The multi-line graph compares average monthly temperatures across three cities throughout the year. City A, located in a tropical region, maintains consistently high temperatures between 25 and 30 degrees Celsius year-round. City B shows moderate seasonal variation, ranging from 10 degrees in winter months to 22 degrees in summer. City C demonstrates the most dramatic seasonal changes, with winter temperatures dropping to minus 5 degrees and summer peaks reaching 28 degrees. The graph clearly illustrates different climate patterns, with City C showing the greatest temperature range of 33 degrees between seasons.",
+      "keywords": [
+        "multi-line graph",
+        "temperature",
+        "three cities",
+        "comparison",
+        "seasonal",
+        "degrees Celsius",
+        "tropical",
+        "variation",
+        "climate"
+      ]
+    },
+    {
+      "id": "img010",
+      "filename": "water_cycle.png",
+      "title": "The Water Cycle Process",
+      "difficulty": "medium",
+      "reference": "The process diagram illustrates the continuous water cycle in nature. The cycle begins with evaporation, where water from oceans, lakes, and rivers transforms into water vapor due to solar heat. This vapor rises into the atmosphere where it undergoes condensation, forming clouds. As clouds accumulate moisture, precipitation occurs in the form of rain, snow, or hail. The precipitated water then flows back to water bodies through surface runoff or seeps into the ground as groundwater. Some groundwater feeds back into rivers and lakes, completing the cycle. This continuous process is essential for distributing water across the planet.",
+      "keywords": [
+        "process diagram",
+        "water cycle",
+        "evaporation",
+        "condensation",
+        "precipitation",
+        "runoff",
+        "groundwater",
+        "continuous",
+        "atmosphere"
+      ]
+    }
+  ]
+}

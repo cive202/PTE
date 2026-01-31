@@ -10,14 +10,15 @@ import difflib
 from pathlib import Path
 
 # Add project root to path to import pte_core
-PROJECT_ROOT = Path("C:/Users/Acer/DataScience/PTE")
+# Add project root to path to import pte_core
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from pte_core.asr.pseudo_voice2text import voice2text_segment
 
 # --- Configuration ---
-# We assume the app runs from project root C:\Users\Acer\DataScience\PTE
+# We assume the app runs from project root
 MFA_BASE_DIR = PROJECT_ROOT / "PTE_MFA_TESTER_DOCKER"
 
 # Docker Mount: Maps MFA_BASE_DIR (Host) -> /data (Container)
@@ -30,22 +31,22 @@ ACCENTS_CONFIG = {
         "dict_rel": "eng_indian_model/english_india_mfa.dict",
         "model_rel": "eng_indian_model/english_mfa.zip"
     },
-    "Nigerian": {
-        "dict_rel": "eng_nigeria_model/english_nigeria_mfa.dict",
-        "model_rel": "eng_nigeria_model/english_mfa.zip"
-    },
-    "US_ARPA": {
-        "dict_rel": "eng_us_model/english_us_arpa.dict",
-        "model_rel": "eng_us_model/english_us_arpa.zip"
-    },
-    "US_MFA": {
-        "dict_rel": "eng_us_model_2/english_us_mfa.dict",
-        "model_rel": "eng_us_model_2/english_mfa.zip"
-    },
-    "UK": {
-        "dict_rel": "english_uk_model/english_uk_mfa.dict",
-        "model_rel": "english_uk_model/english_mfa.zip"
-    }
+    # "Nigerian": {
+    #     "dict_rel": "eng_nigeria_model/english_nigeria_mfa.dict",
+    #     "model_rel": "eng_nigeria_model/english_mfa.zip"
+    # },
+    # "US_ARPA": {
+    #     "dict_rel": "eng_us_model/english_us_arpa.dict",
+    #     "model_rel": "eng_us_model/english_us_arpa.zip"
+    # },
+    # "US_MFA": {
+    #     "dict_rel": "eng_us_model_2/english_us_mfa.dict",
+    #     "model_rel": "eng_us_model_2/english_mfa.zip"
+    # },
+    # "UK": {
+    #     "dict_rel": "english_uk_model/english_uk_mfa.dict",
+    #     "model_rel": "english_uk_model/english_mfa.zip"
+    # }
 }
 
 # --- Validation Logic (Ported from test_mfa_output.py) ---
@@ -151,19 +152,45 @@ def get_phones_for_word(word_info, all_phones):
 
 # --- ASR Logic ---
 
+ASR_SERVICE_URL = "http://localhost:8000/transcribe"
+USE_MOCK_ASR = False  # Set to True for testing without Docker
+
 def transcribe_audio(audio_path):
     """
-    Use pseudo_voice2text instead of real Whisper.
-    Ignores the audio_path content and returns the hardcoded transcript.
+    Transcribe audio using Whisper ASR from Docker service.
+    Falls back to mock data if USE_MOCK_ASR is True or service is unavailable.
     """
-    try:
+    if USE_MOCK_ASR:
+        # Fallback to mock data for testing
         segments = voice2text_segment()
         if segments:
             return segments[0]["value"]
         return ""
+    
+    try:
+        import requests
+        
+        with open(audio_path, 'rb') as audio_file:
+            files = {'audio': ('audio.wav', audio_file, 'audio/wav')}
+            response = requests.post(ASR_SERVICE_URL, files=files, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('text', '').strip()
+        else:
+            print(f"ASR service error: {response.status_code} - {response.text}")
+            # Fallback to mock
+            segments = voice2text_segment()
+            return segments[0]["value"] if segments else ""
+            
+    except requests.exceptions.ConnectionError:
+        print("ASR service not available, using mock data")
+        segments = voice2text_segment()
+        return segments[0]["value"] if segments else ""
     except Exception as e:
-        print(f"Pseudo-ASR failed: {e}")
-        return ""
+        print(f"Transcription failed: {e}")
+        segments = voice2text_segment()
+        return segments[0]["value"] if segments else ""
 
 def compare_text(reference_text, transcription):
     """
@@ -224,6 +251,24 @@ def compare_text(reference_text, transcription):
 
 # --- Alignment Workflow ---
 
+# Global cache for dictionaries
+CACHED_DICTIONARIES = {}
+
+def get_dictionary(accent):
+    """Get dictionary from cache or load it."""
+    if accent in CACHED_DICTIONARIES:
+        return CACHED_DICTIONARIES[accent]
+    
+    conf = ACCENTS_CONFIG.get(accent)
+    if not conf:
+        return {}
+        
+    dict_path = MFA_BASE_DIR / conf['dict_rel']
+    print(f"Loading dictionary for {accent} from {dict_path}...")
+    d = load_dictionary(dict_path)
+    CACHED_DICTIONARIES[accent] = d
+    return d
+
 def align_and_validate(audio_path, text_path):
     """
     1. Transcribe with Pseudo-ASR to check content.
@@ -260,11 +305,10 @@ def align_and_validate(audio_path, text_path):
         # Docker paths
         docker_input_dir = f"/data/data/{temp_dir_name}"
         
-        # Load Dictionaries (Local)
+        # Load Dictionaries (Cached)
         dictionaries = {}
-        for accent, conf in ACCENTS_CONFIG.items():
-            dict_path = MFA_BASE_DIR / conf['dict_rel']
-            dictionaries[accent] = load_dictionary(dict_path)
+        for accent in ACCENTS_CONFIG:
+            dictionaries[accent] = get_dictionary(accent)
             
         # Run Alignment for each accent
         accent_tgs = {} # accent -> path to TG

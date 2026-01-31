@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTE Practice Platform</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">PTE Practice Platform</h1>
+            <p class="page-subtitle">Practice speaking tasks with AI-powered feedback</p>
+        </div>
+
+        <div class="card-grid">
+            <!-- Read Aloud -->
+            <a href="/speaking/read-aloud" class="task-card status-available">
+                <div class="card-icon">📖</div>
+                <h3 class="card-title">Read Aloud</h3>
+                <p class="card-description">
+                    Read a text passage aloud with clear pronunciation and natural fluency.
+                </p>
+                <span class="card-badge badge-available">✅ Available</span>
+                <button class="card-button primary">Start Practice →</button>
+            </a>
+
+            <!-- Repeat Sentence -->
+            <a href="/speaking/repeat-sentence" class="task-card status-available">
+                <div class="card-icon">🔁</div>
+                <h3 class="card-title">Repeat Sentence</h3>
+                <p class="card-description">
+                    Listen to a sentence and repeat it exactly as you heard it.
+                </p>
+                <span class="card-badge badge-available">✅ Available</span>
+                <button class="card-button primary">Start Practice →</button>
+            </a>
+
+            <!-- Describe Image -->
+            <a href="/speaking/describe-image" class="task-card status-available">
+                <div class="card-icon">🖼️</div>
+                <h3 class="card-title">Describe Image</h3>
+                <p class="card-description">
+                    Describe charts, graphs, and images in detail with key information.
+                </p>
+                <span class="card-badge badge-available">✅ Available</span>
+                <button class="card-button primary">Start Practice →</button>
+            </a>
+
+            <!-- Retell Lecture -->
+            <div class="task-card disabled">
+                <div class="card-icon">🎤</div>
+                <h3 class="card-title">Retell Lecture</h3>
+                <p class="card-description">
+                    Listen to a lecture and summarize the main points in your own words.
+                </p>
+                <span class="card-badge badge-coming">⚪ Coming Soon</span>
+                <button class="card-button disabled">Coming Soon</button>
+            </div>
+
+            <!-- Answer Short Question -->
+            <div class="task-card disabled">
+                <div class="card-icon">❓</div>
+                <h3 class="card-title">Answer Short Question</h3>
+                <p class="card-description">
+                    Provide brief, accurate answers to simple questions.
+                </p>
+                <span class="card-badge badge-coming">⚪ Coming Soon</span>
+                <button class="card-button disabled">Coming Soon</button>
+            </div>
+        </div>
+
+        <footer class="page-footer">
+            PTE Practice Platform • Powered by Whisper ASR & MFA
+        </footer>
+    </div>
+</body>
+
+</html>
