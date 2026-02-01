@@ -8,3 +8,7 @@ scipy
 nltk
 scikit-learn
 requests
+openai-whisper
+fastapi
+uvicorn
+python-multipart
