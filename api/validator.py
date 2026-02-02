@@ -35,10 +35,10 @@ ACCENTS_CONFIG = {
     #     "dict_rel": "eng_nigeria_model/english_nigeria_mfa.dict",
     #     "model_rel": "eng_nigeria_model/english_mfa.zip"
     # },
-    # "US_ARPA": {
-    #     "dict_rel": "eng_us_model/english_us_arpa.dict",
-    #     "model_rel": "eng_us_model/english_us_arpa.zip"
-    # },
+    "US_ARPA": {
+        "dict_rel": "eng_us_model/english_us_arpa.dict",
+        "model_rel": "eng_us_model/english_us_arpa.zip"
+    },
     # "US_MFA": {
     #     "dict_rel": "eng_us_model_2/english_us_mfa.dict",
     #     "model_rel": "eng_us_model_2/english_mfa.zip"

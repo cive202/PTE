@@ -13,25 +13,30 @@ if PROJECT_ROOT not in sys.path:
 
 from api.validator import align_and_validate
 from api.image_evaluator import get_random_image, evaluate_description
+from api.lecture_evaluator import get_random_lecture, evaluate_lecture
 from api.file_utils import (
     get_paired_paths,
     get_temp_filepath,
     FEATURE_READ_ALOUD,
-    FEATURE_DESCRIBE_IMAGE
+    FEATURE_DESCRIBE_IMAGE,
+    FEATURE_RETELL_LECTURE
 )
 
 app = Flask(__name__)
 CORPUS_DIR = os.path.join(PROJECT_ROOT, "corpus")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 IMAGES_DIR = os.path.join(DATA_DIR, "images")
+LECTURES_DIR = os.path.join(DATA_DIR, "lectures")
 os.makedirs(CORPUS_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
+os.makedirs(LECTURES_DIR, exist_ok=True)
 
 # ============================================================================
 # JOB QUEUE SYSTEM
 # ============================================================================
 JOB_STORE = {}  # {job_id: {status, result, error, audio_path, text_path}}
 IMAGE_JOB_STORE = {}  # {job_id: {status, result, error, image_id, audio_path}}
+LECTURE_JOB_STORE = {}  # {job_id: {status, result, error, lecture_id, audio_path}}
 
 def run_mfa_job(job_id, audio_path, text_path):
     """Background worker for MFA alignment."""
@@ -96,6 +101,41 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         except Exception:
             pass
 
+def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
+    """Background worker for lecture evaluation."""
+    try:
+        LECTURE_JOB_STORE[job_id]['status'] = 'processing'
+        
+        # Transcribe audio using Whisper
+        import requests
+        with open(audio_path, 'rb') as audio_file:
+            files = {'audio': ('audio.wav', audio_file, 'audio/wav')}
+            response = requests.post('http://localhost:8000/transcribe', files=files, timeout=60)
+        
+        if response.status_code != 200:
+            raise Exception(f"ASR service error: {response.status_code}")
+        
+        asr_result = response.json()
+        transcription = asr_result.get('text', '').strip()
+        
+        # Evaluate summary
+        result = evaluate_lecture(lecture_id, transcription)
+        
+        LECTURE_JOB_STORE[job_id]['status'] = 'complete'
+        LECTURE_JOB_STORE[job_id]['result'] = result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        LECTURE_JOB_STORE[job_id]['status'] = 'failed'
+        LECTURE_JOB_STORE[job_id]['error'] = str(e)
+    finally:
+        # Cleanup temp files
+        try:
+            if os.path.exists(audio_path):
+                os.remove(audio_path)
+        except Exception:
+            pass
+
 # ============================================================================
 # UTILITY
 # ============================================================================
@@ -141,6 +181,11 @@ def repeat_sentence():
 def describe_image_speaking():
     """Describe Image practice page."""
     return render_template('describe_image.html')
+
+@app.route('/speaking/retell-lecture')
+def retell_lecture_page():
+    """Retell Lecture practice page."""
+    return render_template('retell_lecture.html')
 
 # Backward compatibility redirects
 @app.route('/check-pronunciation')
@@ -360,6 +405,107 @@ def description_status(job_id):
 def serve_image(filename):
     """Serve images from data/images directory."""
     return send_from_directory(IMAGES_DIR, filename)
+
+@app.route('/lectures/<path:filename>')
+def serve_lecture(filename):
+    """Serve lecture audio from data/lectures directory."""
+    return send_from_directory(LECTURES_DIR, filename)
+
+# ============================================================================
+# ROUTES - RETELL LECTURE
+# ============================================================================
+@app.route('/retell-lecture/get-lecture', methods=['GET'])
+def get_lecture_task():
+    """Get a random lecture for retell task."""
+    lecture_data = get_random_lecture()
+    if not lecture_data:
+        return jsonify({"error": "No lectures available"}), 404
+    
+    return jsonify({
+        "lecture_id": lecture_data['id'],
+        "audio_url": f"/lectures/{lecture_data['filename']}",
+        "title": lecture_data['title']
+    })
+
+@app.route('/retell-lecture/submit', methods=['POST'])
+def submit_lecture():
+    """Submit audio summary for async evaluation."""
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file"}), 400
+    
+    file = request.files['audio']
+    lecture_id = request.form.get('lecture_id', '')
+    
+    if not lecture_id:
+        return jsonify({"error": "No lecture_id provided"}), 400
+    
+    # Generate unique job ID
+    job_id = str(uuid.uuid4())[:8]
+    
+    # Use standardized file naming
+    audio_path, _ = get_paired_paths(FEATURE_RETELL_LECTURE)
+    temp_upload = get_temp_filepath(f'lec_{job_id}', 'tmp')
+    
+    try:
+        file.save(temp_upload)
+        
+        # Convert to ensure 16kHz WAV
+        if not convert_to_wav(temp_upload, audio_path):
+            return jsonify({"error": "Audio conversion failed"}), 500
+        
+        # Remove temp upload after conversion
+        if os.path.exists(temp_upload):
+            os.remove(temp_upload)
+        
+        # Initialize job in store
+        LECTURE_JOB_STORE[job_id] = {
+            'status': 'queued',
+            'result': None,
+            'error': None,
+            'lecture_id': lecture_id,
+            'audio_path': audio_path,
+            'created_at': datetime.datetime.now().isoformat()
+        }
+        
+        # Start background thread
+        thread = threading.Thread(
+            target=run_lecture_evaluation_job,
+            args=(job_id, lecture_id, audio_path),
+            daemon=True
+        )
+        thread.start()
+        
+        return jsonify({
+            "status": "queued",
+            "job_id": job_id,
+            "estimated_time": 10,
+            "message": "Processing started. Poll /retell-lecture/status/<job_id> for results."
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/retell-lecture/status/<job_id>', methods=['GET'])
+def lecture_status(job_id):
+    """Get status of a lecture evaluation job."""
+    if job_id not in LECTURE_JOB_STORE:
+        return jsonify({"error": "Job not found"}), 404
+    
+    job = LECTURE_JOB_STORE[job_id]
+    
+    response = {
+        "job_id": job_id,
+        "status": job['status']
+    }
+    
+    if job['status'] == 'complete':
+        response['result'] = job['result']
+    elif job['status'] == 'failed':
+        response['error'] = job['error']
+    
+    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
