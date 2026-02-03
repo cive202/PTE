@@ -26,7 +26,7 @@ Write-Host "Checking service health..."
 try {
     $response = Invoke-RestMethod -Uri "http://localhost:$PORT/health" -Method Get
     Write-Host "Service Status: $($response.status)"
-    Write-Host "Whisper Loaded: $($response.whisper)"
+    Write-Host "ASR Model Loaded: $($response.asr_model)"
     Write-Host "LanguageTool Loaded: $($response.language_tool)"
 } catch {
     Write-Host "Failed to connect to service. Check logs:"

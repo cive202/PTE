@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repeat Sentence - PTE Practice</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .sentence-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+            display: none; /* Hidden during initial phase */
+        }
+        .instruction {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .word-container { 
+            display: inline-flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin: 5px; 
+            vertical-align: top;
+        }
+        .word { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold;
+            border: 2px solid transparent;
+            cursor: help;
+            position: relative;
+        }
+        .word:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: pre;
+            z-index: 100;
+            margin-bottom: 8px;
+            pointer-events: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            line-height: 1.4;
+            display: none;
+        }
+        .word[data-tooltip]:hover::after { display: block; }
+        .correct { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
+        .wrong { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }   
+        .mispronounced { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .inserted { background-color: #cce5ff; color: #004085; border-color: #b8daff; }
+        
+        #progress-container { 
+            margin-top: 1rem; 
+            background-color: #e0e0e0; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            display: none;
+            height: 25px;
+            position: relative;
+        }
+        #progress-bar { 
+            width: 0%; 
+            height: 100%; 
+            background-color: #4CAF50; 
+            transition: width 0.3s ease-in-out; 
+        }
+        #progress-text {
+            position: absolute; width: 100%; text-align: center;
+            top: 0; left: 0; line-height: 25px; font-size: 0.8rem;
+            color: #333; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1 class="page-title">Repeat Sentence</h1>
+            <p class="page-subtitle">Listen to the sentence and repeat it exactly.</p>
+        </div>
+
+        <div class="task-container">
+            <div id="setup-phase">
+                <button id="btn-start-task" class="btn primary">Start Task</button>
+            </div>
+
+            <div id="active-phase" style="display:none;">
+                <div class="instruction" id="task-instruction">Listen to the sentence...</div>
+                <div id="sentence-display" class="sentence-display"></div>
+                
+                <div class="controls">
+                    <button id="btn-record" class="btn primary" disabled>Record</button>
+                    <button id="btn-stop" class="btn danger" disabled>Stop</button>
+                    <span id="recording-indicator" style="display:none; color: red;">🔴 Recording...</span>
+                </div>
+
+                <div id="audio-playback-container" style="display:none; margin-top: 1rem;">
+                    <strong>Your Recording:</strong>
+                    <audio id="audio-playback" controls style="width: 100%;"></audio>
+                </div>
+
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                    <div id="progress-text">0%</div>
+                </div>
+
+                <div id="results-container" style="margin-top: 2rem;">
+                    <div id="status"></div>
+                    <div id="metrics" style="margin-top: 0.5rem; font-weight: bold;"></div>
+                    <div id="results" style="margin-top: 1rem; line-height: 2;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+        let currentSentence = "";
+
+        const sentences = [
+            "The lecture on economic policy has been rescheduled to next Tuesday.",
+            "Please ensure all laboratory equipment is cleaned and stored properly after use.",
+            "Higher education prepares students for professional challenges in a globalized world.",
+            "The library will be closed for maintenance during the winter break.",
+            "Scientific research requires careful observation and systematic documentation of data."
+        ];
+
+        const btnStart = document.getElementById('btn-start-task');
+        const setupPhase = document.getElementById('setup-phase');
+        const activePhase = document.getElementById('active-phase');
+        const sentenceDisplay = document.getElementById('sentence-display');
+        const instruction = document.getElementById('task-instruction');
+        const btnRecord = document.getElementById('btn-record');
+        const btnStop = document.getElementById('btn-stop');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const metricsDiv = document.getElementById('metrics');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        btnStart.onclick = () => {
+            setupPhase.style.display = 'none';
+            activePhase.style.display = 'block';
+            startTask();
+        };
+
+        function startTask() {
+            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
+            instruction.innerText = "Prepare to listen...";
+            
+            // In a real app, we'd play audio here. 
+            // For this demo, we'll just show the sentence after 1 second and then hide it.
+            setTimeout(() => {
+                instruction.innerText = "Listen carefully...";
+                sentenceDisplay.innerText = currentSentence;
+                sentenceDisplay.style.display = 'block';
+                
+                setTimeout(() => {
+                    sentenceDisplay.style.display = 'none';
+                    instruction.innerText = "Now repeat the sentence!";
+                    btnRecord.disabled = false;
+                }, 3000);
+            }, 1000);
+        }
+
+        btnRecord.onclick = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = async () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                document.getElementById('audio-playback').src = URL.createObjectURL(audioBlob);
+                document.getElementById('audio-playback-container').style.display = 'block';
+                await checkPronunciation();
+            };
+            mediaRecorder.start();
+            btnRecord.disabled = true;
+            btnStop.disabled = false;
+            document.getElementById('recording-indicator').style.display = 'inline';
+        };
+
+        btnStop.onclick = () => {
+            mediaRecorder.stop();
+            btnStop.disabled = true;
+            document.getElementById('recording-indicator').style.display = 'none';
+        };
+
+        async function checkPronunciation() {
+            progressContainer.style.display = 'block';
+            statusDiv.innerText = "Analyzing your speech...";
+            
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'rs.wav');
+            formData.append('text', currentSentence);
+            formData.append('feature', 'repeat_sentence');
+
+            try {
+                const response = await fetch('/check_stream', { method: 'POST', body: formData });
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        const data = JSON.parse(line);
+                        if (data.type === 'progress') {
+                            progressBar.style.width = data.percent + '%';
+                            progressText.innerText = `${data.percent}% - ${data.message}`;
+                        } else if (data.type === 'result') {
+                            progressBar.style.width = '100%';
+                            progressText.innerText = "Complete!";
+                            handleResult(data.data);
+                        }
+                    }
+                }
+            } catch (err) {
+                statusDiv.innerText = "Error: " + err.message;
+            }
+        }
+
+        function handleResult(data) {
+            sentenceDisplay.style.display = 'block'; // Show original sentence for comparison
+            statusDiv.innerText = `Accuracy: ${(data.summary.correct / data.summary.total * 100).toFixed(1)}%`;
+            metricsDiv.innerHTML = `Speech Rate: ${data.speech_rate_scale}x | Pause Penalty: ${data.summary.pause_penalty}`;
+            
+            resultsDiv.innerHTML = "";
+            data.words.forEach(w => {
+                const container = document.createElement('div');
+                container.className = 'word-container';
+                const span = document.createElement('div');
+                span.innerText = w.word;
+                span.className = 'word ' + (w.status === 'correct' ? 'correct' : (w.status === 'inserted' ? 'inserted' : 'mispronounced'));
+                if (w.observed_phones) span.setAttribute('data-tooltip', `Observed: ${w.observed_phones}`);
+                container.appendChild(span);
+                resultsDiv.appendChild(container);
+            });
+        }
+    </script>
+</body>
+</html>

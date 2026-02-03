@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTE - Describe Image</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+
+        .nav-links {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-links a {
+            color: #3498db;
+            text-decoration: none;
+            margin-right: 1rem;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-title {
+            font-size: 1.1rem;
+            color: #34495e;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .instructions {
+            background: #e8f4f8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3498db;
+        }
+
+        .controls {
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #229954;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #7f8c8d;
+        }
+
+        .recording-indicator {
+            display: none;
+            color: #e74c3c;
+            font-weight: bold;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #e74c3c;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 24px;
+            background: #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.5s ease;
+            animation: pulse-progress 1.5s infinite;
+        }
+
+        @keyframes pulse-progress {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .progress-text {
+            margin-top: 0.75rem;
+            font-size: 0.95rem;
+            color: #666;
+            text-align: center;
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #status.show {
+            display: block;
+        }
+
+        #status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .results {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-number {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .score-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .feedback-box {
+            background: #fff3cd;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 1.5rem;
+        }
+
+        .feedback-box h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .detail-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .transcription-box {
+            background: #e9ecef;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            line-height: 2;
+        }
+
+        .transcription-box h4 {
+            margin-top: 0;
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+
+        /* Interactive Word Styles */
+        .interactive-word {
+            display: inline-block;
+            padding: 2px 4px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: help;
+            position: relative;
+            background: #fff;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+
+        .interactive-word:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .interactive-word.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .interactive-word.mispronounced {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .interactive-word.grammar-error {
+            border-bottom: 2px wavy #f44336;
+        }
+
+        .word-overlay {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 280px;
+            z-index: 1000;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+            text-align: left;
+        }
+
+        .interactive-word:hover .word-overlay {
+            display: block;
+        }
+
+        .word-overlay::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+
+        .overlay-section {
+            margin-bottom: 8px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .overlay-section:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .overlay-title {
+            font-weight: bold;
+            color: #ffca28;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .overlay-content {
+            line-height: 1.4;
+        }
+
+        .phone-display {
+            font-family: 'Courier New', monospace;
+            background: #444;
+            padding: 4px 6px;
+            border-radius: 3px;
+            margin: 2px 0;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-correct {
+            background: #28a745;
+        }
+
+        .status-mispronounced {
+            background: #dc3545;
+        }
+
+        .status-unknown {
+            background: #6c757d;
+        }
+
+        /* Audio Playback */
+        #audioPlayback {
+            display: none;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        #audioPlayback h4 {
+            margin: 0 0 0.5rem 0;
+            color: #495057;
+        }
+
+        #audioPlayer {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Ideal Answer Section */
+        #idealAnswerSection {
+            margin-top: 1.5rem;
+        }
+
+        #idealAnswerContent {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .ideal-answer-box {
+            background: #e7f3ff;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #007bff;
+        }
+
+        .ideal-answer-box h4 {
+            margin: 0 0 0.75rem 0;
+            color: #004085;
+        }
+
+        .keyword-analysis {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 6px;
+        }
+
+        .keyword-analysis h4 {
+            margin: 0 0 0.75rem 0;
+            color: #495057;
+        }
+
+        .keyword-list {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .keyword-mentioned {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .keyword-missed {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="/">← Back to Dashboard</a>
+        </div>
+
+        <h1>📊 Describe Image</h1>
+        <p class="subtitle">Look at the image and describe what you see in detail</p>
+
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ol style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
+                <li>Study the image carefully</li>
+                <li>Click "Start Recording" and describe the image in detail</li>
+                <li>Click "Stop Recording" when finished</li>
+                <li>Click "Submit Description" to get your score</li>
+            </ol>
+        </div>
+
+        <div class="image-title" id="imageTitle">Loading image...</div>
+
+        <div class="image-container" id="imageContainer">
+            <p style="color: #999;">Loading...</p>
+        </div>
+
+        <div class="controls">
+            <button id="btnRecord" class="btn-primary">🎤 Start Recording</button>
+            <button id="btnStop" class="btn-secondary" disabled>⏹ Stop Recording</button>
+            <button id="btnRerecord" class="btn-secondary" style="display:none;">🔄 Re-record</button>
+            <button id="btnSubmit" class="btn-success" disabled>✓ Submit Description</button>
+            <button id="btnNewImage" class="btn-secondary">🔄 New Image</button>
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="pulse"></div>
+                Recording...
+            </div>
+        </div>
+
+        <!-- Audio Playback -->
+        <div id="audioPlayback">
+            <h4 style="margin: 0 0 0.5rem 0; color: #495057;">🎧 Your Recording</h4>
+            <audio id="audioPlayer" controls style="width: 100%; margin-bottom: 0.5rem;"></audio>
+            <p style="margin: 0; font-size: 0.9rem; color: #666;">Listen to your recording before submitting</p>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText" class="progress-text">Processing...</div>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="results" id="results">
+            <div class="score-display">
+                <div class="score-label">Your Score</div>
+                <div class="score-number" id="scoreNumber">0</div>
+                <div class="score-label">out of 90</div>
+            </div>
+
+            <div class="feedback-box">
+                <h3>💡 Feedback</h3>
+                <p id="feedbackText"></p>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-card">
+                    <div class="detail-label">Content Accuracy</div>
+                    <div class="detail-value" id="contentScore">0</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">Keyword Coverage</div>
+                    <div class="detail-value" id="keywordScore">0%</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">Word Count</div>
+                    <div class="detail-value" id="wordCount">0</div>
+                </div>
+            </div>
+
+            <div class="transcription-box">
+                <h4>📝 Your Transcription</h4>
+                <div id="transcriptionText"></div>
+            </div>
+
+            <!-- Ideal Answer Section -->
+            <div id="idealAnswerSection">
+                <button id="btnShowIdeal"
+                    style="padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">
+                    📖 Show Ideal Answer
+                </button>
+
+                <div id="idealAnswerContent" style="display: none; margin-top: 1rem;">
+                    <div class="ideal-answer-box">
+                        <h4>📖 Ideal Answer</h4>
+                        <p id="referenceText" style="margin: 0; line-height: 1.6; color: #333;"></p>
+                    </div>
+
+                    <div class="keyword-analysis">
+                        <h4>🔍 Keyword Analysis</h4>
+                        <div id="keywordComparison"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob = null;
+        let currentImageId = null;
+        let pollInterval = null;
+        let currentResult = null; // Store result for ideal answer display
+
+        const btnRecord = document.getElementById('btnRecord');
+        const btnStop = document.getElementById('btnStop');
+        const btnRerecord = document.getElementById('btnRerecord');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const btnNewImage = document.getElementById('btnNewImage');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageTitle = document.getElementById('imageTitle');
+        const statusDiv = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const results = document.getElementById('results');
+
+        // Load initial image
+        loadNewImage();
+
+        function loadNewImage() {
+            fetch('/describe-image/get-image')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        showStatus(data.error, 'error');
+                        return;
+                    }
+                    currentImageId = data.image_id;
+                    imageTitle.textContent = data.title;
+                    imageContainer.innerHTML = `<img src="${data.image_url}" alt="${data.title}">`;
+                    results.classList.remove('show');
+                    statusDiv.classList.remove('show');
+                })
+                .catch(err => {
+                    showStatus('Failed to load image: ' + err.message, 'error');
+                });
+        }
+
+        btnNewImage.onclick = loadNewImage;
+
+        btnRecord.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+
+                    // Create playback URL
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+
+                    // Enable buttons
+                    btnSubmit.disabled = false;
+                    btnRerecord.style.display = 'inline-block';
+                    recordingIndicator.classList.remove('active');
+                    showStatus('Recording complete. You can listen to it or submit directly.', 'success');
+                };
+
+                mediaRecorder.start();
+                btnRecord.disabled = true;
+                btnStop.disabled = false;
+                recordingIndicator.classList.add('active');
+                results.classList.remove('show');
+                statusDiv.classList.remove('show');
+            } catch (err) {
+                showStatus('Error accessing microphone: ' + err.message, 'error');
+            }
+        };
+
+        btnStop.onclick = () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                btnRecord.disabled = false;
+                btnStop.disabled = true;
+            }
+        };
+
+        btnRerecord.onclick = () => {
+            // Reset recording state
+            audioBlob = null;
+            audioPlayer.src = '';
+            audioPlayback.style.display = 'none';
+            btnRerecord.style.display = 'none';
+            btnSubmit.disabled = true;
+            statusDiv.classList.remove('show');
+        };
+
+        btnSubmit.onclick = async () => {
+            if (!audioBlob || !currentImageId) return;
+
+            results.classList.remove('show');
+            statusDiv.classList.remove('show');
+
+            progressContainer.classList.add('active');
+            progressFill.style.width = '10%';
+            progressText.textContent = '📤 Uploading audio...';
+            btnSubmit.disabled = true;
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'description.wav');
+            formData.append('image_id', currentImageId);
+
+            try {
+                // Submit job
+                const res = await fetch('/describe-image/submit', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.error) {
+                    progressContainer.classList.remove('active');
+                    showStatus('Error: ' + data.error, 'error');
+                    btnSubmit.disabled = false;
+                    return;
+                }
+
+                const jobId = data.job_id;
+                progressFill.style.width = '20%';
+                progressText.textContent = '🔄 Transcribing and evaluating... (~10 seconds)';
+
+                // Poll for result
+                let elapsed = 0;
+                const estimatedTime = data.estimated_time || 10;
+
+                pollInterval = setInterval(async () => {
+                    elapsed += 2;
+                    const progress = Math.min(20 + (elapsed / estimatedTime) * 70, 90);
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `🔄 Processing... (${elapsed}s elapsed)`;
+
+                    try {
+                        const statusRes = await fetch(`/describe-image/status/${jobId}`);
+                        const status = await statusRes.json();
+
+                        if (status.status === 'complete') {
+                            clearInterval(pollInterval);
+                            progressFill.style.width = '100%';
+                            progressText.textContent = '✅ Complete!';
+                            setTimeout(() => {
+                                progressContainer.classList.remove('active');
+                                displayResult(status.result);
+                            }, 500);
+                            btnSubmit.disabled = false;
+                        } else if (status.status === 'failed') {
+                            clearInterval(pollInterval);
+                            progressContainer.classList.remove('active');
+                            showStatus('Error: ' + status.error, 'error');
+                            btnSubmit.disabled = false;
+                        }
+                    } catch (pollErr) {
+                        console.error('Poll error:', pollErr);
+                    }
+                }, 2000);
+
+            } catch (err) {
+                progressContainer.classList.remove('active');
+                showStatus('Submission failed: ' + err.message, 'error');
+                btnSubmit.disabled = false;
+            }
+        };
+
+        async function displayResult(result) {
+            currentResult = result; // Store for ideal answer display
+
+            document.getElementById('scoreNumber').textContent = result.score;
+            document.getElementById('feedbackText').textContent = result.feedback;
+            document.getElementById('contentScore').textContent = result.details.content_similarity + '%';
+            document.getElementById('keywordScore').textContent = result.details.keyword_coverage + '%';
+            document.getElementById('wordCount').textContent = result.details.word_count;
+            
+            // Render interactive transcription with MFA info
+            const transcriptionBox = document.getElementById('transcriptionText');
+            const details = result.transcription_details || { text: result.transcription || "", words: [] };
+            
+            transcriptionBox.innerHTML = '';
+            
+            // Check grammar using LanguageTool via proxy
+            let grammarIssues = [];
+            try {
+                const grammarRes = await fetch('/api/grammar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: details.text })
+                });
+                const grammarData = await grammarRes.json();
+                grammarIssues = grammarData.matches || [];
+            } catch (err) {
+                console.error("Grammar check failed:", err);
+            }
+
+            // Create interactive words
+            const words = details.text.split(/\s+/);
+            words.forEach((word, idx) => {
+                if (!word) return;
+                
+                const wordData = details.words[idx] || {};
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'interactive-word';
+                
+                // Add status class
+                if (wordData.status === 'correct') {
+                    wordSpan.classList.add('correct');
+                } else if (wordData.status === 'mispronounced') {
+                    wordSpan.classList.add('mispronounced');
+                }
+                
+                wordSpan.textContent = word;
+                
+                // Overlay content
+                let overlayHTML = `
+                    <div class="overlay-section">
+                        <div class="overlay-title">Word Analysis</div>
+                        <div class="overlay-content">
+                            <div><span class="status-indicator status-${wordData.status || 'unknown'}"></span>Status: ${wordData.status || 'unknown'}</div>
+                            <div>Timing: ${(wordData.start !== undefined && wordData.start !== null) ? wordData.start.toFixed(2) : 'N/A'}s - ${(wordData.end !== undefined && wordData.end !== null) ? wordData.end.toFixed(2) : 'N/A'}s</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add phone analysis if available
+                if (wordData.observed_phones || wordData.expected_phones) {
+                    overlayHTML += `
+                        <div class="overlay-section">
+                            <div class="overlay-title">Phonetic Analysis</div>
+                            <div class="overlay-content">
+                    `;
+                    
+                    if (wordData.observed_phones) {
+                        overlayHTML += `<div class="phone-display">Observed: ${wordData.observed_phones}</div>
+                        `;
+                    }
+                    
+                    if (wordData.expected_phones) {
+                        overlayHTML += `<div class="phone-display">Expected: ${wordData.expected_phones}</div>
+                        `;
+                    }
+                    
+                    if (wordData.stress_error) {
+                        overlayHTML += `<div style="color: #ff9800; font-size: 0.8rem; margin-top: 4px;">⚠ Stress error detected</div>
+                        `;
+                    }
+                    
+                    overlayHTML += `</div>
+                        </div>
+                    `;
+                }
+                
+                // Find grammar issues for this word
+                const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
+                if (wordIssues.length > 0) {
+                    wordSpan.classList.add('grammar-error');
+                    overlayHTML += `
+                        <div class="overlay-section">
+                            <div class="overlay-title" style="color: #ff5252;">Grammar/Spelling</div>
+                            <div class="overlay-content">
+                                ${wordIssues.map(i => `<div>• ${i}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'word-overlay';
+                overlay.innerHTML = overlayHTML;
+                wordSpan.appendChild(overlay);
+                
+                transcriptionBox.appendChild(wordSpan);
+                transcriptionBox.appendChild(document.createTextNode(' '));
+            });
+
+            results.classList.add('show');
+            showStatus(`Evaluation complete! Score: ${result.score}/90`, 'success');
+        }
+
+        // Ideal Answer Button Handler
+        document.getElementById('btnShowIdeal').onclick = () => {
+            if (!currentResult) return;
+
+            const idealContent = document.getElementById('idealAnswerContent');
+            const btnShowIdeal = document.getElementById('btnShowIdeal');
+
+            if (idealContent.style.display === 'none') {
+                // Show ideal answer
+                document.getElementById('referenceText').textContent = currentResult.reference || 'No reference available';
+
+                // Generate keyword comparison
+                const keywords = currentResult.keywords || [];
+                const studentText = currentResult.transcription || '';
+                const studentLower = studentText.toLowerCase();
+
+                const mentioned = keywords.filter(kw => studentLower.includes(kw.toLowerCase()));
+                const missed = keywords.filter(kw => !studentLower.includes(kw.toLowerCase()));
+
+                let comparisonHTML = '';
+                if (mentioned.length > 0) {
+                    comparisonHTML += '<div class="keyword-list"><strong class="keyword-mentioned">✅ You mentioned:</strong><br>';
+                    comparisonHTML += '<span style="color: #666;">' + mentioned.join(', ') + '</span></div>';
+                }
+                if (missed.length > 0) {
+                    comparisonHTML += '<div class="keyword-list"><strong class="keyword-missed">❌ You missed:</strong><br>';
+                    comparisonHTML += '<span style="color: #666;">' + missed.join(', ') + '</span></div>';
+                }
+                if (comparisonHTML === '') {
+                    comparisonHTML = '<p style="color: #666;">No keyword analysis available.</p>';
+                }
+
+                document.getElementById('keywordComparison').innerHTML = comparisonHTML;
+
+                idealContent.style.display = 'block';
+                btnShowIdeal.textContent = '📖 Hide Ideal Answer';
+            } else {
+                // Hide ideal answer
+                idealContent.style.display = 'none';
+                btnShowIdeal.textContent = '📖 Show Ideal Answer';
+            }
+        };
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'show ' + type;
+        }
+    </script>
+</body>
+</html>

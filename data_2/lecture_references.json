@@ -1,0 +1,49 @@
+{
+    "lectures": [
+        {
+            "id": "lec_001",
+            "title": "Introduction to Galaxies",
+            "filename": "galaxy_intro.wav",
+            "transcript": "Galaxies are massive systems of stars, gas, dust, and dark matter held together by gravity. There are billions of galaxies in the observable universe. They come in various shapes and sizes, with the most common types being spiral, elliptical, and irregular. Our own galaxy, the Milky Way, is a spiral galaxy. One of the most important features of galaxies is that they are not static; they are constantly evolving and interacting with their neighbors.",
+            "keywords": [
+                "galaxy",
+                "stars",
+                "gravity",
+                "universe",
+                "spiral",
+                "elliptical",
+                "milky way",
+                "evolving"
+            ],
+            "key_points": [
+                "Galaxies are massive systems held together by gravity",
+                "There are billions of galaxies with different shapes like spiral and elliptical",
+                "The Milky Way is a spiral galaxy",
+                "Galaxies are dynamic and constantly evolving"
+            ]
+        },
+        {
+            "id": "lec_002",
+            "title": "The Role of Bees",
+            "filename": "bees_pollination.wav",
+            "transcript": "Bees play a crucial role in our ecosystem primarily as pollinators. When bees travel from flower to flower in search of nectar, they transfer pollen, which allows plants to reproduce. This process is essential for the production of many fruits, vegetables, and seeds that humans and other animals rely on for food. Unfortunately, bee populations are declining due to factors like habitat loss, pesticide use, and climate change.",
+            "keywords": [
+                "bees",
+                "ecosystem",
+                "pollinators",
+                "nectar",
+                "pollen",
+                "reproduce",
+                "food",
+                "declining",
+                "habitat"
+            ],
+            "key_points": [
+                "Bees are essential pollinators for the ecosystem",
+                "They transfer pollen allowing plants to reproduce",
+                "Many food sources depend on bee pollination",
+                "Bee populations are declining due to human and environmental factors"
+            ]
+        }
+    ]
+}

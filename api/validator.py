@@ -7,6 +7,7 @@ import uuid
 import time
 import sys
 import difflib
+import concurrent.futures
 from pathlib import Path
 
 # Add project root to path to import pte_core
@@ -14,7 +15,11 @@ PROJECT_ROOT = Path("C:/Users/Acer/DataScience/PTE")
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pte_core.asr.pseudo_voice2text import voice2text_segment
+from pte_core.asr.voice2text import voice2text
+from pte_core.pause.pause_evaluator import evaluate_pause
+from pte_core.pause.hesitation import apply_hesitation_clustering, aggregate_pause_penalty
+from pte_core.pause.speech_rate import calculate_speech_rate_scale
+from read_aloud.alignment.normalizer import PAUSE_PUNCTUATION, is_punctuation
 
 # --- Configuration ---
 # We assume the app runs from project root C:\Users\Acer\DataScience\PTE
@@ -30,21 +35,9 @@ ACCENTS_CONFIG = {
         "dict_rel": "eng_indian_model/english_india_mfa.dict",
         "model_rel": "eng_indian_model/english_mfa.zip"
     },
-    "Nigerian": {
-        "dict_rel": "eng_nigeria_model/english_nigeria_mfa.dict",
-        "model_rel": "eng_nigeria_model/english_mfa.zip"
-    },
     "US_ARPA": {
         "dict_rel": "eng_us_model/english_us_arpa.dict",
         "model_rel": "eng_us_model/english_us_arpa.zip"
-    },
-    "US_MFA": {
-        "dict_rel": "eng_us_model_2/english_us_mfa.dict",
-        "model_rel": "eng_us_model_2/english_mfa.zip"
-    },
-    "UK": {
-        "dict_rel": "english_uk_model/english_uk_mfa.dict",
-        "model_rel": "english_uk_model/english_mfa.zip"
     }
 }
 
@@ -153,29 +146,41 @@ def get_phones_for_word(word_info, all_phones):
 
 def transcribe_audio(audio_path):
     """
-    Use pseudo_voice2text instead of real Whisper.
-    Ignores the audio_path content and returns the hardcoded transcript.
+    Use real ASR service via pte_core.
     """
     try:
-        segments = voice2text_segment()
-        if segments:
-            return segments[0]["value"]
-        return ""
+        result = voice2text(audio_path)
+        return result.get("text", "")
     except Exception as e:
-        print(f"Pseudo-ASR failed: {e}")
+        print(f"ASR failed: {e}")
         return ""
 
 def compare_text(reference_text, transcription):
     """
     Compare reference text with transcription using difflib.
     Returns a list of word objects with status: 'correct', 'omitted', 'inserted', 'substituted'.
+    Preserves punctuation marks (,.) for pause scoring.
     """
-    # Tokenize (simple split for now, remove punctuation)
-    def tokenize(text):
-        return [w.strip(".,!?;:\"").lower() for w in text.split()]
+    def tokenize(text, preserve_pause_punct=True):
+        if not preserve_pause_punct:
+            return [w.strip(".,!?;:\"").lower() for w in text.split()]
+        
+        # Split by whitespace, then separate trailing pause punctuation
+        tokens = []
+        for word in text.split():
+            clean_word = word.lower()
+            if clean_word.endswith(',') or clean_word.endswith('.'):
+                punct = clean_word[-1]
+                word_part = clean_word[:-1].strip("!?;:\"")
+                if word_part:
+                    tokens.append(word_part)
+                tokens.append(punct)
+            else:
+                tokens.append(clean_word.strip("!?;:\""))
+        return [t for t in tokens if t]
 
     ref_words = tokenize(reference_text)
-    trans_words = tokenize(transcription)
+    trans_words = tokenize(transcription, preserve_pause_punct=False) # Transcriptions usually don't have punct
     
     matcher = difflib.SequenceMatcher(None, ref_words, trans_words)
     diff_results = []
@@ -183,25 +188,28 @@ def compare_text(reference_text, transcription):
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == 'equal':
             # Words match
-            for k in range(i1, i2):
+            for k, l in zip(range(i1, i2), range(j1, j2)):
                 diff_results.append({
                     "word": ref_words[k],
                     "status": "correct",
-                    "ref_index": k
+                    "ref_index": k,
+                    "trans_index": l
                 })
         elif tag == 'replace':
             # Substitution (Mismatch)
             for k in range(i1, i2):
                 diff_results.append({
                     "word": ref_words[k],
-                    "status": "omitted", # or "substituted"
-                    "ref_index": k
+                    "status": "omitted",
+                    "ref_index": k,
+                    "trans_index": None
                 })
-            for k in range(j1, j2):
+            for l in range(j1, j2):
                 diff_results.append({
-                    "word": trans_words[k],
+                    "word": trans_words[l],
                     "status": "inserted",
-                    "ref_index": None
+                    "ref_index": None,
+                    "trans_index": l
                 })
         elif tag == 'delete':
             # Words in Ref but not in Trans (Omitted)
@@ -209,42 +217,121 @@ def compare_text(reference_text, transcription):
                 diff_results.append({
                     "word": ref_words[k],
                     "status": "omitted",
-                    "ref_index": k
+                    "ref_index": k,
+                    "trans_index": None
                 })
         elif tag == 'insert':
             # Words in Trans but not in Ref (Inserted)
-            for k in range(j1, j2):
+            for l in range(j1, j2):
                 diff_results.append({
-                    "word": trans_words[k],
+                    "word": trans_words[l],
                     "status": "inserted",
-                    "ref_index": None
+                    "ref_index": None,
+                    "trans_index": l
                 })
                 
     return diff_results, " ".join(trans_words)
 
-# --- Alignment Workflow ---
+def calculate_pauses(word_timestamps, threshold=0.5):
+    """
+    Calculate pauses between words.
+    threshold: minimum duration in seconds to be considered a pause.
+    """
+    pauses = []
+    for i in range(len(word_timestamps) - 1):
+        current_word_end = word_timestamps[i]['end']
+        next_word_start = word_timestamps[i+1]['start']
+        duration = next_word_start - current_word_end
+        if duration > threshold:
+            pauses.append({
+                "start": current_word_end,
+                "end": next_word_start,
+                "duration": round(duration, 2),
+                "after_word": word_timestamps[i]['value']
+            })
+    return pauses
 
-def align_and_validate(audio_path, text_path):
+def transcribe_audio_with_details(audio_path):
     """
-    1. Transcribe with Pseudo-ASR to check content.
-    2. Create a temp dir in PTE_MFA_TESTER_DOCKER/data
-    3. Copy audio/text there.
-    4. Run Docker alignment for all accents.
-    5. Validate and return report combining ASR and MFA results.
+    Use real ASR service via pte_core.
+    Returns full result dict with text and word_timestamps.
     """
+    try:
+        return voice2text(audio_path)
+    except Exception as e:
+        print(f"ASR failed: {e}")
+        return {"text": "", "word_timestamps": []}
+
+def run_single_alignment(accent, conf, run_id, docker_input_dir):
+    """Run MFA alignment for a single accent in Docker."""
+    output_dir_name = f"output_{accent}_{run_id}"
+    docker_output_dir = f"/data/data/{output_dir_name}"
+    host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
+    
+    cmd = [
+        "docker", "run", "--rm",
+        "-v", f"{MFA_BASE_DIR}:/data",
+        DOCKER_IMAGE,
+        "mfa", "align",
+        docker_input_dir,
+        f"/data/{conf['dict_rel']}",
+        f"/data/{conf['model_rel']}",
+        docker_output_dir,
+        "--clean", "--quiet"
+    ]
+    
+    try:
+        subprocess.run(cmd, check=True, timeout=300)
+        tg_file = host_output_dir / "input.TextGrid"
+        if tg_file.exists():
+            return accent, tg_file
+    except Exception as e:
+        print(f"Alignment failed for {accent}: {e}")
+    return accent, None
+
+def align_and_validate_gen(audio_path, text_path, accents=None):
+    """
+    Generator version of align_and_validate for real-time progress updates.
+    Yields: {"type": "progress", "percent": int, "message": str}
+    Finally yields: {"type": "result", "data": dict}
+    """
+    # Use specified accents or default to all
+    target_accents = {a: ACCENTS_CONFIG[a] for a in accents if a in ACCENTS_CONFIG} if accents else ACCENTS_CONFIG
     
     # --- Step 1: ASR Transcription & Content Check ---
+    yield {"type": "progress", "percent": 5, "message": "Reading reference text..."}
     with open(text_path, 'r', encoding='utf-8') as f:
         reference_text = f.read().strip()
         
-    transcript = transcribe_audio(audio_path)
+    yield {"type": "progress", "percent": 10, "message": "Transcribing audio with Parakeet ASR..."}
+    asr_result = transcribe_audio_with_details(audio_path)
+    transcript = asr_result.get("text", "")
+    word_timestamps = asr_result.get("word_timestamps", [])
+    
+    yield {"type": "progress", "percent": 15, "message": "Calculating fluency and pauses..."}
+    speech_rate_scale = calculate_speech_rate_scale(word_timestamps)
+    
+    # Identify pauses at punctuation marks
+    pause_evaluations = []
+    
+    # Find word-to-word gaps first
+    word_only_timestamps = [w for w in word_timestamps if w.get('value')]
+    
+    # Map reference punctuation to timestamps
+    # This is a bit complex: we need to find which punctuation in diff_analysis
+    # falls between which words in word_timestamps.
+    
+    # For now, let's use the simple gaps between transcribed words 
+    # and map them back to punctuation in the reference.
+    
+    yield {"type": "progress", "percent": 20, "message": "Analyzing content alignment..."}
     diff_analysis, transcript_clean = compare_text(reference_text, transcript)
     
     # Identify which words (indices) in the reference are "correct" content-wise.
     # We will only run pronunciation checks on these.
     valid_ref_indices = {item['ref_index'] for item in diff_analysis if item['status'] == 'correct'}
     
-    # --- Step 2: MFA Alignment (as before) ---
+    # --- Step 2: MFA Alignment ---
     
     # Unique ID for this run
     run_id = str(uuid.uuid4())[:8]
@@ -253,6 +340,7 @@ def align_and_validate(audio_path, text_path):
     os.makedirs(temp_host_dir, exist_ok=True)
     
     try:
+        yield {"type": "progress", "percent": 25, "message": "Preparing files for MFA alignment..."}
         # Copy inputs
         shutil.copy(audio_path, temp_host_dir / "input.wav")
         shutil.copy(text_path, temp_host_dir / "input.txt")
@@ -262,56 +350,38 @@ def align_and_validate(audio_path, text_path):
         
         # Load Dictionaries (Local)
         dictionaries = {}
-        for accent, conf in ACCENTS_CONFIG.items():
+        for accent, conf in target_accents.items():
             dict_path = MFA_BASE_DIR / conf['dict_rel']
             dictionaries[accent] = load_dictionary(dict_path)
             
-        # Run Alignment for each accent
+        # Run Alignment for each accent in parallel
         accent_tgs = {} # accent -> path to TG
         
-        for accent, conf in ACCENTS_CONFIG.items():
-            print(f"Aligning {accent}...")
-            
-            output_dir_name = f"output_{accent}_{run_id}"
-            docker_output_dir = f"/data/data/{output_dir_name}"
-            host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
-            
-            # Docker Command
-            # Note: Mounting MFA_BASE_DIR to /data
-            cmd = [
-                "docker", "run", "--rm",
-                "-v", f"{MFA_BASE_DIR}:/data",
-                DOCKER_IMAGE,
-                "mfa", "align",
-                docker_input_dir,
-                f"/data/{conf['dict_rel']}",
-                f"/data/{conf['model_rel']}",
-                docker_output_dir,
-                "--clean", "--quiet"
-            ]
-            
-            try:
-                subprocess.run(cmd, check=True, timeout=120) # 2 min timeout
-                
-                # Check output
-                tg_file = host_output_dir / "input.TextGrid"
-                if tg_file.exists():
-                    accent_tgs[accent] = tg_file
-            except subprocess.CalledProcessError as e:
-                print(f"Alignment failed for {accent}: {e}")
-            except Exception as e:
-                print(f"Error running docker: {e}")
-                
-        # --- Step 3: Combine Results ---
+        yield {"type": "progress", "percent": 30, "message": f"Launching parallel alignments ({', '.join(target_accents.keys())})..."}
         
-        # Use US_MFA as anchor (or first available)
-        if "US_MFA" in accent_tgs:
-            base_tg = accent_tgs["US_MFA"]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(target_accents)) as executor:
+            future_to_accent = {
+                executor.submit(run_single_alignment, accent, conf, run_id, docker_input_dir): accent 
+                for accent, conf in target_accents.items()
+            }
+            
+            for future in concurrent.futures.as_completed(future_to_accent):
+                accent, tg_file = future.result()
+                if tg_file:
+                    accent_tgs[accent] = tg_file
+                yield {"type": "progress", "percent": 80, "message": f"Finished alignment for {accent}."}
+                
+        # --- Step 3: Combine Results & Evaluate Pauses ---
+        yield {"type": "progress", "percent": 90, "message": "Finalizing scoring and pauses..."}
+        
+        # Use US_ARPA as anchor (or first available)
+        if "US_ARPA" in accent_tgs:
+            base_tg = accent_tgs["US_ARPA"]
         elif accent_tgs:
             base_tg = list(accent_tgs.values())[0]
         else:
             # If alignment fails completely (e.g. empty audio), fall back to just ASR results
-             return {
+            yield {"type": "result", "data": {
                 "words": diff_analysis,
                 "transcript": transcript,
                 "summary": {
@@ -319,78 +389,152 @@ def align_and_validate(audio_path, text_path):
                     "correct": 0,
                     "asr_only": True
                 }
-            }
+            }}
+            return
             
         base_words = read_textgrid_words(base_tg)
         
-        # We need to map MFA results back to our diff_analysis
-        # MFA base_words should roughly correspond to the reference text tokens
-        # But diff_analysis has insertions mixed in.
-        
-        # Strategy:
-        # 1. Iterate through diff_analysis.
-        # 2. If status is 'correct', look up the word in MFA results (using ref_index).
-        # 3. If MFA says it's mispronounced, update status to 'pronunciation_error'.
-        
         final_results = []
+        pause_evals = []
         
-        for item in diff_analysis:
+        # Track word indices for pause evaluation
+        last_word_end = 0.0
+        if word_timestamps:
+            last_word_end = word_timestamps[0]['start']
+
+        for i, item in enumerate(diff_analysis):
             res_entry = item.copy()
             
-            if item['status'] == 'correct' and item['ref_index'] is not None:
-                # Check pronunciation
+            # Add timestamps for any word that exists in the transcript
+            t_idx = item.get('trans_index')
+            if t_idx is not None and t_idx < len(word_timestamps):
+                res_entry['start'] = round(word_timestamps[t_idx]['start'], 3)
+                res_entry['end'] = round(word_timestamps[t_idx]['end'], 3)
+
+            # If it's punctuation, evaluate the pause
+            if is_punctuation(item['word']):
+                # Find pause duration around this punctuation
+                prev_word_idx = -1
+                next_word_idx = -1
+                
+                # Find the 'correct' word before this punct
+                for k in range(i-1, -1, -1):
+                    if diff_analysis[k]['status'] == 'correct' and not is_punctuation(diff_analysis[k]['word']):
+                        prev_word_idx = diff_analysis[k]['ref_index']
+                        break
+                
+                # Find the 'correct' word after this punct
+                for k in range(i+1, len(diff_analysis)):
+                    if diff_analysis[k]['status'] == 'correct' and not is_punctuation(diff_analysis[k]['word']):
+                        next_word_idx = diff_analysis[k]['ref_index']
+                        break
+                
+                pause_duration = None
+                p_start = None
+                p_end = None
+                
+                if prev_word_idx != -1 and next_word_idx != -1 and prev_word_idx < len(word_timestamps) and next_word_idx < len(word_timestamps):
+                    # We have timestamps for both words
+                    p_start = word_timestamps[prev_word_idx]['end']
+                    p_end = word_timestamps[next_word_idx]['start']
+                    pause_duration = p_end - p_start
+                
+                # Use pte_core evaluator
+                prev_word_text = diff_analysis[prev_word_idx]['word'] if prev_word_idx != -1 else "START"
+                p_eval = evaluate_pause(
+                    punct=item['word'],
+                    pause_duration=pause_duration,
+                    prev_end=p_start,
+                    next_start=p_end,
+                    speech_rate_scale=speech_rate_scale,
+                    prev_word=prev_word_text
+                )
+                p_eval['prev_word'] = prev_word_text # Add for UI
+                pause_evals.append(p_eval)
+                res_entry['pause_eval'] = p_eval
+                res_entry['status'] = p_eval['status']
+            
+            elif item['status'] == 'correct' and item['ref_index'] is not None:
+                # Check pronunciation via MFA
                 idx = item['ref_index']
                 
-                # Sanity check: ensure MFA index exists
                 if idx < len(base_words):
                     word_text = base_words[idx]['word']
-                    
-                    # Validate Pronunciation
                     is_pronounced_correctly = False
                     stress_ok = False
+                    best_observed = []
                     
+                    # Try to get best alignment across accents
                     for accent, tg_path in accent_tgs.items():
                         acc_words = read_textgrid_words(tg_path)
                         acc_phones = read_textgrid_phones(tg_path)
                         
                         if idx < len(acc_words):
                              observed = get_phones_for_word(acc_words[idx], acc_phones)
+                             if not best_observed:
+                                 best_observed = observed
+                                 
                              valid, msg, s_ok = validate_pronunciation(word_text, observed, dictionaries[accent])
                              if valid:
                                  is_pronounced_correctly = True
+                                 best_observed = observed # Keep the valid one
                                  if s_ok:
                                      stress_ok = True
                     
+                    res_entry['observed_phones'] = " ".join([p['label'] for p in best_observed])
+                    res_entry['expected_phones'] = " / ".join([" ".join(p) for p in dictionaries.get("US_ARPA", {}).get(word_text.lower(), [])])
+
                     if is_pronounced_correctly:
                          res_entry['status'] = 'correct'
                          if not stress_ok:
                              res_entry['stress_error'] = True
                     else:
                          res_entry['status'] = 'mispronounced'
-                else:
-                    # If index out of bounds in MFA (rare), keep as correct or mark unknown
-                    pass
             
             final_results.append(res_entry)
             
-        return {
+        # Apply hesitation clustering to pauses
+        pause_evals = apply_hesitation_clustering(pause_evals)
+        total_pause_penalty = aggregate_pause_penalty(pause_evals)
+        
+        yield {"type": "result", "data": {
             "words": final_results,
             "transcript": transcript,
+            "pauses": pause_evals,
+            "speech_rate_scale": round(speech_rate_scale, 2),
+            "raw_word_timestamps": word_timestamps,
             "summary": {
                 "total": len(final_results),
-                "correct": sum(1 for w in final_results if w['status'] == 'correct')
+                "correct": sum(1 for w in final_results if w['status'] == 'correct'),
+                "pause_penalty": round(total_pause_penalty, 3),
+                "pause_count": len([p for p in pause_evals if p['status'] != 'correct_pause'])
             }
-        }
+        }}
 
     finally:
         # Cleanup temp dirs
         try:
             shutil.rmtree(temp_host_dir)
             # Also cleanup output dirs
-            for accent in ACCENTS_CONFIG:
+            for accent in target_accents:
                  output_dir_name = f"output_{accent}_{run_id}"
                  host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
                  if host_output_dir.exists():
                      shutil.rmtree(host_output_dir)
         except Exception as e:
             print(f"Cleanup error: {e}")
+
+# --- Alignment Workflow ---
+
+def align_and_validate(audio_path, text_path, accents=None):
+    """
+    Synchronous version of align_and_validate_gen.
+    """
+    gen = align_and_validate_gen(audio_path, text_path, accents=accents)
+    final_result = None
+    for update in gen:
+        if update['type'] == 'result':
+            final_result = update['data']
+    return final_result
+
+# --- Helper Functions ---

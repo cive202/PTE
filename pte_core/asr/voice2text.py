@@ -1,24 +1,62 @@
+import requests
+import os
 from .pseudo_voice2text import voice2text_word, voice2text_char, voice2text_segment
+
+ASR_SERVICE_URL = "http://localhost:8000/asr"
 
 def voice2text(file_path):
     """
     Master fn that returns the text and all timestamp.
     input:file_path: Path to the audio file
     """
-    # Use pseudo data instead of real model
-    word_ts = voice2text_word()
-    char_ts = voice2text_char()
-    segment_ts = voice2text_segment()
-    
-    # Get the full transcribed text
-    full_text = segment_ts[0]['value'] if segment_ts else ''
-    
-    return {
-        'text': full_text,
-        'word_timestamps': word_ts,
-        'char_timestamps': char_ts,
-        'segment_timestamps': segment_ts
-    }
+    if not os.path.exists(file_path):
+        return {
+            'text': '',
+            'word_timestamps': [],
+            'char_timestamps': [],
+            'segment_timestamps': []
+        }
+
+    try:
+        with open(file_path, 'rb') as f:
+            files = {'file': f}
+            response = requests.post(ASR_SERVICE_URL, files=files, timeout=60)
+            response.raise_for_status()
+            result = response.json()
+            
+            # The ASR service now returns {"text": "...", "word_timestamps": [...]}
+            full_text = result.get("text", "")
+            word_ts = result.get("word_timestamps", [])
+            
+            # Transform word_timestamps to the internal format if needed
+            # ASR service returns: {"word": "...", "start": 0.0, "end": 0.0}
+            # Internal format expects: {"value": "...", "start": 0.0, "end": 0.0}
+            formatted_word_ts = []
+            for w in word_ts:
+                formatted_word_ts.append({
+                    "value": w.get("word", ""),
+                    "start": w.get("start", 0.0),
+                    "end": w.get("end", 0.0)
+                })
+
+            return {
+                'text': full_text,
+                'word_timestamps': formatted_word_ts,
+                'char_timestamps': [], 
+                'segment_timestamps': [{'start': word_ts[0]['start'] if word_ts else 0, 
+                                       'end': word_ts[-1]['end'] if word_ts else 0, 
+                                       'value': full_text}] if full_text else []
+            }
+    except Exception as e:
+        print(f"ASR Service error: {e}")
+        # Fallback to pseudo data for now if service fails, to keep system running
+        segment_ts = voice2text_segment()
+        return {
+            'text': segment_ts[0]['value'] if segment_ts else '',
+            'word_timestamps': voice2text_word(),
+            'char_timestamps': voice2text_char(),
+            'segment_timestamps': segment_ts
+        }
 
 
 def words_timestamps(file_path):

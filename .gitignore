@@ -1,4 +1,5 @@
 # Python virtual environment
+venv/
 env_aloud/
 
 # Python cache
@@ -18,3 +19,10 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# PTE Specific Transient Data
+PTE_MFA_TESTER_DOCKER/data/output_*/
+PTE_MFA_TESTER_DOCKER/data/run_*/
+corpus/check_*
+corpus/recording_*
+corpus/temp_upload_*

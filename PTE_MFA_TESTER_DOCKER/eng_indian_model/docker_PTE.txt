@@ -1,0 +1,21 @@
+docker run -it --rm -v C:/Users/Acer/DataScience/PTE/PTE_MFA_TESTER_DOCKER:/data mmcauliffe/montreal-forced-aligner:latest mfa align /data/data /data/eng_indian_model/english_india_mfa.dict /data/eng_indian_model/english_mfa.zip /data/output_indian --clean
+
+
+2. Nigerian Accent
+
+docker run -it --rm -v C:/Users/Acer/DataScience/PTE/PTE_MFA_TESTER_DOCKER:/data mmcauliffe/montreal-forced-aligner:latest mfa align /data/data /data/eng_nigeria_model/english_nigeria_mfa.dict /data/eng_nigeria_model/english_mfa.zip /data/output_nigeria --clean
+
+3. US Accent (ARPA Model)
+
+docker run -it --rm -v C:/Users/Acer/DataScience/PTE/PTE_MFA_TESTER_DOCKER:/data mmcauliffe/montreal-forced-aligner:latest mfa align /data/data /data/eng_us_model/english_us_arpa.dict /data/eng_us_model/english_us_arpa.zip /data/output_us --clean
+
+US Accent (MFA/IPA Model)
+
+docker run -it --rm -v C:/Users/Acer/DataScience/PTE/PTE_MFA_TESTER_DOCKER:/data mmcauliffe/montreal-forced-aligner:latest mfa align /data/data /data/eng_us_model_2/english_us_mfa.dict /data/eng_us_model_2/english_mfa.zip /data/output_us_mfa --clean
+
+UK Accent
+
+docker run -it --rm -v C:/Users/Acer/DataScience/PTE/PTE_MFA_TESTER_DOCKER:/data mmcauliffe/montreal-forced-aligner:latest mfa align /data/data /data/english_uk_model/english_uk_mfa.dict /data/english_uk_model/english_mfa.zip /data/output_uk --clean
+
+
+
