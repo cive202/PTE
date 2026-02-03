@@ -20,6 +20,9 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     print("Warning: sklearn not available, using simple keyword matching")
 
+from pte_core.pause.speech_rate import calculate_speech_rate_scale
+from pte_core.pause.hesitation import apply_hesitation_clustering, aggregate_pause_penalty
+
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -107,7 +110,54 @@ def tfidf_similarity(reference: str, student_text: str) -> float:
         return 0.0
 
 
-def calculate_score(reference: str, student_text: str, keywords: List[str]) -> Tuple[int, Dict]:
+def analyze_fluency(asr_result):
+    """Analyze fluency from ASR results."""
+    all_words = []
+    for segment in asr_result.get("segments", []):
+        all_words.extend(segment.get("words", []))
+    
+    if not all_words:
+        return {"score": 0, "penalty": 0, "pauses": [], "marked_transcript": ""}
+    
+    rate_scale = calculate_speech_rate_scale(all_words)
+    
+    pauses = []
+    marked_words = []
+    if all_words:
+        marked_words.append(all_words[0].get("word", ""))
+
+    for i in range(len(all_words) - 1):
+        curr_end = all_words[i].get("end")
+        next_start = all_words[i+1].get("start")
+        next_word = all_words[i+1].get("word", "")
+        
+        if curr_end is not None and next_start is not None:
+            duration = next_start - curr_end
+            if duration > 0.5:
+                pauses.append({
+                    "start": curr_end, "end": next_start, "duration": round(duration, 2),
+                    "penalty": min(1.0, (duration - 0.5) / 1.0)
+                })
+                marked_words.append("/")
+        
+        marked_words.append(next_word)
+    
+    clustered = apply_hesitation_clustering(pauses)
+    penalty = aggregate_pause_penalty(clustered)
+    
+    # Fluency score (0-20 scale for lecture)
+    fluency_score = max(0, 20 * (1.0 - penalty))
+    
+    return {
+        "score": round(fluency_score, 1),
+        "penalty": round(penalty, 2),
+        "pauses": clustered,
+        "rate_scale": round(rate_scale, 2),
+        "marked_transcript": " ".join(marked_words)
+    }
+
+
+def calculate_score(reference: str, student_text: str, keywords: List[str], asr_result: Optional[Dict] = None) -> Tuple[int, Dict]:
     """
     Calculate PTE-style score (0-90) for Retell Lecture.
     
@@ -131,15 +181,29 @@ def calculate_score(reference: str, student_text: str, keywords: List[str]) -> T
     keyword_coverage = calculate_keyword_coverage(keywords, student_text)
     keyword_score = keyword_coverage * 30
     
-    # 3. Fluency/Pronunciation (0-20 points) - Placeholder / Word count proxy
-    # Ideally should come from ASR confidence
-    word_count = len(student_text.split())
-    if word_count > 40:
-        fluency_score = 20
-    elif word_count > 20:
-        fluency_score = 10
+    # 3. Fluency (0-20 points)
+    word_timestamps = []
+    if asr_result:
+        # Extract word timestamps for the JSON result
+        for segment in asr_result.get("segments", []):
+            for word_obj in segment.get("words", []):
+                word_timestamps.append({
+                    "word": word_obj.get("word", "").strip(),
+                    "start": round(word_obj.get("start", 0), 2),
+                    "end": round(word_obj.get("end", 0), 2)
+                })
+        
+        fluency_data = analyze_fluency(asr_result)
+        fluency_score = fluency_data["score"]
     else:
-        fluency_score = 5
+        # Fallback to word count proxy if no ASR details
+        word_count = len(student_text.split())
+        if word_count > 40:
+            fluency_score = 20
+        elif word_count > 20:
+            fluency_score = 10
+        else:
+            fluency_score = 5
         
     # Total score (capped at 90)
     total_score = int(min(90, content_score + keyword_score + fluency_score))
@@ -150,8 +214,12 @@ def calculate_score(reference: str, student_text: str, keywords: List[str]) -> T
         "fluency_score": round(fluency_score, 1),
         "content_similarity": round(content_similarity * 100, 1),
         "keyword_coverage": round(keyword_coverage * 100, 1),
-        "word_count": word_count
+        "word_count": len(student_text.split()),
+        "timestamps": word_timestamps
     }
+    
+    if asr_result:
+        details["fluency_details"] = fluency_data
     
     return total_score, details
 
@@ -187,7 +255,7 @@ def generate_feedback(score: int, details: Dict, keywords: List[str], student_te
     return " ".join(feedback_parts)
 
 
-def evaluate_lecture(lecture_id: str, student_text: str) -> Dict:
+def evaluate_lecture(lecture_id: str, student_text: str, asr_result: Optional[Dict] = None) -> Dict:
     """
     Main evaluation function for Retell Lecture.
     
@@ -210,17 +278,20 @@ def evaluate_lecture(lecture_id: str, student_text: str) -> Dict:
     keywords = lecture_data.get("keywords", [])
     
     # Calculate score
-    score, details = calculate_score(reference, student_text, keywords)
+    score, details = calculate_score(reference, student_text, keywords, asr_result)
     
     # Generate feedback
     feedback = generate_feedback(score, details, keywords, student_text)
+    
+    # Use marked transcript if available
+    display_transcript = details.get("fluency_details", {}).get("marked_transcript", student_text)
     
     return {
         "score": score,
         "feedback": feedback,
         "details": details,
         "lecture_title": lecture_data.get("title", ""),
-        "transcription": student_text,
+        "transcription": display_transcript,
         "reference": reference,
         "keywords": keywords
     }

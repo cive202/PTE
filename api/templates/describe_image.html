@@ -386,8 +386,24 @@
                     <div class="detail-value" id="keywordScore">0%</div>
                 </div>
                 <div class="detail-card">
+                    <div class="detail-label">Fluency Score</div>
+                    <div class="detail-value" id="fluencyScoreDisplay">0</div>
+                </div>
+                <div class="detail-card">
                     <div class="detail-label">Word Count</div>
                     <div class="detail-value" id="wordCount">0</div>
+                </div>
+            </div>
+
+            <!-- Fluency Details Section -->
+            <div id="fluencyDetailsSection" style="margin-top: 1.5rem; display: none;">
+                <div style="background: #f0f7ff; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #007bff;">
+                    <h4 style="margin: 0 0 1rem 0; color: #0056b3;">⏱ Fluency & Pause Analysis</h4>
+                    <div id="fluencyStats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div><strong>Speech Rate Scale:</strong> <span id="rateScale">1.0</span>x</div>
+                        <div><strong>Pause Penalty:</strong> <span id="pausePenalty">0.0</span></div>
+                    </div>
+                    <div id="pauseList"></div>
                 </div>
             </div>
 
@@ -598,8 +614,32 @@
             document.getElementById('feedbackText').textContent = result.feedback;
             document.getElementById('contentScore').textContent = result.details.content_similarity + '%';
             document.getElementById('keywordScore').textContent = result.details.keyword_coverage + '%';
+            document.getElementById('fluencyScoreDisplay').textContent = result.details.fluency_score;
             document.getElementById('wordCount').textContent = result.details.word_count;
             document.getElementById('transcriptionText').textContent = result.transcription || 'No transcription available';
+
+            // Handle Fluency Details
+            const fluencySection = document.getElementById('fluencyDetailsSection');
+            if (result.details.fluency_details) {
+                const fd = result.details.fluency_details;
+                document.getElementById('rateScale').textContent = fd.rate_scale;
+                document.getElementById('pausePenalty').textContent = fd.penalty;
+                
+                const pauseList = document.getElementById('pauseList');
+                if (fd.pauses && fd.pauses.length > 0) {
+                    let pauseHtml = '<strong>Detected Hesitations:</strong><ul style="margin: 0.5rem 0 0 0; padding-left: 1.2rem;">';
+                    fd.pauses.forEach(p => {
+                        pauseHtml += `<li style="margin-bottom: 0.25rem;">${p.duration}s pause between "${p.prev_word || '...'}" and "${p.next_word || '...'}"</li>`;
+                    });
+                    pauseHtml += '</ul>';
+                    pauseList.innerHTML = pauseHtml;
+                } else {
+                    pauseList.innerHTML = '<p style="margin: 0; color: #28a745;">✅ No significant hesitations detected.</p>';
+                }
+                fluencySection.style.display = 'block';
+            } else {
+                fluencySection.style.display = 'none';
+            }
 
             results.classList.add('show');
             showStatus(`Evaluation complete! Score: ${result.score}/90`, 'success');

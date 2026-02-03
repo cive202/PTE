@@ -4,5 +4,8 @@ fastapi
 uvicorn
 python-multipart
 requests
-openai-whisper
+nemo_toolkit[asr]
 torch
+torchaudio
+Cython
+wget

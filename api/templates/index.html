@@ -125,7 +125,7 @@
     <div>
         <h3>Reference Text</h3>
         <textarea id="ref-text"
-            placeholder="Enter text here...">Over the years, it got easier to build such software, even for non-technical folk.</textarea>
+            placeholder="Enter text here...">Modern technology has transformed the way people communicate and share information, however data privacy and security concerns continue to grow, advanced algorithms and artificial intelligence systems process millions of daily, making accuracy and reliability more important than ever.</textarea>
     </div>
 
     <div class="controls">
@@ -238,8 +238,9 @@
                 return;
             }
 
-            const accuracy = (data.summary.correct / data.summary.total * 100).toFixed(1);
-            statusDiv.innerText = `✅ Check Complete! Accuracy: ${accuracy}%`;
+        const accuracy = (data.summary.correct / data.summary.total * 100).toFixed(1);
+        const fluency = data.summary.fluency_score ? (data.summary.fluency_score * 100).toFixed(0) : "N/A";
+        statusDiv.innerText = `✅ Check Complete! Accuracy: ${accuracy}% | Fluency: ${fluency}%`;
 
             // Show Transcript
             if (data.transcript) {
@@ -268,6 +269,12 @@
                 } else if (w.status === 'mispronounced') {
                     span.className += ' stress-error';
                     span.style.border = '1px solid orange';
+                } else if (w.status === 'hesitation') {
+                    span.innerText = '/';
+                    span.style.color = '#e74c3c';
+                    span.style.fontWeight = 'bold';
+                    span.style.margin = '0 5px';
+                    span.title = `Hesitation: ${w.duration}s`;
                 }
 
                 resultsDiv.appendChild(span);

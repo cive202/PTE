@@ -75,7 +75,9 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         import requests
         with open(audio_path, 'rb') as audio_file:
             files = {'audio': ('audio.wav', audio_file, 'audio/wav')}
-            response = requests.post('http://localhost:8000/transcribe', files=files, timeout=60)
+            # Increased timeout to 300s for larger Whisper models on CPU
+            print(f"Sending ASR request with 300s timeout...")
+            response = requests.post('http://localhost:8000/transcribe', files=files, timeout=300)
         
         if response.status_code != 200:
             raise Exception(f"ASR service error: {response.status_code}")
@@ -84,7 +86,7 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         transcription = asr_result.get('text', '').strip()
         
         # Evaluate description
-        result = evaluate_description(image_id, transcription)
+        result = evaluate_description(image_id, transcription, asr_result)
         
         IMAGE_JOB_STORE[job_id]['status'] = 'complete'
         IMAGE_JOB_STORE[job_id]['result'] = result
@@ -110,7 +112,9 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         import requests
         with open(audio_path, 'rb') as audio_file:
             files = {'audio': ('audio.wav', audio_file, 'audio/wav')}
-            response = requests.post('http://localhost:8000/transcribe', files=files, timeout=60)
+            # Increased timeout to 300s for larger Whisper models on CPU
+            print(f"Sending ASR request with 300s timeout...")
+            response = requests.post('http://localhost:8000/transcribe', files=files, timeout=300)
         
         if response.status_code != 200:
             raise Exception(f"ASR service error: {response.status_code}")
@@ -119,7 +123,7 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         transcription = asr_result.get('text', '').strip()
         
         # Evaluate summary
-        result = evaluate_lecture(lecture_id, transcription)
+        result = evaluate_lecture(lecture_id, transcription, asr_result)
         
         LECTURE_JOB_STORE[job_id]['status'] = 'complete'
         LECTURE_JOB_STORE[job_id]['result'] = result
@@ -141,18 +145,38 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
 # ============================================================================
 def convert_to_wav(input_path, output_path):
     """Convert audio to 16kHz mono WAV using ffmpeg."""
+    import shutil
+    
+    # Prioritize the system-wide FFmpeg which is known to work
+    if os.path.exists(r'C:\ffmpeg\bin\ffmpeg.exe'):
+        ffmpeg_path = r'C:\ffmpeg\bin\ffmpeg.exe'
+    else:
+        ffmpeg_path = shutil.which('ffmpeg')
+        
+    if not ffmpeg_path:
+        print("FFmpeg not found in PATH or at C:\\ffmpeg\\bin\\ffmpeg.exe")
+        return False
+
     try:
-        cmd = [
-            'ffmpeg', '-y',
-            '-i', input_path,
-            '-ac', '1',
-            '-ar', '16000',
-            output_path
-        ]
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Use absolute paths and wrap in quotes for Windows
+        # We also pass the directory containing ffmpeg.exe to the PATH of the subprocess
+        # to help it find its DLLs if they are in the same directory.
+        ffmpeg_dir = os.path.dirname(ffmpeg_path)
+        env = os.environ.copy()
+        env["PATH"] = ffmpeg_dir + os.pathsep + env.get("PATH", "")
+
+        cmd = f'"{ffmpeg_path}" -y -i "{input_path}" -ac 1 -ar 16000 "{output_path}"'
+        print(f"Running command: {cmd}")
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, shell=True, env=env)
+        if result.returncode != 0:
+            print(f"FFmpeg failed with return code {result.returncode}")
+            print(f"STDOUT: {result.stdout}")
+            print(f"STDERR: {result.stderr}")
+            return False
         return True
     except Exception as e:
-        print(f"Conversion failed: {e}")
+        print(f"Conversion failed with exception: {e}")
         return False
 
 # ============================================================================
@@ -208,6 +232,10 @@ def save():
     
     file.save(temp_path)
     
+    if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
+        print(f"Error: Saved file missing or empty at {temp_path}")
+        return jsonify({"error": "Saved file is empty or missing"}), 400
+
     if convert_to_wav(temp_path, audio_path):
         os.remove(temp_path)
     else:
@@ -238,6 +266,11 @@ def check():
     try:
         file.save(temp_upload)
         
+        # Verify file exists and has content
+        if not os.path.exists(temp_upload) or os.path.getsize(temp_upload) == 0:
+            print(f"Error: Uploaded file missing or empty at {temp_upload}")
+            return jsonify({"error": "Uploaded file is empty or missing"}), 400
+            
         # Convert to ensure 16kHz WAV
         if not convert_to_wav(temp_upload, audio_path):
             return jsonify({"error": "Audio conversion failed"}), 500
@@ -343,6 +376,10 @@ def submit_description():
     try:
         file.save(temp_upload)
         
+        if not os.path.exists(temp_upload) or os.path.getsize(temp_upload) == 0:
+            print(f"Error: Uploaded file missing or empty at {temp_upload}")
+            return jsonify({"error": "Uploaded file is empty or missing"}), 400
+
         # Convert to ensure 16kHz WAV
         if not convert_to_wav(temp_upload, audio_path):
             return jsonify({"error": "Audio conversion failed"}), 500
@@ -449,6 +486,10 @@ def submit_lecture():
     try:
         file.save(temp_upload)
         
+        if not os.path.exists(temp_upload) or os.path.getsize(temp_upload) == 0:
+            print(f"Error: Uploaded file missing or empty at {temp_upload}")
+            return jsonify({"error": "Uploaded file is empty or missing"}), 400
+
         # Convert to ensure 16kHz WAV
         if not convert_to_wav(temp_upload, audio_path):
             return jsonify({"error": "Audio conversion failed"}), 500
