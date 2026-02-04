@@ -10,7 +10,7 @@ This project is fully Dockerized to ensure it runs consistently on any machine (
     sudo systemctl start docker
     sudo systemctl enable docker
     # Add your user to the docker group (so you don't need sudo for docker commands)
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker $(whoami)
     newgrp docker
     ```
 
