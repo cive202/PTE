@@ -1,2 +1,7 @@
 flask
 requests
+scikit-learn
+numpy
+scipy
+soundfile
+textgrid

@@ -11,7 +11,12 @@ import concurrent.futures
 from pathlib import Path
 
 # Add project root to path to import pte_core
-PROJECT_ROOT = Path("C:/Users/Acer/DataScience/PTE")
+# Dynamic Project Root Detection
+if "PROJECT_ROOT" in os.environ:
+    PROJECT_ROOT = Path(os.environ["PROJECT_ROOT"])
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 

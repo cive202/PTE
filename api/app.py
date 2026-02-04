@@ -35,7 +35,7 @@ os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(LECTURES_DIR, exist_ok=True)
 
 # Docker Grammar Service URL
-GRAMMAR_SERVICE_URL = "http://localhost:8000/grammar"
+GRAMMAR_SERVICE_URL = os.environ.get("GRAMMAR_SERVICE_URL", "http://localhost:8000/grammar")
 
 # ============================================================================
 # JOB QUEUE SYSTEM

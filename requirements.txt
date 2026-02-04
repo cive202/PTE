@@ -5,6 +5,9 @@
 # Core (required for word-level matcher, alignment, pause scoring, report)
 # -----------------------------------------------------------------------------
 numpy>=1.20.0
+flask
+scikit-learn
+textgrid
 
 # Audio I/O (audio_quality, wavlm)
 soundfile>=0.10.0

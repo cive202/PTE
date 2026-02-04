@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  pte-web:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: pte-web
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock # Allow spawning sibling containers
+    environment:
+      - PROJECT_ROOT=/app
+      - GRAMMAR_SERVICE_URL=http://pte-asr-grammar:8000/grammar
+      - ASR_SERVICE_URL=http://pte-asr-grammar:8000/asr
+    depends_on:
+      - pte-asr-grammar
+    networks:
+      - pte-network
+
+  pte-asr-grammar:
+    build:
+      context: PTE_ASR_GRAMMAR_DOCKER
+    container_name: pte-asr-grammar-service
+    ports:
+      - "8000:8000"
+    networks:
+      - pte-network
+
+networks:
+  pte-network:
+    driver: bridge
