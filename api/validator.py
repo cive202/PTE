@@ -481,7 +481,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                                  if s_ok:
                                      stress_ok = True
                     
-                    res_entry['observed_phones'] = " ".join([p['label'] for p in best_observed])
+                    res_entry['observed_phones'] = " ".join(best_observed)
                     res_entry['expected_phones'] = " / ".join([" ".join(p) for p in dictionaries.get("US_ARPA", {}).get(word_text.lower(), [])])
 
                     if is_pronounced_correctly:

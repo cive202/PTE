@@ -91,6 +91,11 @@
                 <strong>ASR Transcription:</strong> <span id="transcript-text"></span>
             </div>
 
+            <div id="audio-playback" style="margin-top: 1rem; display: none;">
+                <strong>Your Recording:</strong><br>
+                <audio id="recorded-audio" controls style="width: 100%; margin-top: 5px;"></audio>
+            </div>
+
             <div id="results" style="margin-top: 1.5rem; line-height: 2.5;"></div>
 
             <div style="margin-top: 2rem;">
@@ -117,6 +122,8 @@
         const recIndicator = document.getElementById('recording-indicator');
         const transBox = document.getElementById('transcription-box');
         const transText = document.getElementById('transcript-text');
+        const audioPlaybackDiv = document.getElementById('audio-playback');
+        const recordedAudio = document.getElementById('recorded-audio');
         const jsonOutput = document.getElementById('json-output');
         const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
@@ -124,12 +131,22 @@
 
         btnRecord.onclick = async () => {
             try {
+                // Clear previous audio
+                audioPlaybackDiv.style.display = 'none';
+                recordedAudio.src = "";
+                
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    
+                    // Setup audio playback
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    recordedAudio.src = audioUrl;
+                    audioPlaybackDiv.style.display = 'block';
+                    
                     btnSave.disabled = false;
                     btnCheck.disabled = false;
                     statusDiv.innerText = "Recording finished. Ready to Check.";
