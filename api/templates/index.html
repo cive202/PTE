@@ -216,6 +216,32 @@
                     span.className += ' stress-error';
                     span.style.border = '1px solid orange';
                 }
+                
+                // Add pause indicator if available
+                if (w.pause_eval) {
+                    const pauseSpan = document.createElement('span');
+                    pauseSpan.style.fontSize = '0.8em';
+                    pauseSpan.style.color = '#666';
+                    pauseSpan.style.margin = '0 2px';
+                    
+                    if (w.pause_eval.duration > 0) {
+                        pauseSpan.innerText = `[${w.pause_eval.duration}s]`;
+                        // Highlight long pauses or missing pauses if needed
+                        if (w.pause_eval.status === 'long_pause') {
+                            pauseSpan.style.color = 'red';
+                            pauseSpan.style.fontWeight = 'bold';
+                        }
+                    } else if (w.pause_eval.status === 'missing_pause') {
+                         pauseSpan.innerText = `[No Pause]`;
+                         pauseSpan.style.color = 'red';
+                    }
+                    resultsDiv.appendChild(pauseSpan);
+                } else if (w.end) {
+                    // Check if there is a gap to the next word
+                    // This logic is simplified; the backend usually handles pause evaluation at punctuation.
+                    // Ideally, we'd check if the next word's start time is significantly later.
+                }
+                
                 resultsDiv.appendChild(span);
                 resultsDiv.appendChild(document.createTextNode(" "));
             });
@@ -253,7 +279,7 @@
                     elapsed += 2;
                     const progress = Math.min(10 + (elapsed / estimatedTime) * 80, 95);
                     progressFill.style.width = progress + '%';
-                    progressText.innerText = `🔄 Analyzing pronunciation... (${elapsed}s elapsed)`;
+                    progressText.innerText = `🔄`;
 
                     try {
                         const statusRes = await fetch(`/check/status/${jobId}`);

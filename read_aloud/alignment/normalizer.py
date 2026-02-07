@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 
 
 # Punctuation that requires pauses (for PTE scoring)
-PAUSE_PUNCTUATION = {",", "."}
+# Expanded to include all major pause indicators
+PAUSE_PUNCTUATION = {",", ".", ";", ":", "!", "?"}
 
 
 def is_punctuation(token: str) -> bool:
@@ -27,12 +28,12 @@ def is_punctuation(token: str) -> bool:
 def normalize_token(token: str, preserve_punctuation: bool = True) -> str:
     """Normalize a token for alignment.
     
-    If preserve_punctuation is True, punctuation marks (,.) are preserved as-is.
+    If preserve_punctuation is True, punctuation marks are preserved as-is.
     Otherwise, all punctuation is stripped.
     
     Args:
         token: The token string to normalize
-        preserve_punctuation: If True, preserve comma and period as standalone tokens
+        preserve_punctuation: If True, preserve pause-worthy punctuation as standalone tokens
         
     Returns:
         Normalized token string (lowercase, stripped, punctuation removed except apostrophes)
@@ -44,5 +45,7 @@ def normalize_token(token: str, preserve_punctuation: bool = True) -> str:
         return token
     
     # keep apostrophes inside words, drop other punctuation
+    # Remove surrounding punctuation if attached to a word
+    token = token.strip(".,;:!?\"")
     token = re.sub(r"[^a-z0-9']+", "", token)
     return token
