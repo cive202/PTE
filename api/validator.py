@@ -312,16 +312,16 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     target_accents = {a: ACCENTS_CONFIG[a] for a in accents if a in ACCENTS_CONFIG} if accents else ACCENTS_CONFIG
     
     # --- Step 1: ASR Transcription & Content Check ---
-    yield {"type": "progress", "percent": 5, "message": "Reading reference text..."}
+    yield {"type": "progress", "percent": 5, "message": "Analyzing audio..."}
     with open(text_path, 'r', encoding='utf-8') as f:
         reference_text = f.read().strip()
         
-    yield {"type": "progress", "percent": 10, "message": "Transcribing audio with Parakeet ASR..."}
+    yield {"type": "progress", "percent": 10, "message": "Analyzing audio..."}
     asr_result = transcribe_audio_with_details(audio_path)
     transcript = asr_result.get("text", "")
     word_timestamps = asr_result.get("word_timestamps", [])
     
-    yield {"type": "progress", "percent": 15, "message": "Calculating fluency and pauses..."}
+    yield {"type": "progress", "percent": 15, "message": "Evaluating content..."}
     speech_rate_scale = calculate_speech_rate_scale(word_timestamps)
     
     # Identify pauses at punctuation marks
@@ -337,7 +337,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     # For now, let's use the simple gaps between transcribed words 
     # and map them back to punctuation in the reference.
     
-    yield {"type": "progress", "percent": 20, "message": "Analyzing content alignment..."}
+    yield {"type": "progress", "percent": 20, "message": "Evaluating content..."}
     diff_analysis, transcript_clean = compare_text(reference_text, transcript)
     
     # Identify which words (indices) in the reference are "correct" content-wise.
@@ -353,7 +353,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     os.makedirs(temp_host_dir, exist_ok=True)
     
     try:
-        yield {"type": "progress", "percent": 25, "message": "Preparing files for MFA alignment..."}
+        yield {"type": "progress", "percent": 25, "message": "Checking pronunciation..."}
         # Copy inputs
         shutil.copy(audio_path, temp_host_dir / "input.wav")
         shutil.copy(text_path, temp_host_dir / "input.txt")
@@ -370,7 +370,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         # Run Alignment for each accent in parallel
         accent_tgs = {} # accent -> path to TG
         
-        yield {"type": "progress", "percent": 30, "message": f"Launching parallel alignments ({', '.join(target_accents.keys())})..."}
+        yield {"type": "progress", "percent": 30, "message": "Checking pronunciation..."}
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(target_accents)) as executor:
             future_to_accent = {
@@ -382,10 +382,10 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 accent, tg_file = future.result()
                 if tg_file:
                     accent_tgs[accent] = tg_file
-                yield {"type": "progress", "percent": 80, "message": f"Finished alignment for {accent}."}
+                yield {"type": "progress", "percent": 80, "message": "Checking pronunciation..."}
                 
         # --- Step 3: Combine Results & Evaluate Pauses ---
-        yield {"type": "progress", "percent": 90, "message": "Finalizing scoring and pauses..."}
+        yield {"type": "progress", "percent": 90, "message": "Finalizing scores..."}
         
         # Use US_ARPA as anchor (or first available)
         if "US_ARPA" in accent_tgs:

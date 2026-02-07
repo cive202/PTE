@@ -131,14 +131,6 @@
         let audioBlob = null;
         let currentSentence = "";
 
-        const sentences = [
-            "The lecture on economic policy has been rescheduled to next Tuesday.",
-            "Please ensure all laboratory equipment is cleaned and stored properly after use.",
-            "Higher education prepares students for professional challenges in a globalized world.",
-            "The library will be closed for maintenance during the winter break.",
-            "Scientific research requires careful observation and systematic documentation of data."
-        ];
-
         const btnStart = document.getElementById('btn-start-task');
         const setupPhase = document.getElementById('setup-phase');
         const activePhase = document.getElementById('active-phase');
@@ -159,23 +151,47 @@
             startTask();
         };
 
-        function startTask() {
-            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
-            instruction.innerText = "Prepare to listen...";
+        async function startTask() {
+            instruction.innerText = "Loading audio...";
             
-            // In a real app, we'd play audio here. 
-            // For this demo, we'll just show the sentence after 1 second and then hide it.
-            setTimeout(() => {
-                instruction.innerText = "Listen carefully...";
-                sentenceDisplay.innerText = currentSentence;
-                sentenceDisplay.style.display = 'block';
+            try {
+                const response = await fetch('/speaking/repeat-sentence/get-task');
+                const data = await response.json();
                 
-                setTimeout(() => {
-                    sentenceDisplay.style.display = 'none';
+                if (data.error) {
+                    alert('Error loading task: ' + data.error);
+                    setupPhase.style.display = 'block';
+                    activePhase.style.display = 'none';
+                    return;
+                }
+                
+                currentSentence = data.text;
+                const audioUrl = data.audio_url;
+                
+                instruction.innerText = "Listen carefully...";
+                
+                const audio = new Audio(audioUrl);
+                
+                audio.onended = () => {
                     instruction.innerText = "Now repeat the sentence!";
                     btnRecord.disabled = false;
-                }, 3000);
-            }, 1000);
+                    statusDiv.innerText = "Ready to record.";
+                };
+                
+                audio.onerror = (e) => {
+                     console.error("Audio load error", e);
+                     instruction.innerText = "Error playing audio.";
+                     alert("Could not play audio file.");
+                };
+
+                await audio.play();
+                
+            } catch (e) {
+                console.error(e);
+                alert("Failed to start task.");
+                setupPhase.style.display = 'block';
+                activePhase.style.display = 'none';
+            }
         }
 
         btnRecord.onclick = async () => {

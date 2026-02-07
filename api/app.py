@@ -6,6 +6,7 @@ import json
 import threading
 import uuid
 import requests
+import random
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 
 # Ensure project root is in path for imports
@@ -30,6 +31,8 @@ CORPUS_DIR = os.path.join(PROJECT_ROOT, "corpus")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data_2")
 IMAGES_DIR = os.path.join(DATA_DIR, "images")
 LECTURES_DIR = os.path.join(DATA_DIR, "lectures")
+REPEAT_SENTENCE_DIR = os.path.join(DATA_DIR, "audio_repeat_sentence")
+REPEAT_SENTENCE_JSON = os.path.join(REPEAT_SENTENCE_DIR, "readaloud.json")
 os.makedirs(CORPUS_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(LECTURES_DIR, exist_ok=True)
@@ -224,6 +227,35 @@ def read_aloud():
 def repeat_sentence():
     """Repeat Sentence practice page."""
     return render_template('repeat_sentence.html')
+
+@app.route('/speaking/repeat-sentence/get-task')
+def get_repeat_sentence_task():
+    try:
+        if not os.path.exists(REPEAT_SENTENCE_JSON):
+             return jsonify({"error": "Data file not found"}), 404
+
+        with open(REPEAT_SENTENCE_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if not data:
+            return jsonify({"error": "No data available"}), 404
+            
+        entry = random.choice(data)
+        
+        # entry['path'] is like "data/1-47.wav"
+        filename = os.path.basename(entry['path'])
+        
+        return jsonify({
+            "audio_url": f"/audio/repeat-sentence/{filename}",
+            "text": entry['content'],
+            "id": str(entry.get('sno', ''))
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/audio/repeat-sentence/<path:filename>')
+def serve_repeat_sentence_audio(filename):
+    return send_from_directory(REPEAT_SENTENCE_DIR, filename)
 
 @app.route('/speaking/describe-image')
 def describe_image_speaking():
