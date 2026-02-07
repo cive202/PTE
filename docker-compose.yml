@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  asr-grammar:
+    build: 
+      context: ./PTE_ASR_GRAMMAR_DOCKER
+    ports:
+      - "8000:8000"
+    container_name: pte-asr-grammar-service
+    restart: unless-stopped
+    networks:
+      - pte-network
+
+  wav2vec2-service:
+    build: 
+      context: ./wav2vec2_service
+    ports:
+      - "8001:8001"
+    container_name: wav2vec2-phoneme-cpu
+    restart: unless-stopped
+    networks:
+      - pte-network
+
+networks:
+  pte-network:
+    driver: bridge

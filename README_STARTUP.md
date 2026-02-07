@@ -4,71 +4,67 @@ This guide provides step-by-step instructions to set up and run the PTE Scoring 
 
 ## Prerequisites
 
-1.  **Docker Desktop**: 
+1.  **Docker Desktop**:
     *   Must be installed and running.
-    *   Required for:
-        *   MFA Alignment (runs transient containers).
-        *   ASR/Grammar Service (runs a persistent container).
-2.  **Python 3.8+**: Ensure Python is installed and added to your PATH.
-3.  **FFmpeg**: 
+    *   Required for background services and MFA alignment.
+2.  **Python 3.10+**: Ensure Python is installed and added to your PATH.
+3.  **FFmpeg**:
     *   Must be installed and accessible via command line (`ffmpeg -version`).
-    *   Used by the backend to convert audio to 16kHz WAV format.
+    *   **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html), extract, and add the `bin` folder to your System PATH.
+    *   **Mac/Linux**: Install via `brew install ffmpeg` or `sudo apt install ffmpeg`.
 
 ## Installation
 
-1.  **Open a terminal** in the project root directory:
-    ```powershell
-    cd C:\Users\Acer\DataScience\PTE
+1.  **Clone the Repository**:
+    ```bash
+    git clone <repository-url>
+    cd PTE
     ```
 
-2.  **Install Python Dependencies**:
-    ```powershell
+2.  **Start Background Services (Docker)**:
+    This starts the ASR/Grammar service (Port 8000) and the Phoneme service (Port 8001).
+    ```bash
+    docker-compose up -d --build
+    ```
+    *   Wait for a few minutes for the images to build and services to start.
+    *   Verify they are running: `docker ps`
+
+3.  **Install Python Dependencies**:
+    ```bash
     pip install -r requirements.txt
     ```
 
-3.  **Download NLTK Data**:
+4.  **Download NLTK Data**:
     The system requires the CMU Pronouncing Dictionary.
-    ```powershell
+    ```bash
     python -c "import nltk; nltk.download('cmudict')"
     ```
 
 ## Running the Application
 
-The application consists of two main parts: the **ASR/Grammar Service** (Docker) and the **Backend API** (Python/Flask).
-
-### Step 1: Start the ASR/Grammar Service
-This service runs in a Docker container on port `8000`. It handles Speech-to-Text (Whisper) and Grammar checking.
-
-1.  Run the helper script:
-    ```powershell
-    .\build_and_run_docker.ps1
-    ```
-2.  Wait for the script to complete. It will print "Service Status: ok" when ready.
-
-### Step 2: Start the Backend API
-This is the main application that serves the frontend and orchestrates the scoring.
-
-1.  Open a **new terminal window** (keep the previous one open).
-2.  Run the Flask application:
-    ```powershell
+1.  **Start the Backend API**:
+    This is the main application that serves the frontend and orchestrates the scoring.
+    ```bash
     python api/app.py
     ```
-3.  The server will start on `http://0.0.0.0:5000`.
+    *   The server will start on `http://0.0.0.0:5000`.
+
+2.  **Access the Application**:
+    *   Open your web browser.
+    *   Navigate to **[http://localhost:5000](http://localhost:5000)**.
 
 ## Usage
 
-1.  Open your web browser.
-2.  Navigate to **[http://localhost:5000](http://localhost:5000)**.
-3.  You can now:
-    *   **Record Audio**: Use the microphone button to record your speech.
-    *   **Upload Audio**: Upload an existing audio file.
-    *   **Get Scores**: The system will process the audio using MFA and the ASR service to provide pronunciation and fluency scores.
+*   **Read Aloud**: Practice reading text with pronunciation scoring.
+*   **Repeat Sentence**: Listen to audio and repeat it.
+*   **Describe Image**: Describe the displayed image (uses ASR + Grammar check).
+*   **Retell Lecture**: Listen to a lecture and summarize it.
 
 ## Troubleshooting
 
-*   **Docker Errors**: Ensure Docker Desktop is running. If you see "daemon not running" errors, start Docker Desktop and try again.
-*   **Audio Conversion Failed**: Ensure `ffmpeg` is installed. Try running `ffmpeg` in your terminal to verify.
-*   **Port Conflicts**: 
-    *   The ASR service uses port `8000`.
-    *   The Flask app uses port `5000`.
-    *   Ensure these ports are not used by other applications.
+*   **"docker-compose" not found**: Ensure Docker Desktop is installed. On newer versions, use `docker compose` (no hyphen) instead.
+*   **Audio Conversion Failed**: Ensure `ffmpeg` is installed correctly. Run `ffmpeg -version` in a new terminal to check.
+*   **Port Conflicts**:
+    *   Ensure ports `5000`, `8000`, and `8001` are free.
+    *   If `8000` is taken, you need to change it in `docker-compose.yml` AND `api/app.py` (`GRAMMAR_SERVICE_URL`).
+*   **Permission Errors (Docker)**: On Linux/Mac, you might need `sudo`. On Windows, ensure Docker Desktop is running.
