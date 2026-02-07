@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   asr-grammar:
+    image: cive202/pte-asr-grammar:latest
     build: 
       context: ./PTE_ASR_GRAMMAR_DOCKER
     ports:
@@ -12,6 +13,7 @@ services:
       - pte-network
 
   wav2vec2-service:
+    image: cive202/wav2vec2-phoneme-cpu:latest
     build: 
       context: ./wav2vec2_service
     ports:
