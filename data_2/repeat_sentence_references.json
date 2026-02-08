@@ -2,23 +2,27 @@
     "sentences": [
         {
             "id": "rs_001",
-            "text": "The lecture on economic policy has been rescheduled to next Tuesday."
+            "topic": "Work Instructions",
+            "text": "Your boss requires you to finish the report before Friday.",
+            "audio": "1-boss.mp3"
         },
         {
             "id": "rs_002",
-            "text": "Please ensure all laboratory equipment is cleaned and stored properly after use."
+            "topic": "Public Transport",
+            "text": "The bus right out front will take you to London.",
+            "audio": "2-bus.mp3"
         },
         {
             "id": "rs_003",
-            "text": "Higher education prepares students for professional challenges in a globalized world."
+            "topic": "Academic Research",
+            "text": "The facts you have garnered with such infinite trouble invariably fail you at a pinch.",
+            "audio": "3-facts.mp3"
         },
         {
             "id": "rs_004",
-            "text": "The library will be closed for maintenance during the winter break."
-        },
-        {
-            "id": "rs_005",
-            "text": "Scientific research requires careful observation and systematic documentation of data."
+            "topic": "Workplace Facilities",
+            "text": "This parking space is for the employee of the month.",
+            "audio": "4-parking.mp3"
         }
     ]
 }

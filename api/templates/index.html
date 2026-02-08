@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
             border-radius: 8px;
             font-size: 1rem;
         }
+
         .word {
             padding: 4px 8px;
             border-radius: 4px;
@@ -22,9 +24,23 @@
             margin: 4px;
             font-weight: bold;
         }
-        .correct { background-color: #d4edda; color: #155724; }
-        .wrong { background-color: #f8d7da; color: #721c24; }
-        .stress-error { background-color: #fff3cd; color: #856404; border-bottom: 2px solid orange; }
+
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .wrong {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .stress-error {
+            background-color: #fff3cd;
+            color: #856404;
+            border-bottom: 2px solid orange;
+        }
+
         .progress-container {
             display: none;
             margin-top: 1rem;
@@ -33,18 +49,21 @@
             border-radius: 12px;
             border: 1px solid #eee;
         }
+
         .progress-bar {
             height: 12px;
             background: #e9ecef;
             border-radius: 6px;
             overflow: hidden;
         }
+
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #4CAF50, #8BC34A);
             width: 0%;
             transition: width 0.5s ease;
         }
+
         .progress-text {
             margin-top: 0.75rem;
             font-size: 0.9rem;
@@ -53,6 +72,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="page-container">
         <div class="page-header">
@@ -62,47 +82,76 @@
         </div>
 
         <div class="task-container">
-            <div>
-                <label><strong>Reference Text</strong></label>
-                <textarea id="ref-text" placeholder="Enter text here...">Over the years, it got easier to build such software, even for non-technical folk.</textarea>
-            </div>
+            <!-- Topic Selection Phase -->
+            <div id="topic-selection-phase">
+                <h3 style="margin-bottom: 1rem;">Choose a Topic or Enter Custom Text</h3>
 
-            <div class="controls">
-                <button id="btn-record" class="btn primary">Record</button>
-                <button id="btn-stop" class="btn danger" disabled>Stop</button>
-                <span id="recording-indicator" style="display:none; color: red; margin-left: 10px;">🔴 Recording...</span>
-            </div>
-
-            <div class="controls" style="margin-top: 1rem;">
-                <button id="btn-save" class="btn secondary" disabled>Save to Corpus</button>
-                <button id="btn-check" class="btn success" disabled>Check Pronunciation</button>
-            </div>
-
-            <div id="progress-container" class="progress-container">
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
+                <!-- Topic List -->
+                <div id="topic-list" style="max-width: 600px; margin: 0 auto 2rem auto;">
+                    <!-- Topics will be loaded here -->
                 </div>
-                <div id="progress-text" class="progress-text">Initializing...</div>
+
+                <!-- Custom Text Option -->
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button id="btn-custom-text" class="btn secondary">Use Custom Text</button>
+                </div>
             </div>
 
-            <div id="status" style="margin-top: 1rem; font-weight: bold;"></div>
+            <!-- Active Task Phase -->
+            <div id="active-phase" style="display:none;">
+                <div style="margin-bottom: 1rem;">
+                    <span id="topic-badge"
+                        style="background: #007bff; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.9rem; font-weight: 500;"></span>
+                    <button id="btn-change-topic" class="btn secondary"
+                        style="float: right; padding: 0.4rem 1rem; font-size: 0.85rem;">Change Topic</button>
+                    <div style="clear: both;"></div>
+                </div>
 
-            <div id="transcription-box" style="margin-top: 1rem; padding: 15px; background: #f1f3f5; border-radius: 8px; display: none;">
-                <strong>ASR Transcription:</strong> <span id="transcript-text"></span>
-            </div>
+                <div>
+                    <label><strong>Reference Text</strong></label>
+                    <textarea id="ref-text" placeholder="Enter text here..."></textarea>
+                </div>
 
-            <div id="audio-playback" style="margin-top: 1rem; display: none;">
-                <strong>Your Recording:</strong><br>
-                <audio id="recorded-audio" controls style="width: 100%; margin-top: 5px;"></audio>
-            </div>
+                <div class="controls">
+                    <button id="btn-record" class="btn primary">Record</button>
+                    <button id="btn-stop" class="btn danger" disabled>Stop</button>
+                    <span id="recording-indicator" style="display:none; color: red; margin-left: 10px;">🔴
+                        Recording...</span>
+                </div>
 
-            <div id="results" style="margin-top: 1.5rem; line-height: 2.5;"></div>
+                <div class="controls" style="margin-top: 1rem;">
+                    <button id="btn-save" class="btn secondary" disabled>Save to Corpus</button>
+                    <button id="btn-check" class="btn success" disabled>Check Pronunciation</button>
+                </div>
 
-            <div style="margin-top: 2rem;">
-                <details>
-                    <summary>View Raw JSON Data</summary>
-                    <pre id="json-output" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee;"></pre>
-                </details>
+                <div id="progress-container" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="progress-text" class="progress-text">Initializing...</div>
+                </div>
+
+                <div id="status" style="margin-top: 1rem; font-weight: bold;"></div>
+
+                <div id="transcription-box"
+                    style="margin-top: 1rem; padding: 15px; background: #f1f3f5; border-radius: 8px; display: none;">
+                    <strong>ASR Transcription:</strong> <span id="transcript-text"></span>
+                </div>
+
+                <div id="audio-playback" style="margin-top: 1rem; display: none;">
+                    <strong>Your Recording:</strong><br>
+                    <audio id="recorded-audio" controls style="width: 100%; margin-top: 5px;"></audio>
+                </div>
+
+                <div id="results" style="margin-top: 1.5rem; line-height: 2.5;"></div>
+
+                <div style="margin-top: 2rem;">
+                    <details>
+                        <summary>View Raw JSON Data</summary>
+                        <pre id="json-output"
+                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee;"></pre>
+                    </details>
+                </div>
             </div>
         </div>
     </div>
@@ -112,45 +161,149 @@
         let audioChunks = [];
         let audioBlob = null;
         let pollInterval = null;
+        let selectedTopic = null;
 
+        const topicSelectionPhase = document.getElementById('topic-selection-phase');
+        const activePhase = document.getElementById('active-phase');
+        const topicList = document.getElementById('topic-list');
+        const topicBadge = document.getElementById('topic-badge');
+        const btnCustomText = document.getElementById('btn-custom-text');
+        const btnChangeTopic = document.getElementById('btn-change-topic');
         const btnRecord = document.getElementById('btn-record');
         const btnStop = document.getElementById('btn-stop');
         const btnSave = document.getElementById('btn-save');
         const btnCheck = document.getElementById('btn-check');
         const statusDiv = document.getElementById('status');
+        const refText = document.getElementById('ref-text');
         const resultsDiv = document.getElementById('results');
         const recIndicator = document.getElementById('recording-indicator');
-        const transBox = document.getElementById('transcription-box');
-        const transText = document.getElementById('transcript-text');
-        const audioPlaybackDiv = document.getElementById('audio-playback');
+        const transcriptionBox = document.getElementById('transcription-box');
+        const transcriptText = document.getElementById('transcript-text');
+        const audioPlayback = document.getElementById('audio-playback');
         const recordedAudio = document.getElementById('recorded-audio');
         const jsonOutput = document.getElementById('json-output');
         const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
 
+        // Load topics on page load
+        async function loadTopics() {
+            try {
+                const response = await fetch('/speaking/read-aloud/get-topics');
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error loading topics: ' + data.error);
+                    return;
+                }
+
+                topicList.innerHTML = '';
+                data.topics.forEach(topic => {
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                        background: white;
+                        border: 1px solid #ddd;
+                        padding: 1rem 1.5rem;
+                        margin-bottom: 0.5rem;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 1rem;
+                        color: #333;
+                    `;
+
+                    item.textContent = topic;
+
+                    item.onmouseover = () => {
+                        item.style.background = '#f0f0f0';
+                        item.style.borderColor = '#007bff';
+                    };
+
+                    item.onmouseout = () => {
+                        item.style.background = 'white';
+                        item.style.borderColor = '#ddd';
+                    };
+
+                    item.onclick = () => selectTopic(topic);
+                    topicList.appendChild(item);
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Failed to load topics.');
+            }
+        }
+
+        async function selectTopic(topic) {
+            selectedTopic = topic;
+            try {
+                const response = await fetch(`/speaking/read-aloud/get-passage?topic=${encodeURIComponent(topic)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error loading passage: ' + data.error);
+                    return;
+                }
+
+                topicBadge.textContent = `Topic: ${data.topic}`;
+                refText.value = data.text;
+                topicSelectionPhase.style.display = 'none';
+                activePhase.style.display = 'block';
+            } catch (e) {
+                console.error(e);
+                alert('Failed to load passage.');
+            }
+        }
+
+        btnCustomText.onclick = () => {
+            selectedTopic = 'Custom';
+            topicBadge.textContent = 'Custom Text';
+            refText.value = '';
+            topicSelectionPhase.style.display = 'none';
+            activePhase.style.display = 'block';
+        };
+
+        btnChangeTopic.onclick = () => {
+            activePhase.style.display = 'none';
+            topicSelectionPhase.style.display = 'block';
+            resetUI();
+        };
+
+        function resetUI() {
+            resultsDiv.innerHTML = '';
+            statusDiv.textContent = '';
+            jsonOutput.textContent = '';
+            transcriptionBox.style.display = 'none';
+            audioPlayback.style.display = 'none';
+            progressContainer.style.display = 'none';
+            btnSave.disabled = true;
+            btnCheck.disabled = true;
+        }
+
         btnRecord.onclick = async () => {
             try {
                 // Clear previous audio
-                audioPlaybackDiv.style.display = 'none';
+                audioPlayback.style.display = 'none';
                 recordedAudio.src = "";
-                
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
                 mediaRecorder.onstop = () => {
                     audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    
+
                     // Setup audio playback
                     const audioUrl = URL.createObjectURL(audioBlob);
                     recordedAudio.src = audioUrl;
-                    audioPlaybackDiv.style.display = 'block';
-                    
+                    audioPlayback.style.display = 'block';
+
                     btnSave.disabled = false;
                     btnCheck.disabled = false;
-                    statusDiv.innerText = "Recording finished. Ready to Check.";
+                    statusDiv.innerText = "Recording finished. Checking pronunciation...";
                     recIndicator.style.display = 'none';
+
+                    // Auto-check pronunciation after recording stops
+                    setTimeout(() => checkPronunciation(), 500);
                 };
                 mediaRecorder.start();
                 btnRecord.disabled = true;
@@ -193,8 +346,8 @@
             const accuracy = (data.summary.correct / data.summary.total * 100).toFixed(1);
             statusDiv.innerText = `✅ Analysis Complete! Accuracy: ${accuracy}%`;
             if (data.transcript) {
-                transBox.style.display = 'block';
-                transText.innerText = data.transcript;
+                transcriptionBox.style.display = 'block';
+                transcriptText.innerText = data.transcript;
             }
             resultsDiv.innerHTML = '';
             data.words.forEach(w => {
@@ -216,14 +369,14 @@
                     span.className += ' stress-error';
                     span.style.border = '1px solid orange';
                 }
-                
+
                 // Add pause indicator if available
                 if (w.pause_eval) {
                     const pauseSpan = document.createElement('span');
                     pauseSpan.style.fontSize = '0.8em';
                     pauseSpan.style.color = '#666';
                     pauseSpan.style.margin = '0 2px';
-                    
+
                     if (w.pause_eval.duration > 0) {
                         pauseSpan.innerText = `[${w.pause_eval.duration}s]`;
                         // Highlight long pauses or missing pauses if needed
@@ -232,8 +385,8 @@
                             pauseSpan.style.fontWeight = 'bold';
                         }
                     } else if (w.pause_eval.status === 'missing_pause') {
-                         pauseSpan.innerText = `[No Pause]`;
-                         pauseSpan.style.color = 'red';
+                        pauseSpan.innerText = `[No Pause]`;
+                        pauseSpan.style.color = 'red';
                     }
                     resultsDiv.appendChild(pauseSpan);
                 } else if (w.end) {
@@ -241,20 +394,20 @@
                     // This logic is simplified; the backend usually handles pause evaluation at punctuation.
                     // Ideally, we'd check if the next word's start time is significantly later.
                 }
-                
+
                 resultsDiv.appendChild(span);
                 resultsDiv.appendChild(document.createTextNode(" "));
             });
         }
 
-        btnCheck.onclick = async () => {
+        async function checkPronunciation() {
             if (!audioBlob) return;
             resultsDiv.innerHTML = "";
-            transBox.style.display = 'none';
+            transcriptionBox.style.display = 'none';
             jsonOutput.innerText = "";
             progressContainer.style.display = 'block';
-            progressFill.style.width = '5%';
-            progressText.innerText = '📤 Uploading audio...';
+            progressFill.style.width = '2%';
+            progressText.innerText = 'Starting...';
             btnCheck.disabled = true;
 
             const formData = new FormData();
@@ -263,47 +416,52 @@
             formData.append('feature', 'read_aloud');
 
             try {
-                const res = await fetch('/check', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.error) {
-                    progressContainer.style.display = 'none';
-                    statusDiv.innerText = "Error: " + data.error;
-                    btnCheck.disabled = false;
-                    return;
-                }
-                const jobId = data.job_id;
-                const estimatedTime = data.estimated_time || 30;
-                let elapsed = 0;
+                const response = await fetch('/check_stream', { method: 'POST', body: formData });
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-                pollInterval = setInterval(async () => {
-                    elapsed += 2;
-                    const progress = Math.min(10 + (elapsed / estimatedTime) * 80, 95);
-                    progressFill.style.width = progress + '%';
-                    progressText.innerText = `🔄`;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                    try {
-                        const statusRes = await fetch(`/check/status/${jobId}`);
-                        const status = await statusRes.json();
-                        if (status.status === 'complete') {
-                            clearInterval(pollInterval);
-                            progressFill.style.width = '100%';
-                            progressText.innerText = '✅ Complete!';
-                            setTimeout(() => displayResult(status.result), 500);
-                            btnCheck.disabled = false;
-                        } else if (status.status === 'failed') {
-                            clearInterval(pollInterval);
-                            progressContainer.style.display = 'none';
-                            statusDiv.innerText = "Error: " + status.error;
-                            btnCheck.disabled = false;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the last partial line
+
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.type === 'progress') {
+                                progressFill.style.width = data.percent + '%';
+                                progressText.innerText = `${data.percent}% - ${data.message}`;
+                            } else if (data.type === 'result') {
+                                progressFill.style.width = '100%';
+                                progressText.innerText = '✅ Complete!';
+                                setTimeout(() => displayResult(data.data), 500);
+                            } else if (data.type === 'error') {
+                                progressContainer.style.display = 'none';
+                                statusDiv.innerText = "Error: " + data.message;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing JSON chunk', e);
                         }
-                    } catch (pollErr) { console.error(pollErr); }
-                }, 2000);
+                    }
+                }
             } catch (err) {
                 progressContainer.style.display = 'none';
                 statusDiv.innerText = "Check failed: " + err.message;
+            } finally {
                 btnCheck.disabled = false;
             }
-        };
+        }
+
+        btnCheck.onclick = () => checkPronunciation();
+
+        // Load topics when page loads
+        loadTopics();
     </script>
 </body>
+
 </html>

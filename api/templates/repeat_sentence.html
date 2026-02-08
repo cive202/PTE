@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,28 +15,33 @@
             background: #f8f9fa;
             border-radius: 10px;
             border-left: 5px solid #007bff;
-            display: none; /* Hidden during initial phase */
+            display: none;
+            /* Hidden during initial phase */
         }
+
         .instruction {
             font-style: italic;
             color: #666;
             margin-bottom: 1rem;
         }
-        .word-container { 
-            display: inline-flex; 
-            flex-direction: column; 
-            align-items: center; 
-            margin: 5px; 
+
+        .word-container {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 5px;
             vertical-align: top;
         }
-        .word { 
-            padding: 4px 8px; 
-            border-radius: 4px; 
+
+        .word {
+            padding: 4px 8px;
+            border-radius: 4px;
             font-weight: bold;
             border: 2px solid transparent;
             cursor: help;
             position: relative;
         }
+
         .word:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -51,38 +57,70 @@
             z-index: 100;
             margin-bottom: 8px;
             pointer-events: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             line-height: 1.4;
             display: none;
         }
-        .word[data-tooltip]:hover::after { display: block; }
-        .correct { background-color: #d4edda; color: #155724; border-color: #c3e6cb; } 
-        .wrong { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }   
-        .mispronounced { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        .inserted { background-color: #cce5ff; color: #004085; border-color: #b8daff; }
-        
-        #progress-container { 
-            margin-top: 1rem; 
-            background-color: #e0e0e0; 
-            border-radius: 10px; 
-            overflow: hidden; 
+
+        .word[data-tooltip]:hover::after {
+            display: block;
+        }
+
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .wrong {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .mispronounced {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .inserted {
+            background-color: #cce5ff;
+            color: #004085;
+            border-color: #b8daff;
+        }
+
+        #progress-container {
+            margin-top: 1rem;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
             display: none;
             height: 25px;
             position: relative;
         }
-        #progress-bar { 
-            width: 0%; 
-            height: 100%; 
-            background-color: #4CAF50; 
-            transition: width 0.3s ease-in-out; 
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease-in-out;
         }
+
         #progress-text {
-            position: absolute; width: 100%; text-align: center;
-            top: 0; left: 0; line-height: 25px; font-size: 0.8rem;
-            color: #333; font-weight: bold;
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 0;
+            left: 0;
+            line-height: 25px;
+            font-size: 0.8rem;
+            color: #333;
+            font-weight: bold;
         }
     </style>
 </head>
+
 <body>
     <div class="page-container">
         <div class="page-header">
@@ -92,14 +130,20 @@
         </div>
 
         <div class="task-container">
-            <div id="setup-phase">
-                <button id="btn-start-task" class="btn primary">Start Task</button>
+            <!-- Topic Selection Phase -->
+            <div id="topic-selection-phase">
+                <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">Choose a Topic</h2>
+                <div id="topic-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <!-- Topics will be loaded here -->
+                </div>
             </div>
 
+            <!-- Active Task Phase -->
             <div id="active-phase" style="display:none;">
                 <div class="instruction" id="task-instruction">Listen to the sentence...</div>
                 <div id="sentence-display" class="sentence-display"></div>
-                
+
                 <div class="controls">
                     <button id="btn-record" class="btn primary" disabled>Record</button>
                     <button id="btn-stop" class="btn danger" disabled>Stop</button>
@@ -121,6 +165,10 @@
                     <div id="metrics" style="margin-top: 0.5rem; font-weight: bold;"></div>
                     <div id="results" style="margin-top: 1rem; line-height: 2;"></div>
                 </div>
+
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button id="btn-new-topic" class="btn secondary">Choose Different Topic</button>
+                </div>
             </div>
         </div>
     </div>
@@ -130,14 +178,16 @@
         let audioChunks = [];
         let audioBlob = null;
         let currentSentence = "";
+        let selectedTopic = null;
 
-        const btnStart = document.getElementById('btn-start-task');
-        const setupPhase = document.getElementById('setup-phase');
+        const topicSelectionPhase = document.getElementById('topic-selection-phase');
         const activePhase = document.getElementById('active-phase');
+        const topicGrid = document.getElementById('topic-grid');
         const sentenceDisplay = document.getElementById('sentence-display');
         const instruction = document.getElementById('task-instruction');
         const btnRecord = document.getElementById('btn-record');
         const btnStop = document.getElementById('btn-stop');
+        const btnNewTopic = document.getElementById('btn-new-topic');
         const statusDiv = document.getElementById('status');
         const resultsDiv = document.getElementById('results');
         const metricsDiv = document.getElementById('metrics');
@@ -145,52 +195,111 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
 
-        btnStart.onclick = () => {
-            setupPhase.style.display = 'none';
-            activePhase.style.display = 'block';
-            startTask();
-        };
-
-        async function startTask() {
-            instruction.innerText = "Loading audio...";
-            
+        // Load topics on page load
+        async function loadTopics() {
             try {
-                const response = await fetch('/speaking/repeat-sentence/get-task');
+                const response = await fetch('/speaking/repeat-sentence/get-topics');
                 const data = await response.json();
-                
+
                 if (data.error) {
-                    alert('Error loading task: ' + data.error);
-                    setupPhase.style.display = 'block';
-                    activePhase.style.display = 'none';
+                    alert('Error loading topics: ' + data.error);
                     return;
                 }
-                
+
+                topicGrid.innerHTML = '';
+                topicGrid.style.cssText = 'display: block; max-width: 600px; margin: 0 auto;';
+
+                data.topics.forEach(topic => {
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                        background: white;
+                        border: 1px solid #ddd;
+                        padding: 1rem 1.5rem;
+                        margin-bottom: 0.5rem;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        font-size: 1rem;
+                        color: #333;
+                    `;
+
+                    item.textContent = topic;
+
+                    item.onmouseover = () => {
+                        item.style.background = '#f0f0f0';
+                        item.style.borderColor = '#007bff';
+                    };
+
+                    item.onmouseout = () => {
+                        item.style.background = 'white';
+                        item.style.borderColor = '#ddd';
+                    };
+
+                    item.onclick = () => selectTopic(topic);
+                    topicGrid.appendChild(item);
+                });
+            } catch (e) {
+                console.error(e);
+                alert('Failed to load topics.');
+            }
+        }
+
+        function selectTopic(topic) {
+            selectedTopic = topic;
+            topicSelectionPhase.style.display = 'none';
+            activePhase.style.display = 'block';
+            startTask(topic);
+        }
+
+        btnNewTopic.onclick = () => {
+            activePhase.style.display = 'none';
+            topicSelectionPhase.style.display = 'block';
+            resultsDiv.innerHTML = '';
+            statusDiv.innerText = '';
+            metricsDiv.innerHTML = '';
+            progressContainer.style.display = 'none';
+        };
+
+        async function startTask(topic) {
+            instruction.innerText = "Loading audio...";
+
+            try {
+                const response = await fetch(`/speaking/repeat-sentence/get-task?topic=${encodeURIComponent(topic)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error loading task: ' + data.error);
+                    btnNewTopic.click();
+                    return;
+                }
+
                 currentSentence = data.text;
                 const audioUrl = data.audio_url;
-                
-                instruction.innerText = "Listen carefully...";
-                
+                const topicName = data.topic || 'General';
+
+                // Show topic badge
+                instruction.innerHTML = `<span style="background: #007bff; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.9rem; font-weight: 500;">Topic: ${topicName}</span><br><br>Listen carefully...`;
+
                 const audio = new Audio(audioUrl);
-                
+
                 audio.onended = () => {
-                    instruction.innerText = "Now repeat the sentence!";
+                    instruction.innerHTML = `<span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.9rem; font-weight: 500;">Topic: ${topicName}</span><br><br>Now repeat the sentence!`;
                     btnRecord.disabled = false;
                     statusDiv.innerText = "Ready to record.";
                 };
-                
+
                 audio.onerror = (e) => {
-                     console.error("Audio load error", e);
-                     instruction.innerText = "Error playing audio.";
-                     alert("Could not play audio file.");
+                    console.error("Audio load error", e);
+                    instruction.innerText = "Error playing audio.";
+                    alert("Could not play audio file.");
                 };
 
                 await audio.play();
-                
+
             } catch (e) {
                 console.error(e);
                 alert("Failed to start task.");
-                setupPhase.style.display = 'block';
-                activePhase.style.display = 'none';
+                btnNewTopic.click();
             }
         }
 
@@ -220,7 +329,7 @@
         async function checkPronunciation() {
             progressContainer.style.display = 'block';
             statusDiv.innerText = "Analyzing your speech...";
-            
+
             const formData = new FormData();
             formData.append('audio', audioBlob, 'rs.wav');
             formData.append('text', currentSentence);
@@ -258,10 +367,11 @@
         }
 
         function handleResult(data) {
-            sentenceDisplay.style.display = 'block'; // Show original sentence for comparison
+            sentenceDisplay.style.display = 'block';
+            sentenceDisplay.innerText = currentSentence;
             statusDiv.innerText = `Accuracy: ${(data.summary.correct / data.summary.total * 100).toFixed(1)}%`;
             metricsDiv.innerHTML = `Speech Rate: ${data.speech_rate_scale}x | Pause Penalty: ${data.summary.pause_penalty}`;
-            
+
             resultsDiv.innerHTML = "";
             data.words.forEach(w => {
                 const container = document.createElement('div');
@@ -274,6 +384,10 @@
                 resultsDiv.appendChild(container);
             });
         }
+
+        // Load topics when page loads
+        loadTopics();
     </script>
 </body>
+
 </html>

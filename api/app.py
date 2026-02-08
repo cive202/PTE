@@ -31,8 +31,9 @@ CORPUS_DIR = os.path.join(PROJECT_ROOT, "corpus")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data_2")
 IMAGES_DIR = os.path.join(DATA_DIR, "images")
 LECTURES_DIR = os.path.join(DATA_DIR, "lectures")
-REPEAT_SENTENCE_DIR = os.path.join(DATA_DIR, "audio_repeat_sentence")
-REPEAT_SENTENCE_JSON = os.path.join(REPEAT_SENTENCE_DIR, "readaloud.json")
+REPEAT_SENTENCE_AUDIO_DIR = os.path.join(DATA_DIR, "repeat-sentence-audio")
+REPEAT_SENTENCE_JSON = os.path.join(DATA_DIR, "repeat_sentence_references.json")
+READ_ALOUD_JSON = os.path.join(DATA_DIR, "read_aloud_references.json")
 os.makedirs(CORPUS_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
 os.makedirs(LECTURES_DIR, exist_ok=True)
@@ -223,39 +224,123 @@ def read_aloud():
     """Read Aloud practice page."""
     return render_template('index.html')
 
+@app.route('/speaking/read-aloud/get-topics')
+def get_read_aloud_topics():
+    """Get all available topics for read aloud."""
+    try:
+        if not os.path.exists(READ_ALOUD_JSON):
+            return jsonify({"error": "Data file not found"}), 404
+
+        with open(READ_ALOUD_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        passages = data.get('passages', [])
+        if not passages:
+            return jsonify({"error": "No data available"}), 404
+        
+        # Extract unique topics
+        topics = list(set(p.get('topic', 'General') for p in passages))
+        
+        return jsonify({"topics": topics})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/speaking/read-aloud/get-passage')
+def get_read_aloud_passage():
+    """Get a passage by topic or random."""
+    try:
+        topic = request.args.get('topic', None)
+        
+        if not os.path.exists(READ_ALOUD_JSON):
+            return jsonify({"error": "Data file not found"}), 404
+
+        with open(READ_ALOUD_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        passages = data.get('passages', [])
+        if not passages:
+            return jsonify({"error": "No data available"}), 404
+        
+        # Filter by topic if provided
+        if topic:
+            filtered = [p for p in passages if p.get('topic', 'General') == topic]
+            if not filtered:
+                return jsonify({"error": f"No passages found for topic: {topic}"}), 404
+            entry = random.choice(filtered)
+        else:
+            entry = random.choice(passages)
+        
+        return jsonify({
+            "text": entry['text'],
+            "id": entry['id'],
+            "topic": entry.get('topic', 'General'),
+            "title": entry.get('title', '')
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/speaking/repeat-sentence')
 def repeat_sentence():
     """Repeat Sentence practice page."""
     return render_template('repeat_sentence.html')
 
+@app.route('/speaking/repeat-sentence/get-topics')
+def get_repeat_sentence_topics():
+    """Get all available topics for repeat sentence."""
+    try:
+        if not os.path.exists(REPEAT_SENTENCE_JSON):
+            return jsonify({"error": "Data file not found"}), 404
+
+        with open(REPEAT_SENTENCE_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        sentences = data.get('sentences', [])
+        if not sentences:
+            return jsonify({"error": "No data available"}), 404
+        
+        # Extract unique topics
+        topics = list(set(s.get('topic', 'General') for s in sentences))
+        
+        return jsonify({"topics": topics})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/speaking/repeat-sentence/get-task')
 def get_repeat_sentence_task():
     try:
+        topic = request.args.get('topic', None)
+        
         if not os.path.exists(REPEAT_SENTENCE_JSON):
              return jsonify({"error": "Data file not found"}), 404
 
         with open(REPEAT_SENTENCE_JSON, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        if not data:
+        sentences = data.get('sentences', [])
+        if not sentences:
             return jsonify({"error": "No data available"}), 404
-            
-        entry = random.choice(data)
         
-        # entry['path'] is like "data/1-47.wav"
-        filename = os.path.basename(entry['path'])
+        # Filter by topic if provided
+        if topic:
+            filtered = [s for s in sentences if s.get('topic', 'General') == topic]
+            if not filtered:
+                return jsonify({"error": f"No sentences found for topic: {topic}"}), 404
+            entry = random.choice(filtered)
+        else:
+            entry = random.choice(sentences)
         
         return jsonify({
-            "audio_url": f"/audio/repeat-sentence/{filename}",
-            "text": entry['content'],
-            "id": str(entry.get('sno', ''))
+            "text": entry['text'],
+            "id": entry['id'],
+            "topic": entry.get('topic', 'General'),
+            "audio_url": f"/audio/repeat-sentence/{entry['audio']}"
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route('/audio/repeat-sentence/<path:filename>')
 def serve_repeat_sentence_audio(filename):
-    return send_from_directory(REPEAT_SENTENCE_DIR, filename)
+    return send_from_directory(REPEAT_SENTENCE_AUDIO_DIR, filename)
 
 @app.route('/speaking/describe-image')
 def describe_image_speaking():

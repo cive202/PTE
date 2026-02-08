@@ -2,7 +2,7 @@
   "images": [
     {
       "id": "img001",
-      "filename": "sample_bar_chart.png",
+      "filename": "quarterly_sales_bar_chart.png",
       "title": "Quarterly Sales Performance",
       "difficulty": "easy",
       "reference": "The bar chart illustrates quarterly sales performance across four quarters. The vertical axis represents sales revenue in thousands of dollars, while the horizontal axis shows the time periods from Q1 to Q4. The data reveals a consistent upward trend, with Q1 starting at approximately 45,000 dollars, followed by steady growth through Q2 and Q3, reaching 65,000 and 78,000 respectively. The final quarter, Q4, shows the highest performance at around 92,000 dollars, representing more than double the initial quarter's revenue.",
@@ -22,7 +22,7 @@
     },
     {
       "id": "img002",
-      "filename": "sample_line_graph.png",
+      "filename": "daily_temperature_line_graph.png",
       "title": "Temperature Variation Over Time",
       "difficulty": "easy",
       "reference": "The line graph depicts temperature variations throughout a typical day. The horizontal axis represents time from midnight to midnight in 3-hour intervals, while the vertical axis shows temperature in degrees Celsius. The temperature starts at around 12 degrees at midnight, drops to its lowest point of 8 degrees at 6 AM, then rises steadily throughout the morning and afternoon. The peak temperature of 28 degrees occurs at 3 PM, after which it gradually declines through the evening, returning to approximately 14 degrees by midnight.",
@@ -37,6 +37,86 @@
         "midnight",
         "afternoon",
         "decline"
+      ]
+    },
+    {
+      "id": "img003",
+      "filename": "australia_population_chart.png",
+      "title": "Australia Population by Country of Birth",
+      "difficulty": "medium",
+      "reference": "The image shows Australia's population by foreign country of birth in 2013, 2018, and 2023. India had the highest increase, reaching nearly 800,000 in 2023. China came second, followed by the Philippines and Vietnam. Nepal and Pakistan also saw a steady rise over the years. Other countries like Brazil and Colombia had smaller numbers. Overall, the chart shows that the number of people born in India living in Australia grew the most over time.",
+      "keywords": [
+        "Australia",
+        "population",
+        "foreign country",
+        "birth",
+        "India",
+        "China",
+        "increase",
+        "2023",
+        "Philippines",
+        "Vietnam",
+        "growth"
+      ]
+    },
+    {
+      "id": "img004",
+      "filename": "gender_birth_rates_pie_chart.png",
+      "title": "Male and Female Birth Rates",
+      "difficulty": "medium",
+      "reference": "The following pie chart gives information about different birth rates of the male and the female. According to this graph, on Sunday the male birth rate is about eight percent, while that for the female is about seventeen percent. The male birth rate is lowest on Saturday, while the female one is lowest on Monday. What's more, the male reaches highest on Thursday, so does the female, respectively twenty-five percent and twenty percent. To sum up, this pie chart tells about how different the birth rates are between the male and the female.",
+      "keywords": [
+        "pie chart",
+        "birth rates",
+        "male",
+        "female",
+        "Sunday",
+        "Monday",
+        "percentage",
+        "highest",
+        "lowest",
+        "Thursday",
+        "Saturday"
+      ]
+    },
+    {
+      "id": "img005",
+      "filename": "meat_preparation_process.png",
+      "title": "Meat Preparation Process",
+      "difficulty": "medium",
+      "reference": "This picture tells about how to prepare food of meat. The first stage 'clean' starts with washing hands under a running tap. Once this is completed, the subsequent step 'separate' is to cut meat into pieces with a knife. After that, the meat is put into a roasting machine for cooking. In this step, the meat is processed in a very high temperature. The final step 'chill' is to put cooked meat into a refrigerator. To sum up, the picture tells about steps in preparation of meat.",
+      "keywords": [
+        "process",
+        "prepare",
+        "meat",
+        "clean",
+        "separate",
+        "roasting",
+        "chill",
+        "steps",
+        "refrigerator",
+        "washing",
+        "cooking"
+      ]
+    },
+    {
+      "id": "img006",
+      "filename": "nz_club_membership_bar_chart.png",
+      "title": "Club Membership in New Zealand",
+      "difficulty": "medium",
+      "reference": "The bar chart gives information of types of clubs that people belong to. From the chart we can see professional accounts for eleven percent, slightly lower than volunteer. Then hobby is higher, which is about fifteen percent. Following that, the percentage of religion is twenty-one percent. What's more, political is the smallest club type, and sport is the largest one. To sum up, people belong to many types of clubs.",
+      "keywords": [
+        "bar chart",
+        "clubs",
+        "New Zealand",
+        "professional",
+        "volunteer",
+        "hobby",
+        "religion",
+        "political",
+        "sport",
+        "percentage",
+        "membership"
       ]
     }
   ]

@@ -1,0 +1,28 @@
+{
+    "passages": [
+        {
+            "id": "ra_001",
+            "topic": "Travel & Tourism",
+            "title": "Canada Visitation",
+            "text": "The best time to visit Canada is during fall months, when mild temperatures and vibrant fall foliage make scenic drives, hiking, and outdoor exploration especially enjoyable. Travel guides often highlight autumn—especially from late September through October—as a peak season for color changes in Ontario, Quebec, and other regions of the country."
+        },
+        {
+            "id": "ra_002",
+            "topic": "Workplace & Productivity",
+            "title": "Productivity and Focus",
+            "text": "The importance of breaks in maintaining productivity cannot be overstated. Research suggests that short, frequent breaks throughout the workday can significantly enhance focus and prevent mental fatigue. By stepping away from the screen or task at hand, individuals allow their brains to rest and recharge, ultimately leading to higher-quality work and better overall well-being."
+        },
+        {
+            "id": "ra_003",
+            "topic": "Environment & Nature",
+            "title": "Marine Ecosystems",
+            "text": "Coral reefs are among the most diverse and productive ecosystems on Earth, often referred to as the rainforests of the sea. They provide essential habitat for a vast array of marine life, from tiny colorful fish to large predators like sharks. Beyond their biological importance, coral reefs also offer coastal protection, tourism opportunities, and livelihoods for millions of people worldwide."
+        },
+        {
+            "id": "ra_004",
+            "topic": "Social Policy",
+            "title": "Welfare Evolution",
+            "text": "Welfare hasn't actually been defined as a policy, but rather it has evolved from a series of events and pieces of legislation in response to social and economic changes. It involves the provision of a social safety net, including healthcare, education, and financial assistance to ensure a basic standard of living for all citizens."
+        }
+    ]
+}

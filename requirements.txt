@@ -1,53 +1,25 @@
-# PTE Read Aloud – dependencies
-# Install: pip install -r requirements.txt
-
-# -----------------------------------------------------------------------------
-# Core (required for word-level matcher, alignment, pause scoring, report)
-# -----------------------------------------------------------------------------
+# Core dependencies
 numpy>=1.20.0
+scipy>=1.7.0
 
-# Audio I/O (audio_quality, wavlm)
+# Audio processing
 soundfile>=0.10.0
+librosa>=0.9.0
 
-# -----------------------------------------------------------------------------
-# WavLM pronunciation (noisy-audio fallback)
-# -----------------------------------------------------------------------------
+# Deep learning
 torch>=1.9.0
 transformers>=4.20.0
 
-# -----------------------------------------------------------------------------
-# MFA pronunciation (clear-audio path)
-# -----------------------------------------------------------------------------
-# MFA itself: install via conda, not pip:
-#   conda install -c conda-forge montreal-forced-aligner
+# NLP and text processing
+nltk>=3.8
+jiwer>=3.0.0
+Levenshtein>=0.20.0
+
+# Phoneme and pronunciation
+cmudict>=1.0.0
+g2p_en>=2.1.0
 praat-textgrids>=1.0.0
 
-# -----------------------------------------------------------------------------
-# Optional: scipy (audio_quality fallback if soundfile fails)
-# -----------------------------------------------------------------------------
-scipy>=1.7.0
-
-# -----------------------------------------------------------------------------
-# CMU Pronouncing Dictionary (for expected phonemes)
-# -----------------------------------------------------------------------------
-nltk>=3.8
-# After installing, download CMUdict:
-#   python -c "import nltk; nltk.download('cmudict')"
-
-# -----------------------------------------------------------------------------
-# Optional: NeMo ASR (voice2text.py – Parakeet)
-# Heavy; install separately if using real ASR instead of pseudo_voice2text.
-#   pip install nemo_toolkit[asr]
-# -----------------------------------------------------------------------------
-# nemo_toolkit[asr]
-
-# -----------------------------------------------------------------------------
-# Describe Image Dependencies (Client Side)
-# -----------------------------------------------------------------------------
-# Note: openai-whisper and language-tool-python are now in the Docker container.
-requests>=2.25.0
-
-# -----------------------------------------------------------------------------
-# API Dependencies
-# -----------------------------------------------------------------------------
+# Web framework
 flask>=2.0.0
+requests>=2.25.0
