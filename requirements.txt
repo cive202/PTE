@@ -23,3 +23,6 @@ praat-textgrids>=1.0.0
 # Web framework
 flask>=2.0.0
 requests>=2.25.0
+
+# Data Science
+scikit-learn>=1.0.0

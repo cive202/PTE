@@ -47,6 +47,8 @@ ACCENTS_CONFIG = {
 
 # --- Validation Logic (Ported from test_mfa_output.py) ---
 
+# --- Validation Logic (Ported from test_mfa_output.py) ---
+
 def load_dictionary(path):
     """Load MFA dictionary mapping words to phone tuples."""
     pronunciations = {}
@@ -114,27 +116,76 @@ def validate_pronunciation(word, observed_phones, dictionary):
             
     return True, "Stress Mismatch", False
 
-def read_textgrid_words(path):
-    """Minimal TextGrid reader for words using pte_core if available."""
-    words = []
+def parse_textgrid(path, target_tier):
+    """
+    Robust manual TextGrid parser.
+    Extracts intervals from the specified tier ('words' or 'phones').
+    Returns list of dicts: {'value': text, 'start': float, 'end': float, ...}
+    """
+    items = []
     if not os.path.exists(path):
-        return words
-    
+        return items
+
     try:
-        from pte_core.mfa.textgrid_reader import read_word_textgrid
-        return read_word_textgrid(str(path))
-    except ImportError:
-        pass
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        in_target_tier = False
+        in_interval = False
+        current_item = {}
         
-    return [] # Fallback if pte_core not found
+        # Simple state machine
+        for line in lines:
+            line = line.strip()
+            
+            # check for tier start
+            if line.startswith('name ='):
+                if '=' in line:
+                    name = line.split('=')[1].strip().strip('"')
+                    if name == target_tier:
+                        in_target_tier = True
+                    # Only reset if we find another name= line (start of next tier)
+                    # and we were already in target tier?
+                    # Actually, if we are in target tier, and see name=, it means NEXT tier started.
+                    elif in_target_tier:
+                        in_target_tier = False
+            
+            if in_target_tier:
+                if line.startswith('intervals ['):
+                    in_interval = True
+                    current_item = {}
+                
+                if in_interval:
+                    if line.startswith('xmin ='):
+                        try: current_item['start'] = float(line.split('=')[1].strip())
+                        except: pass
+                    elif line.startswith('xmax ='):
+                        try: current_item['end'] = float(line.split('=')[1].strip())
+                        except: pass
+                    elif line.startswith('text ='):
+                        text = line.split('=')[1].strip().strip('"')
+                        # Only keep non-empty text
+                        if text:
+                            current_item['value'] = text
+                            current_item['word'] = text # Alias for words
+                            current_item['label'] = text # Alias for phones
+                            if 'start' in current_item and 'end' in current_item:
+                                items.append(current_item)
+                        
+                        in_interval = False # End of interval data
+                        
+    except Exception as e:
+        print(f"[DEBUG] Failed to parse TextGrid {path}: {e}")
+        
+    return items
+
+def read_textgrid_words(path):
+    """Read words from TextGrid using manual parser."""
+    return parse_textgrid(path, "words")
 
 def read_textgrid_phones(path):
-    """Read phones from TextGrid."""
-    try:
-        from pte_core.mfa.phone_reader import read_phone_textgrid
-        return read_phone_textgrid(str(path))
-    except ImportError:
-        return []
+    """Read phones from TextGrid using manual parser."""
+    return parse_textgrid(path, "phones")
 
 def get_phones_for_word(word_info, all_phones):
     """Extract phones corresponding to a specific word time range."""
@@ -275,8 +326,12 @@ def transcribe_audio_with_details(audio_path):
         print(f"ASR failed: {e}")
         return {"text": "", "word_timestamps": []}
 
-def run_single_alignment(accent, conf, run_id, docker_input_dir):
-    """Run MFA alignment for a single accent in Docker."""
+def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
+    """
+    Generator that runs MFA alignment and yields progress updates to keep connection alive.
+    Yields: {"type": "progress", ...} or {"type": "result", "data": (accent, tg_path)}
+    """
+    import time
     output_dir_name = f"output_{accent}_{run_id}"
     docker_output_dir = f"/data/data/{output_dir_name}"
     host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
@@ -290,16 +345,65 @@ def run_single_alignment(accent, conf, run_id, docker_input_dir):
         f"/data/{conf['dict_rel']}",
         f"/data/{conf['model_rel']}",
         docker_output_dir,
-        "--clean", "--quiet"
+        "--clean", "--quiet",
+        "--beam", "100",
+        "--retry_beam", "400",
+        "--num_jobs", "1"
     ]
     
+    process = None
     try:
-        subprocess.run(cmd, check=True, timeout=300)
-        tg_file = host_output_dir / "input.TextGrid"
-        if tg_file.exists():
-            return accent, tg_file
+        # Use Popen to allow polling/heartbeats
+        process = subprocess.Popen(
+            cmd, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE
+        )
+        
+        start_time = time.time()
+        while True:
+            try:
+                # Wait for 2 seconds
+                stdout, stderr = process.communicate(timeout=2)
+                # If we get here without TimeoutExpired, process finished
+                if process.returncode == 0:
+                    print(f"[DEBUG] MFA alignment for {accent} completed successfully")
+                    tg_file = host_output_dir / "input.TextGrid"
+                    if tg_file.exists():
+                        yield {"type": "result", "data": (accent, tg_file)}
+                    else:
+                        print(f"[DEBUG] TextGrid not found at {tg_file}")
+                        yield {"type": "result", "data": (accent, None)}
+                else:
+                    stderr_text = stderr.decode('utf-8', errors='ignore') if stderr else 'No stderr'
+                    print(f"[DEBUG] MFA failed for {accent}: exit code {process.returncode}")
+                    print(f"  stderr: {stderr_text[:500]}")
+                    yield {"type": "result", "data": (accent, None)}
+                break
+                
+            except subprocess.TimeoutExpired:
+                # Still running - yield heartbeat
+                elapsed = int(time.time() - start_time)
+                # Only limit duration if > 150s (safety net)
+                if elapsed > 150:
+                    process.kill()
+                    yield {"type": "result", "data": (accent, None)}
+                    break
+                    
+                yield {"type": "progress", "percent": 30 + int((elapsed/90)*40), "message": f"Aligning ({elapsed}s)..."}
+                
     except Exception as e:
         print(f"Alignment failed for {accent}: {e}")
+        yield {"type": "result", "data": (accent, None)}
+    finally:
+        if process and process.poll() is None:
+            process.kill()
+
+def run_single_alignment(accent, conf, run_id, docker_input_dir):
+    """Wrapper for backward compatibility (blocking)."""
+    for msg in run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
+        if msg['type'] == 'result':
+            return msg['data']
     return accent, None
 
 def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, base_tg, builder):
@@ -468,25 +572,63 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             dict_path = MFA_BASE_DIR / conf['dict_rel']
             dictionaries[accent] = load_dictionary(dict_path)
             
-        # Run Alignment for each accent in parallel
+        # Run Alignment (Sequential implementation for reliability)
         accent_tgs = {} # accent -> path to TG
         
-        yield {"type": "progress", "percent": 30, "message": "Checking pronunciation..."}
+        # Run MFA alignment (60-90 seconds)
+        print(f"[DEBUG] Running MFA for {list(target_accents.keys())}...")
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(target_accents)) as executor:
-            future_to_accent = {
-                executor.submit(run_single_alignment, accent, conf, run_id, docker_input_dir): accent 
-                for accent, conf in target_accents.items()
-            }
-            
-            for future in concurrent.futures.as_completed(future_to_accent):
-                accent, tg_file = future.result()
+        try:
+             yield {"type": "progress", "percent": 30, "message": "Running MFA alignment (may take 60-90s)..."}
+        except Exception as e:
+             print(f"[DEBUG] Failed to yield progress: {e}")
+
+        # Sequential Loop instead of ThreadPoolExecutor
+        for accent, conf in target_accents.items():
+            print(f"[DEBUG] Processing accent: {accent}")
+            try:
+                # Run alignment using generator to keep connection alive with heartbeats
+                tg_file = None
+                for msg in run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
+                    if msg['type'] == 'progress':
+                        # Re-yield progress to keep client connection alive
+                        try:
+                            yield msg
+                        except BaseException as e:
+                            print(f"[DEBUG] Failed to yield heartbeat: {e}")
+                            # If client disconnects here, we might want to stop MFA
+                            if isinstance(e, GeneratorExit):
+                                raise e
+                    elif msg['type'] == 'result':
+                        res_accent, tg_file = msg['data']
+                
+                print(f"[DEBUG] Validated run_single_alignment result: {accent}, {tg_file}")
+                
                 if tg_file:
                     accent_tgs[accent] = tg_file
-                yield {"type": "progress", "percent": 80, "message": "Checking pronunciation..."}
-                
+            except Exception as e:
+                print(f"[DEBUG] Error running alignment for {accent}: {e}")
+                if isinstance(e, GeneratorExit):
+                    raise e
+
+                try:
+                    print(f"[DEBUG] Yielding progress update...")
+                    yield {"type": "progress", "percent": 80, "message": "Checking pronunciation..."}
+                    print(f"[DEBUG] Yield success")
+                except BaseException as e:
+                     print(f"[DEBUG] CRITICAL: Failed to yield progress update: {e} ({type(e)})")
+                     # Re-raise generator exit but log it first
+                     if isinstance(e, GeneratorExit):
+                         raise e
+
+        print(f"[DEBUG] All MFA alignments done. accent_tgs: {list(accent_tgs.keys())}")
+        
         # --- Step 3: Combine Results & Evaluate Pauses ---
-        yield {"type": "progress", "percent": 90, "message": "Finalizing scores..."}
+        try:
+             yield {"type": "progress", "percent": 90, "message": "Finalizing scores..."}
+        except BaseException as e:
+            print(f"[DEBUG] Failed to yield finalizing progress: {e}")
+            pass
         
         # Use US_ARPA as anchor (or first available)
         if "US_ARPA" in accent_tgs:
@@ -494,24 +636,41 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         elif accent_tgs:
             base_tg = list(accent_tgs.values())[0]
         else:
+            print(f"[DEBUG] MFA failed for all accents. Falling back to ASR results.")
             # If alignment fails completely (e.g. empty audio), fall back to just ASR results
-            yield {"type": "result", "data": {
-                "words": diff_analysis,
-                "transcript": transcript,
-                "summary": {
-                    "total": len(diff_analysis),
-                    "correct": 0,
-                    "asr_only": True
-                }
-            }}
+            # Still provide useful word-level feedback based on ASR comparison
+            correct_count = sum(1 for w in diff_analysis if w['status'] == 'correct' and not is_punctuation(w['word']))
+            total_words = sum(1 for w in diff_analysis if not is_punctuation(w['word']))
+            
+            try:
+                yield {"type": "result", "data": {
+                    "words": diff_analysis,
+                    "transcript": transcript,
+                    "pauses": [],
+                    "speech_rate_scale": round(speech_rate_scale, 2),
+                    "raw_word_timestamps": word_timestamps,
+                    "summary": {
+                        "total": total_words,
+                        "correct": correct_count,
+                        "pause_penalty": 0,
+                        "pause_count": 0,
+                        "asr_only": True,
+                        "note": "Phoneme-level analysis unavailable. Showing ASR-based results."
+                    }
+                }}
+            except BaseException as e:
+                print(f"[DEBUG] Failed to yield ASR fallback result: {e}")
             return
             
+        print(f"[DEBUG] Using base_tg: {base_tg}")
         base_words = read_textgrid_words(base_tg)
+        print(f"[DEBUG] base_words count: {len(base_words)}")
         builder = PhonemeReferenceBuilder()
         
         final_results_map = [None] * len(diff_analysis) # Preserve order
         pause_evals = []
         
+        print(f"[DEBUG] Starting parallel word analysis for {len(diff_analysis)} items")
         # 3A. Parallel Word Analysis
         # Filter items that need analysis (correct or inserted)
         items_to_process = []
@@ -525,34 +684,32 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                  # Omitted or others without trans_index, just copy
                  final_results_map[i] = item.copy()
 
-        # Execute detailed analysis in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_idx = {
-                executor.submit(
-                    analyze_word_pronunciation, 
+        # Execute detailed analysis sequentially to avoid C++ input stream errors
+        completed_count = 0
+        total_items = len(items_to_process)
+        
+        for idx, item in items_to_process:
+            try:
+                res = analyze_word_pronunciation(
                     item, word_timestamps, audio_path, base_words, base_tg, builder
-                ): idx 
-                for idx, item in items_to_process
-            }
+                )
+                final_results_map[idx] = res
+            except Exception as exc:
+                print(f"Word analysis exception at index {idx}: {exc}")
+                final_results_map[idx] = diff_analysis[idx].copy() # Fallback
             
-            completed_count = 0
-            total_items = len(items_to_process)
-            
-            for future in concurrent.futures.as_completed(future_to_idx):
-                idx = future_to_idx[future]
-                try:
-                    res = future.result()
-                    final_results_map[idx] = res
-                except Exception as exc:
-                    print(f"Word analysis exception at index {idx}: {exc}")
-                    final_results_map[idx] = diff_analysis[idx].copy() # Fallback
-                
-                completed_count += 1
-                # Update progress more frequently
-                if total_items > 0 and completed_count % 5 == 0:
-                     prog = 60 + int(30 * (completed_count / total_items))
+            completed_count += 1
+            # Update progress periodically
+            if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
+                 prog = 60 + int(30 * (completed_count / total_items))
+                 try:
                      yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
+                 except Exception:
+                     pass
 
+        # Send one update after completion
+        yield {"type": "progress", "percent": 90, "message": "Analysis complete."}
+        print(f"[DEBUG] Parallel word analysis complete. Completed: {completed_count}")
         # 3B. Pause Evaluation (Sequential, fast)
         yield {"type": "progress", "percent": 95, "message": "Evaluating pauses..."}
         
@@ -609,13 +766,27 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 res_entry['pause_eval'] = p_eval
                 res_entry['status'] = p_eval['status']
 
+        print(f"[DEBUG] Pause evaluation complete. Generating final result...")
         final_results = [r for r in final_results_map if r is not None]
+        print(f"[DEBUG] final_results count: {len(final_results)}")
         
         # Apply hesitation clustering to pauses
         pause_evals = apply_hesitation_clustering(pause_evals)
         total_pause_penalty = aggregate_pause_penalty(pause_evals)
         
+        print(f"[DEBUG] Yielding final result...")
+        
+        # Read TextGrid content for debug visibility
+        textgrid_content = ""
+        try:
+            if base_tg and os.path.exists(base_tg):
+                with open(base_tg, 'r', encoding='utf-8') as f:
+                    textgrid_content = f.read()
+        except Exception as e:
+            print(f"Failed to read TextGrid for debug: {e}")
+
         yield {"type": "result", "data": {
+            "textgrid_content": textgrid_content,
             "words": final_results,
             "transcript": transcript,
             "pauses": pause_evals,
@@ -629,16 +800,23 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             }
         }}
 
+    except Exception as gen_err:
+        import traceback
+        traceback.print_exc()
+        print(f"[ERROR] Generator failed: {gen_err}")
+        # Yield an error so the client knows what happened instead of silent death
+        yield {"type": "error", "message": f"Processing failed: {str(gen_err)}"}
+        
     finally:
         # Cleanup temp dirs
         try:
-            shutil.rmtree(temp_host_dir)
+            # shutil.rmtree(temp_host_dir)
             # Also cleanup output dirs
             for accent in target_accents:
                  output_dir_name = f"output_{accent}_{run_id}"
                  host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
-                 if host_output_dir.exists():
-                     shutil.rmtree(host_output_dir)
+                 # if host_output_dir.exists():
+                 #     shutil.rmtree(host_output_dir)
         except Exception as e:
             print(f"Cleanup error: {e}")
 

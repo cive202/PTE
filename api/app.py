@@ -186,10 +186,26 @@ def convert_to_wav(input_path, output_path):
             '-ar', '16000',
             output_path
         ]
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Added timeout to prevent hanging and capture stderr for debugging
+        result = subprocess.run(
+            cmd, 
+            check=True, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.PIPE,
+            timeout=10
+        )
         return True
-    except Exception as e:
+    except subprocess.TimeoutExpired:
+        print(f"Conversion timed out for {input_path}")
+        return False
+    except subprocess.CalledProcessError as e:
         print(f"Conversion failed: {e}")
+        # Print stderr if available
+        if e.stderr:
+            print(f"FFmpeg Error: {e.stderr.decode('utf-8', errors='ignore')}")
+        return False
+    except Exception as e:
+        print(f"Conversion error: {e}")
         return False
 
 # ============================================================================

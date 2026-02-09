@@ -90,6 +90,12 @@
             border-color: #b8daff;
         }
 
+        .stress-error {
+            background-color: #fff3cd;
+            color: #856404;
+            border-bottom: 2px solid orange;
+        }
+
         #progress-container {
             margin-top: 1rem;
             background-color: #e0e0e0;
@@ -144,9 +150,12 @@
                 <div class="instruction" id="task-instruction">Listen to the sentence...</div>
                 <div id="sentence-display" class="sentence-display"></div>
 
-                <div class="controls">
+                <div class="controls" style="margin-top: 1rem;">
+                    <!-- New Controls -->
+                    <button id="btn-play-prompt" class="btn secondary">Play Prompt Again</button>
                     <button id="btn-record" class="btn primary" disabled>Record</button>
                     <button id="btn-stop" class="btn danger" disabled>Stop</button>
+                    <button id="btn-check-manual" class="btn primary" disabled>Check Pronunciation</button>
                     <span id="recording-indicator" style="display:none; color: red;">🔴 Recording...</span>
                 </div>
 
@@ -164,6 +173,24 @@
                     <div id="status"></div>
                     <div id="metrics" style="margin-top: 0.5rem; font-weight: bold;"></div>
                     <div id="results" style="margin-top: 1rem; line-height: 2;"></div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <details>
+                        <summary>View Debug Data (JSON & TextGrid)</summary>
+                        <div style="display: flex; gap: 20px; margin-top: 10px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin-bottom: 5px;">API Response</h4>
+                                <pre id="json-output"
+                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #1c2e42;"></pre>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin-bottom: 5px;">TextGrid Content</h4>
+                                <pre id="textgrid-output"
+                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #ddd; white-space: pre-wrap; font-family: monospace;"></pre>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div style="margin-top: 2rem; text-align: center;">
@@ -324,6 +351,7 @@
             mediaRecorder.stop();
             btnStop.disabled = true;
             document.getElementById('recording-indicator').style.display = 'none';
+            document.getElementById('btn-check-manual').disabled = false; // Enable manual check
         };
 
         async function checkPronunciation() {
@@ -336,7 +364,18 @@
             formData.append('feature', 'repeat_sentence');
 
             try {
-                const response = await fetch('/check_stream', { method: 'POST', body: formData });
+                // Add 2-minute timeout for MFA alignment
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+
+                const response = await fetch('/check_stream', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = "";
@@ -378,14 +417,69 @@
                 container.className = 'word-container';
                 const span = document.createElement('div');
                 span.innerText = w.word;
-                span.className = 'word ' + (w.status === 'correct' ? 'correct' : (w.status === 'inserted' ? 'inserted' : 'mispronounced'));
-                if (w.observed_phones) span.setAttribute('data-tooltip', `Observed: ${w.observed_phones}`);
+
+                let className = 'word';
+                if (w.status === 'correct') {
+                    className += ' correct';
+                    if (w.stress_error) className += ' stress-error';
+                } else if (w.status === 'inserted') {
+                    className += ' inserted';
+                } else {
+                    className += ' mispronounced';
+                }
+                span.className = className;
+
+                let tooltip = [];
+                if (w.observed_phones) tooltip.push(`Observed: ${w.observed_phones}`);
+                if (w.stress_error) tooltip.push('Stressed Incorrectly');
+
+                if (tooltip.length > 0) span.setAttribute('data-tooltip', tooltip.join('\n'));
                 container.appendChild(span);
                 resultsDiv.appendChild(container);
             });
+
+            // Populate Debug View
+            const tgOutput = document.getElementById('textgrid-output');
+            const jsonOutput = document.getElementById('json-output');
+
+            let tgContent = data.textgrid_content;
+            if (tgContent) {
+                delete data.textgrid_content;
+                tgOutput.textContent = tgContent;
+            } else {
+                tgOutput.textContent = "No TextGrid content available.";
+            }
+            jsonOutput.innerText = JSON.stringify(data, null, 2);
         }
 
-        // Load topics when page loads
+        function toggleTextGrid() {
+            // Function no longer needed with new layout but kept to avoid ReferenceError if button was cached? 
+            // Button is removed from DOM so onclick won't fire. Safe to remove or leave empty.
+        }
+
+        // --- New Handlers (User Request) ---
+        // Play Again functionality for strict mode users who want to rehear the prompt
+        // (Note: In real test, you can't replay! But for practice, it's fine).
+        document.getElementById('btn-play-prompt').onclick = async () => {
+            if (audio) {
+                try {
+                    await audio.play();
+                } catch (e) {
+                    console.error("Play error", e);
+                }
+            }
+        };
+
+        // Manual Check Pronunciation button
+        document.getElementById('btn-check-manual').onclick = async () => {
+            if (audioBlob) {
+                await checkPronunciation();
+            } else {
+                alert("Please record something first!");
+            }
+        };
+
+        // Initialize
         loadTopics();
     </script>
 </body>

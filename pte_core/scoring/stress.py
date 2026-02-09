@@ -28,7 +28,16 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
     """
     try:
         # 1. Load Audio Segment
-        y, sr = librosa.load(audio_path, sr=16000, offset=start_time, duration=end_time-start_time)
+        try:
+            y, sr = librosa.load(audio_path, sr=16000, offset=start_time, duration=end_time-start_time)
+        except Exception as load_err:
+            print(f"librosa.load failed for {audio_path} at {start_time}-{end_time}: {load_err}")
+            return {
+                "score": 0.5,
+                "syllables": [],
+                "ref_pattern": reference_stress_pattern,
+                "match_info": "Audio load error"
+            }
         
         # 2. Group Phones into Syllables (Heuristic: Vowel is nucleus)
         vowels = {'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'}

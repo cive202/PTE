@@ -1,12 +1,27 @@
 # Python virtual environment
 venv/
 env_aloud/
+env/
+.env
+.venv/
 
 # Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 
 # IDE
 .vscode/
@@ -15,10 +30,12 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+.ipynb_checkpoints
 
 # Temporary files
 *.tmp
 *.log
+*.swp
 
 # PTE Specific Transient Data
 PTE_MFA_TESTER_DOCKER/data/output_*/
@@ -26,3 +43,5 @@ PTE_MFA_TESTER_DOCKER/data/run_*/
 corpus/check_*
 corpus/recording_*
 corpus/temp_upload_*
+corpus/img_*
+corpus/lec_*

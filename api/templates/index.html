@@ -147,9 +147,19 @@
 
                 <div style="margin-top: 2rem;">
                     <details>
-                        <summary>View Raw JSON Data</summary>
-                        <pre id="json-output"
-                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee;"></pre>
+                        <summary>View Debug Data (JSON & TextGrid)</summary>
+                        <div style="display: flex; gap: 20px; margin-top: 10px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin-bottom: 5px;">API Response</h4>
+                                <pre id="json-output"
+                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #1c2e42;"></pre>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <h4 style="margin-bottom: 5px;">TextGrid Content</h4>
+                                <pre id="textgrid-output"
+                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #ddd; white-space: pre-wrap; font-family: monospace;"></pre>
+                            </div>
+                        </div>
                     </details>
                 </div>
             </div>
@@ -338,6 +348,16 @@
 
         function displayResult(data) {
             progressContainer.style.display = 'none';
+
+            // Separate TextGrid content
+            let tgContent = data.textgrid_content;
+            if (tgContent) {
+                delete data.textgrid_content; // Remove from main JSON view
+                document.getElementById('textgrid-output').textContent = tgContent;
+            } else {
+                document.getElementById('textgrid-output').textContent = "No TextGrid content available.";
+            }
+
             jsonOutput.innerText = JSON.stringify(data, null, 2);
             if (data.error) {
                 statusDiv.innerText = "Error: " + data.error;
@@ -405,6 +425,8 @@
             resultsDiv.innerHTML = "";
             transcriptionBox.style.display = 'none';
             jsonOutput.innerText = "";
+            document.getElementById('textgrid-output').textContent = "";
+            // document.getElementById('textgrid-container').style.display = 'none'; // ID removed
             progressContainer.style.display = 'block';
             progressFill.style.width = '2%';
             progressText.innerText = 'Starting...';
@@ -416,7 +438,18 @@
             formData.append('feature', 'read_aloud');
 
             try {
-                const response = await fetch('/check_stream', { method: 'POST', body: formData });
+                // Add 2-minute timeout for MFA alignment (takes 60-90 seconds)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+
+                const response = await fetch('/check_stream', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId); // Clear timeout if request completes
+
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
@@ -451,7 +484,11 @@
                 }
             } catch (err) {
                 progressContainer.style.display = 'none';
-                statusDiv.innerText = "Check failed: " + err.message;
+                if (err.name === 'AbortError') {
+                    statusDiv.innerText = "Request timed out after 2 minutes. Please try a shorter passage.";
+                } else {
+                    statusDiv.innerText = "Check failed: " + err.message;
+                }
             } finally {
                 btnCheck.disabled = false;
             }
