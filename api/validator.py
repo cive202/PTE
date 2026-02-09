@@ -356,6 +356,7 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
         # Use Popen to allow polling/heartbeats
         process = subprocess.Popen(
             cmd, 
+            stdin=subprocess.DEVNULL,  # Prevent hanging on input requests
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE
         )
@@ -414,14 +415,26 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
     res_entry = item.copy()
     
     # 1. Start/End Times from Transcription
+    s, e = None, None
     t_idx = item.get('trans_index')
     if t_idx is not None and t_idx < len(word_timestamps):
         s = word_timestamps[t_idx]['start']
         e = word_timestamps[t_idx]['end']
+    
+    # 2. MFA Fallback for correct words without ASR timing
+    if s is None and item['status'] == 'correct' and base_words:
+        target_word = item['word'].lower()
+        for bw in base_words:
+            if bw['word'].lower() == target_word:
+                s, e = bw['start'], bw['end']
+                break
+    
+    # Assign timestamps if found
+    if s is not None and e is not None:
         res_entry['start'] = round(s, 3)
         res_entry['end'] = round(e, 3)
         
-        # 2. Inserted Words (e.g. fillers)
+        # 3. Inserted Words (e.g. fillers)
         if item['status'] == 'inserted':
             # Get observed phones only
             try:
@@ -431,21 +444,30 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
                 res_entry['observed_phones'] = ""
             return res_entry
 
-        # 3. Correct Words (Full Analysis)
+        # 4. Correct Words (Full Analysis)
         if item['status'] == 'correct':
             ref_word = item['word']
             
             # --- A. Phoneme Analysis (wav2vec2) ---
+            per_score = 0.0
             try:
                 ref_ph = builder.word_to_phonemes(ref_word)
                 obs_ph = call_phoneme_service(audio_path, s, e)
-                v = per(ref_ph, obs_ph)
-                per_score = 1.0 - v # Accuracy
-                
-                res_entry['phoneme_analysis'] = analyze_phoneme_errors(ref_ph, obs_ph)
-                res_entry['observed_phones'] = " ".join(obs_ph)
-                res_entry['expected_phones'] = " ".join(ref_ph)
-                res_entry['per'] = round(v, 3)
+                if obs_ph:  # Only analyze if we got results
+                    v = per(ref_ph, obs_ph)
+                    per_score = 1.0 - v # Accuracy
+                    
+                    res_entry['phoneme_analysis'] = analyze_phoneme_errors(ref_ph, obs_ph)
+                    res_entry['observed_phones'] = " ".join(obs_ph)
+                    res_entry['expected_phones'] = " ".join(ref_ph)
+                    res_entry['per'] = round(v, 3)
+                else:
+                    # Phoneme service returned empty - skip analysis but keep timestamps
+                    res_entry['per'] = 1.0
+            except Exception as e:
+                print(f"Phoneme analysis failed for {ref_word}: {e}")
+                per_score = 0.0
+                res_entry['per'] = 1.0
             except Exception as e:
                 print(f"Phoneme analysis failed for {ref_word}: {e}")
                 per_score = 0.0
@@ -495,8 +517,8 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
             combined_score = (0.7 * per_score) + (0.3 * stress_score)
             res_entry['combined_score'] = round(combined_score, 3)
             
-            # Decision threshold
-            if combined_score < 0.65:
+            # Decision threshold (Relaxed from 0.65)
+            if combined_score < 0.55:
                 res_entry['status'] = 'mispronounced'
             
             return res_entry
@@ -688,24 +710,38 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         completed_count = 0
         total_items = len(items_to_process)
         
-        for idx, item in items_to_process:
-            try:
-                res = analyze_word_pronunciation(
-                    item, word_timestamps, audio_path, base_words, base_tg, builder
-                )
-                final_results_map[idx] = res
-            except Exception as exc:
-                print(f"Word analysis exception at index {idx}: {exc}")
-                final_results_map[idx] = diff_analysis[idx].copy() # Fallback
-            
-            completed_count += 1
-            # Update progress periodically
-            if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
-                 prog = 60 + int(30 * (completed_count / total_items))
-                 try:
-                     yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
-                 except Exception:
-                     pass
+        # Use ThreadPoolExecutor with timeout for each word
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            for idx, item in items_to_process:
+                try:
+                    # Submit the task with a timeout
+                    future = executor.submit(
+                        analyze_word_pronunciation,
+                        item, word_timestamps, audio_path, base_words, base_tg, builder
+                    )
+                    # Wait up to 45 seconds for this word
+                    res = future.result(timeout=45)
+                    final_results_map[idx] = res
+                except concurrent.futures.TimeoutError:
+                    print(f"[WARNING] Word analysis timeout at index {idx} (word: {item.get('word')})")
+                    # Keep the item with timestamps but skip detailed analysis
+                    fallback = diff_analysis[idx].copy()
+                    if 'start' in item and 'end' in item:
+                        fallback['start'] = item['start']
+                        fallback['end'] = item['end']
+                    final_results_map[idx] = fallback
+                except Exception as exc:
+                    print(f"Word analysis exception at index {idx}: {exc}")
+                    final_results_map[idx] = diff_analysis[idx].copy() # Fallback
+                
+                completed_count += 1
+                # Update progress periodically
+                if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
+                     prog = 60 + int(30 * (completed_count / total_items))
+                     try:
+                         yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
+                     except Exception:
+                         pass
 
         # Send one update after completion
         yield {"type": "progress", "percent": 90, "message": "Analysis complete."}

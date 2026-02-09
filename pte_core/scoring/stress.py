@@ -113,13 +113,26 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
                 max_idx = i
                 
         # Mark observed stress
+        observed_pattern_list = ['0'] * len(observed_vowels)
         for i, v in enumerate(observed_vowels):
             v['is_max_stress'] = (i == max_idx)
             v['expected_stress'] = reference_stress_pattern[i]
+            if i == max_idx:
+                observed_pattern_list[i] = '1'
+        
+        result['observed_pattern'] = "".join(observed_pattern_list)
                 
+        # Relaxed Logic: Accept 2 (Secondary Stress) as valid max stress if 1 is expected
+        # or if existing logic matches
+        expected_stress_at_max = reference_stress_pattern[max_idx]
+        
         if max_idx == prim_idx:
             result["score"] = 1.0
             result["match_info"] = "Perfect match"
+        elif expected_stress_at_max == '2':
+             # Allow secondary stress to carry main emphasis (common in dialects/speech rates)
+            result["score"] = 0.9 
+            result["match_info"] = "Acceptable variation (Secondary Stress)"
         else:
             result["score"] = 0.5
             result["match_info"] = f"Stress mismatch (expected index {prim_idx}, observed {max_idx})"
