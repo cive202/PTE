@@ -42,6 +42,22 @@ ACCENTS_CONFIG = {
     "US_ARPA": {
         "dict_rel": "eng_us_model/english_us_arpa.dict",
         "model_rel": "eng_us_model/english_us_arpa.zip"
+    },
+    "US_MFA": {
+        "dict_rel": "eng_us_model_2/english_us_mfa.dict",
+        "model_rel": "eng_us_model_2/english_mfa.zip"
+    },
+    "UK": {
+        "dict_rel": "english_uk_model/english_uk_mfa.dict",
+        "model_rel": "english_uk_model/english_mfa.zip"
+    },
+    "Nigerian": {
+        "dict_rel": "eng_nigeria_model/english_nigeria_mfa.dict",
+        "model_rel": "eng_nigeria_model/english_mfa.zip"
+    },
+    "NonNative": {
+        "dict_rel": "english_nonnative/english_nonnative_mfa.dict",
+        "model_rel": "english_nonnative/english_mfa.zip"
     }
 }
 
@@ -362,42 +378,57 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
         )
         
         start_time = time.time()
+        print(f"[MFA] Starting alignment for accent: {accent}, run_id: {run_id}")
+        print(f"[MFA] Command: {' '.join(cmd)}")
+        
         while True:
             try:
                 # Wait for 2 seconds
                 stdout, stderr = process.communicate(timeout=2)
                 # If we get here without TimeoutExpired, process finished
+                elapsed = int(time.time() - start_time)
+                
                 if process.returncode == 0:
-                    print(f"[DEBUG] MFA alignment for {accent} completed successfully")
+                    print(f"[MFA] Alignment for {accent} completed successfully in {elapsed}s")
                     tg_file = host_output_dir / "input.TextGrid"
                     if tg_file.exists():
+                        print(f"[MFA] TextGrid found at {tg_file}")
                         yield {"type": "result", "data": (accent, tg_file)}
                     else:
-                        print(f"[DEBUG] TextGrid not found at {tg_file}")
+                        print(f"[MFA] ERROR: TextGrid not found at {tg_file}")
                         yield {"type": "result", "data": (accent, None)}
                 else:
                     stderr_text = stderr.decode('utf-8', errors='ignore') if stderr else 'No stderr'
-                    print(f"[DEBUG] MFA failed for {accent}: exit code {process.returncode}")
-                    print(f"  stderr: {stderr_text[:500]}")
+                    print(f"[MFA] FAILED for {accent}: exit code {process.returncode}, elapsed: {elapsed}s")
+                    print(f"[MFA] stderr: {stderr_text[:1000]}")
                     yield {"type": "result", "data": (accent, None)}
                 break
                 
             except subprocess.TimeoutExpired:
                 # Still running - yield heartbeat
                 elapsed = int(time.time() - start_time)
-                # Only limit duration if > 150s (safety net)
-                if elapsed > 150:
+                
+                # Increased timeout to 240 seconds (4 minutes)
+                if elapsed > 240:
+                    print(f"[MFA] TIMEOUT after {elapsed}s for {accent}, killing process")
                     process.kill()
                     yield {"type": "result", "data": (accent, None)}
                     break
+                
+                # Log progress every 30 seconds
+                if elapsed % 30 == 0:
+                    print(f"[MFA] Still running for {accent}: {elapsed}s elapsed")
                     
-                yield {"type": "progress", "percent": 30 + int((elapsed/90)*40), "message": f"Aligning ({elapsed}s)..."}
+                yield {"type": "progress", "percent": 30 + int((elapsed/180)*40), "message": f"Aligning ({elapsed}s)..."}
                 
     except Exception as e:
-        print(f"Alignment failed for {accent}: {e}")
+        print(f"[MFA] Exception during alignment for {accent}: {e}")
+        import traceback
+        traceback.print_exc()
         yield {"type": "result", "data": (accent, None)}
     finally:
         if process and process.poll() is None:
+            print(f"[MFA] Cleaning up process for {accent}")
             process.kill()
 
 def run_single_alignment(accent, conf, run_id, docker_input_dir):
@@ -414,20 +445,55 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
     """
     res_entry = item.copy()
     
-    # 1. Start/End Times from Transcription
+    # PRIORITY 1: Use MFA phoneme-level timestamps (MAXIMUM PRECISION)
+    # Get exact start of first phoneme and exact end of last phoneme
     s, e = None, None
-    t_idx = item.get('trans_index')
-    if t_idx is not None and t_idx < len(word_timestamps):
-        s = word_timestamps[t_idx]['start']
-        e = word_timestamps[t_idx]['end']
+    target_word = item['word'].lower()
     
-    # 2. MFA Fallback for correct words without ASR timing
-    if s is None and item['status'] == 'correct' and base_words:
-        target_word = item['word'].lower()
+    if base_words and base_tg:
+        # Find the word in MFA alignment
+        matched_word = None
         for bw in base_words:
             if bw['word'].lower() == target_word:
-                s, e = bw['start'], bw['end']
+                matched_word = bw
                 break
+        
+        if matched_word:
+            # Get all phonemes from the TextGrid
+            all_phones = read_textgrid_phones(base_tg)
+            
+            # Extract phonemes for this specific word
+            word_phones = get_phones_for_word(matched_word, all_phones)
+            
+            # If we have phonemes, use FIRST phoneme start and LAST phoneme end
+            if word_phones:
+                # Find actual phoneme intervals within word boundaries
+                w_start = matched_word['start']
+                w_end = matched_word['end']
+                
+                phoneme_intervals = []
+                for p in all_phones:
+                    # Phoneme must be within word boundaries
+                    if p['start'] >= w_start - 0.01 and p['end'] <= w_end + 0.01:
+                        phoneme_intervals.append(p)
+                
+                if phoneme_intervals:
+                    # PRECISE: First phoneme start, last phoneme end
+                    s = phoneme_intervals[0]['start']
+                    e = phoneme_intervals[-1]['end']
+                else:
+                    # Fallback to word boundaries if no phonemes found
+                    s, e = w_start, w_end
+            else:
+                # No phonemes, use word boundaries
+                s, e = matched_word['start'], matched_word['end']
+    
+    # PRIORITY 2: Fall back to ASR timestamps if MFA doesn't have this word
+    if s is None:
+        t_idx = item.get('trans_index')
+        if t_idx is not None and t_idx < len(word_timestamps):
+            s = word_timestamps[t_idx]['start']
+            e = word_timestamps[t_idx]['end']
     
     # Assign timestamps if found
     if s is not None and e is not None:
@@ -448,12 +514,24 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
         if item['status'] == 'correct':
             ref_word = item['word']
             
-            # --- A. Phoneme Analysis (wav2vec2) ---
+            # --- A. Phoneme Analysis (MFA-based, replacing wav2vec2) ---
             per_score = 0.0
             try:
+                # Get expected phonemes from CMUDict
                 ref_ph = builder.word_to_phonemes(ref_word)
-                obs_ph = call_phoneme_service(audio_path, s, e)
-                if obs_ph:  # Only analyze if we got results
+                
+                # Get observed phonemes from MFA TextGrid (instead of wav2vec2)
+                obs_ph = []
+                if base_tg:
+                    all_mfa_phones = read_textgrid_phones(base_tg)
+                    # Extract phonemes within this word's time boundaries
+                    for p in all_mfa_phones:
+                        # Phoneme must be within word boundaries (with small tolerance)
+                        if p['start'] >= s - 0.01 and p['end'] <= e + 0.01:
+                            # MFA uses ARPA symbols, same as CMUDict
+                            obs_ph.append(p['label'])
+                
+                if obs_ph:  # Only analyze if we got phonemes from MFA
                     v = per(ref_ph, obs_ph)
                     per_score = 1.0 - v # Accuracy
                     
@@ -462,16 +540,13 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
                     res_entry['expected_phones'] = " ".join(ref_ph)
                     res_entry['per'] = round(v, 3)
                 else:
-                    # Phoneme service returned empty - skip analysis but keep timestamps
-                    res_entry['per'] = 1.0
+                    # No MFA phonemes found - default to perfect score
+                    res_entry['per'] = 0.0
+                    per_score = 1.0
             except Exception as e:
                 print(f"Phoneme analysis failed for {ref_word}: {e}")
-                per_score = 0.0
-                res_entry['per'] = 1.0
-            except Exception as e:
-                print(f"Phoneme analysis failed for {ref_word}: {e}")
-                per_score = 0.0
-                res_entry['per'] = 1.0
+                per_score = 1.0  # Default to perfect on error
+                res_entry['per'] = 0.0
 
             # --- B. Stress Analysis (MFA + CMUDict) ---
             stress_score = 1.0

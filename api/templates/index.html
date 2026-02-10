@@ -87,15 +87,7 @@
             z-index: 10;
         }
 
-        /* Speaker icon for playable words */
-        .word.clickable::after {
-            content: "🔊";
-            font-size: 0.7em;
-            margin-left: 4px;
-            opacity: 0.5;
-        }
-
-        .word.clickable:hover::after {
+        .word.clickable:hover {
             opacity: 1;
         }
 
@@ -230,6 +222,19 @@
                     <textarea id="ref-text" placeholder="Enter text here..."></textarea>
                 </div>
 
+                <div style="margin-bottom: 1rem;">
+                    <label><strong>Accent/Region:</strong></label>
+                    <select id="accent-selector"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                        <option value="US_ARPA">United States (ARPA)</option>
+                        <option value="US_MFA">United States (MFA)</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="Indian">Indian English</option>
+                        <option value="Nigerian">Nigerian English</option>
+                        <option value="NonNative">Non-Native English</option>
+                    </select>
+                </div>
+
                 <div class="controls">
                     <button id="btn-record" class="btn primary">Record</button>
                     <button id="btn-stop" class="btn danger" disabled>Stop</button>
@@ -360,6 +365,16 @@
         const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
+        const accentSelector = document.getElementById('accent-selector');
+
+        // Load saved accent from localStorage
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        accentSelector.value = savedAccent;
+
+        // Save accent to localStorage when changed
+        accentSelector.addEventListener('change', () => {
+            localStorage.setItem('selectedAccent', accentSelector.value);
+        });
 
         // Load topics on page load
         async function loadTopics() {
@@ -534,6 +549,7 @@
             formData.append('audio', audioBlob, 'recording.wav');
             formData.append('text', document.getElementById('ref-text').value);
             formData.append('feature', 'read_aloud');
+            formData.append('accent', accentSelector.value);
             try {
                 const res = await fetch('/save', { method: 'POST', body: formData });
                 const data = await res.json();
@@ -647,11 +663,12 @@
             formData.append('audio', audioBlob, 'check.wav');
             formData.append('text', document.getElementById('ref-text').value);
             formData.append('feature', 'read_aloud');
+            formData.append('accent', accentSelector.value);
 
             try {
-                // Add 2-minute timeout for MFA alignment (takes 60-90 seconds)
+                // Add 4-minute timeout for MFA alignment (can take 60-180 seconds depending on accent/model)
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+                const timeoutId = setTimeout(() => controller.abort(), 240000); // 240 seconds (4 minutes)
 
                 const response = await fetch('/check_stream', {
                     method: 'POST',
@@ -696,7 +713,7 @@
             } catch (err) {
                 progressContainer.style.display = 'none';
                 if (err.name === 'AbortError') {
-                    statusDiv.innerText = "Request timed out after 2 minutes. Please try a shorter passage.";
+                    statusDiv.innerText = "Request timed out after 4 minutes. The MFA alignment is taking too long. Please try a shorter passage or different accent.";
                 } else {
                     statusDiv.innerText = "Check failed: " + err.message;
                 }

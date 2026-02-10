@@ -53,8 +53,11 @@ def run_mfa_job(job_id, audio_path, text_path):
     try:
         JOB_STORE[job_id]['status'] = 'processing'
         
+        # Get accent from job store
+        accent = JOB_STORE[job_id].get('accent', 'US_ARPA')
+        
         # Use the main engine from validator.py
-        result = align_and_validate(audio_path, text_path)
+        result = align_and_validate(audio_path, text_path, accents=[accent])
         
         JOB_STORE[job_id]['status'] = 'complete'
         JOB_STORE[job_id]['result'] = result
@@ -91,7 +94,8 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         
         # Run MFA alignment to get phone-level data
         from api.validator import align_and_validate
-        mfa_result = align_and_validate(audio_path, temp_text_path, accents=['Indian'])
+        accent = IMAGE_JOB_STORE[job_id].get('accent', 'US_ARPA')
+        mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
         
         # Evaluate description
         result = evaluate_description(image_id, transcription)
@@ -141,7 +145,8 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         
         # Run MFA alignment to get phone-level data
         from api.validator import align_and_validate
-        mfa_result = align_and_validate(audio_path, temp_text_path, accents=['Indian'])
+        accent = LECTURE_JOB_STORE[job_id].get('accent', 'US_ARPA')
+        mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
         
         # Evaluate summary
         result = evaluate_lecture(lecture_id, transcription)
@@ -402,6 +407,7 @@ def check():
     file = request.files['audio']
     text = request.form.get('text', '')
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
+    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, text_path = get_paired_paths(feature)
@@ -425,6 +431,7 @@ def check():
             'error': None,
             'audio_path': audio_path,
             'text_path': text_path,
+            'accent': accent,
             'created_at': datetime.datetime.now().isoformat()
         }
         
@@ -472,6 +479,7 @@ def check_stream():
     file = request.files['audio']
     text = request.form.get('text', '')
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
+    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
     
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     temp_upload = os.path.join(CORPUS_DIR, f"temp_upload_{timestamp}")
@@ -491,7 +499,7 @@ def check_stream():
                 f.write(text)
                 
             from api.validator import align_and_validate_gen
-            for update in align_and_validate_gen(audio_path, text_path):
+            for update in align_and_validate_gen(audio_path, text_path, accents=[accent]):
                 yield json.dumps(update) + "\n"
                 
         except Exception as e:
@@ -528,6 +536,7 @@ def submit_description():
     
     file = request.files['audio']
     image_id = request.form.get('image_id', '')
+    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_DESCRIBE_IMAGE)
@@ -546,6 +555,7 @@ def submit_description():
             'error': None,
             'image_id': image_id,
             'audio_path': audio_path,
+            'accent': accent,
             'created_at': datetime.datetime.now().isoformat()
         }
         
@@ -606,6 +616,7 @@ def submit_lecture():
     
     file = request.files['audio']
     lecture_id = request.form.get('lecture_id', '')
+    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_RETELL_LECTURE)
@@ -624,6 +635,7 @@ def submit_lecture():
             'error': None,
             'lecture_id': lecture_id,
             'audio_path': audio_path,
+            'accent': accent,
             'created_at': datetime.datetime.now().isoformat()
         }
         

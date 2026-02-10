@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -355,7 +356,7 @@
             width: 280px;
             z-index: 1000;
             margin-bottom: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             pointer-events: none;
             text-align: left;
         }
@@ -497,6 +498,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="nav-links">
@@ -605,7 +607,8 @@
             <div style="margin-top: 2rem;">
                 <details>
                     <summary>View Raw JSON Data</summary>
-                    <pre id="json-output" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee;"></pre>
+                    <pre id="json-output"
+                        style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee;"></pre>
                 </details>
             </div>
         </div>
@@ -793,13 +796,13 @@
             document.getElementById('contentScore').textContent = result.details.content_similarity + '%';
             document.getElementById('keywordScore').textContent = result.details.keyword_coverage + '%';
             document.getElementById('wordCount').textContent = result.details.word_count;
-            
+
             // Render interactive transcription with MFA info
             const transcriptionBox = document.getElementById('transcriptionText');
             const details = result.transcription_details || { text: result.transcription || "", words: [] };
-            
+
             transcriptionBox.innerHTML = '';
-            
+
             // Check grammar using LanguageTool via proxy
             let grammarIssues = [];
             try {
@@ -818,20 +821,20 @@
             const words = details.text.split(/\s+/);
             words.forEach((word, idx) => {
                 if (!word) return;
-                
+
                 const wordData = details.words[idx] || {};
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
-                
+
                 // Add status class
                 if (wordData.status === 'correct') {
                     wordSpan.classList.add('correct');
                 } else if (wordData.status === 'mispronounced') {
                     wordSpan.classList.add('mispronounced');
                 }
-                
+
                 wordSpan.textContent = word;
-                
+
                 // Overlay content
                 let overlayHTML = `
                     <div class="overlay-section">
@@ -842,7 +845,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 // Add phone analysis if available
                 if (wordData.observed_phones || wordData.expected_phones) {
                     overlayHTML += `
@@ -850,27 +853,27 @@
                             <div class="overlay-title">Phonetic Analysis</div>
                             <div class="overlay-content">
                     `;
-                    
+
                     if (wordData.observed_phones) {
                         overlayHTML += `<div class="phone-display">Observed: ${wordData.observed_phones}</div>
                         `;
                     }
-                    
+
                     if (wordData.expected_phones) {
                         overlayHTML += `<div class="phone-display">Expected: ${wordData.expected_phones}</div>
                         `;
                     }
-                    
+
                     if (wordData.stress_error) {
                         overlayHTML += `<div style="color: #ff9800; font-size: 0.8rem; margin-top: 4px;">⚠ Stress error detected</div>
                         `;
                     }
-                    
+
                     overlayHTML += `</div>
                         </div>
                     `;
                 }
-                
+
                 // Find grammar issues for this word
                 const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
                 if (wordIssues.length > 0) {
@@ -884,12 +887,12 @@
                         </div>
                     `;
                 }
-                
+
                 const overlay = document.createElement('div');
                 overlay.className = 'word-overlay';
                 overlay.innerHTML = overlayHTML;
                 wordSpan.appendChild(overlay);
-                
+
                 transcriptionBox.appendChild(wordSpan);
                 transcriptionBox.appendChild(document.createTextNode(' '));
             });
@@ -947,4 +950,5 @@
         }
     </script>
 </body>
+
 </html>

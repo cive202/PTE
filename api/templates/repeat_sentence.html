@@ -150,6 +150,19 @@
                 <div class="instruction" id="task-instruction">Listen to the sentence...</div>
                 <div id="sentence-display" class="sentence-display"></div>
 
+                <div style="margin-bottom: 1rem;">
+                    <label><strong>Accent/Region:</strong></label>
+                    <select id="accent-selector"
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                        <option value="US_ARPA">United States (ARPA)</option>
+                        <option value="US_MFA">United States (MFA)</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="Indian">Indian English</option>
+                        <option value="Nigerian">Nigerian English</option>
+                        <option value="NonNative">Non-Native English</option>
+                    </select>
+                </div>
+
                 <div class="controls" style="margin-top: 1rem;">
                     <!-- New Controls -->
                     <button id="btn-play-prompt" class="btn secondary">Play Prompt Again</button>
@@ -221,6 +234,16 @@
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
+        const accentSelector = document.getElementById('accent-selector');
+
+        // Load saved accent from localStorage
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        accentSelector.value = savedAccent;
+
+        // Save accent to localStorage when changed
+        accentSelector.addEventListener('change', () => {
+            localStorage.setItem('selectedAccent', accentSelector.value);
+        });
 
         // Load topics on page load
         async function loadTopics() {
@@ -362,11 +385,12 @@
             formData.append('audio', audioBlob, 'rs.wav');
             formData.append('text', currentSentence);
             formData.append('feature', 'repeat_sentence');
+            formData.append('accent', accentSelector.value);
 
             try {
-                // Add 2-minute timeout for MFA alignment
+                // Add 4-minute timeout for MFA alignment
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds
+                const timeoutId = setTimeout(() => controller.abort(), 240000); // 240 seconds (4 minutes)
 
                 const response = await fetch('/check_stream', {
                     method: 'POST',
