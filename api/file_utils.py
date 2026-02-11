@@ -1,19 +1,19 @@
 """
-File Utilities for PTE Platform
-Handles standardized file naming and path generation for audio files.
+File Utilities for PTE Platform.
+Handles standardized file naming and path generation for user-uploaded audio files.
 """
 
 import os
 import datetime
 import uuid
-from pathlib import Path
 
-# Project paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CORPUS_DIR = PROJECT_ROOT / "corpus"
+from src.shared.paths import USER_UPLOADS_DIR, ensure_runtime_dirs
 
-# Ensure corpus directory exists
-os.makedirs(CORPUS_DIR, exist_ok=True)
+# Runtime paths
+CORPUS_DIR = USER_UPLOADS_DIR
+
+# Ensure runtime upload directory exists
+ensure_runtime_dirs()
 
 # Feature name constants
 FEATURE_READ_ALOUD = 'read_aloud'
@@ -53,11 +53,11 @@ def get_audio_filepath(feature_name: str, extension: str = 'wav') -> str:
         extension: File extension (default: wav)
     
     Returns:
-        Absolute path: /path/to/corpus/{feature}_{timestamp}.wav
+        Absolute path: /path/to/data/user_uploads/{feature}_{timestamp}.wav
     
     Example:
         >>> get_audio_filepath('read_aloud')
-        '/home/user/PTE/corpus/read_aloud_20260131_143022.wav'
+        '/home/user/PTE/data/user_uploads/read_aloud_20260131_143022.wav'
     """
     filename = generate_audio_filename(feature_name, extension)
     return str(CORPUS_DIR / filename)
@@ -71,7 +71,7 @@ def get_text_filepath(feature_name: str) -> str:
         feature_name: read_aloud, describe_image, etc.
     
     Returns:
-        Absolute path: /path/to/corpus/{feature}_{timestamp}.txt
+        Absolute path: /path/to/data/user_uploads/{feature}_{timestamp}.txt
     """
     filename = generate_audio_filename(feature_name, 'txt')
     return str(CORPUS_DIR / filename)
@@ -86,11 +86,11 @@ def get_temp_filepath(prefix: str = 'temp', extension: str = 'tmp') -> str:
         extension: File extension (default: tmp)
     
     Returns:
-        Absolute path: /path/to/corpus/{prefix}_{uuid}.{ext}
+        Absolute path: /path/to/data/user_uploads/{prefix}_{uuid}.{ext}
     
     Example:
         >>> get_temp_filepath('upload')
-        '/home/user/PTE/corpus/upload_a3b4c5d6.tmp'
+        '/home/user/PTE/data/user_uploads/upload_a3b4c5d6.tmp'
     """
     unique_id = str(uuid.uuid4())[:8]
     filename = f"{prefix}_{unique_id}.{extension}"
@@ -110,9 +110,9 @@ def get_paired_paths(feature_name: str) -> tuple:
     Example:
         >>> audio, text = get_paired_paths('read_aloud')
         >>> print(audio)
-        '/home/user/PTE/corpus/read_aloud_20260131_143022.wav'
+        '/home/user/PTE/data/user_uploads/read_aloud_20260131_143022.wav'
         >>> print(text)
-        '/home/user/PTE/corpus/read_aloud_20260131_143022.txt'
+        '/home/user/PTE/data/user_uploads/read_aloud_20260131_143022.txt'
     """
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     base_name = f"{feature_name}_{timestamp}"

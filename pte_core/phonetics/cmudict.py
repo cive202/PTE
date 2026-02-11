@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Dict, List, Optional
 
 try:
@@ -15,6 +16,24 @@ except ImportError:
 
 # Global cache for loaded CMUdict
 _CMUDICT_CACHE: Optional[Dict[str, List[List[str]]]] = None
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_NLTK_DIRS = [
+    PROJECT_ROOT / "data" / "models" / "nltk_data",
+    PROJECT_ROOT / "nltk_data",
+]
+
+
+def _configure_nltk_data_path() -> None:
+    if not NLTK_AVAILABLE:
+        return
+    for data_dir in DEFAULT_NLTK_DIRS:
+        if data_dir.exists():
+            path_str = str(data_dir)
+            if path_str not in nltk.data.path:
+                nltk.data.path.insert(0, path_str)
+
+
+_configure_nltk_data_path()
 
 
 def ensure_cmudict_available() -> bool:

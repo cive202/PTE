@@ -7,9 +7,11 @@ env/
 
 # Python cache
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
+*$py.class
 
 # Distribution / packaging
 dist/
@@ -23,9 +25,13 @@ build/
 htmlcov/
 .tox/
 
+# Local tooling caches
+.cache/
+
 # IDE
 .vscode/
 .idea/
+.trae/
 
 # OS
 .DS_Store
@@ -45,3 +51,12 @@ corpus/recording_*
 corpus/temp_upload_*
 corpus/img_*
 corpus/lec_*
+
+# Local language resources
+nltk_data/
+
+# Local Windows artifact folder created in Linux workspace
+C:/
+
+# Runtime logs
+data/processed/logs/

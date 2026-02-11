@@ -1,8 +1,7 @@
 import requests
 import os
 from .pseudo_voice2text import voice2text_word, voice2text_char, voice2text_segment
-
-ASR_SERVICE_URL = "http://localhost:8000/asr"
+from src.shared.services import ASR_SERVICE_URL
 
 def voice2text(file_path):
     """

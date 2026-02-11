@@ -125,6 +125,110 @@
             font-weight: bold;
         }
     </style>
+    <style>
+        /* --- Audio Playback & Modal Styles --- */
+        .word.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .word.clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            opacity: 1;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        /* Modal Box */
+        .modal-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            animation: modalPop 0.3s ease-out;
+        }
+
+        @keyframes modalPop {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-word {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .modal-time {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-family: monospace;
+        }
+
+        .modal-play-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            gap: 8px;
+        }
+
+        .modal-play-btn:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #ccc;
+            background: none;
+            border: none;
+        }
+
+        .modal-close:hover {
+            color: #666;
+        }
+    </style>
 </head>
 
 <body>
@@ -210,6 +314,47 @@
                     <button id="btn-new-topic" class="btn secondary">Choose Different Topic</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Audio Playback Modal -->
+    <div id="audio-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modal-word-text" class="modal-word">Thinking...</div>
+            <div id="modal-timestamp" class="modal-time">0.00s - 0.00s</div>
+
+            <div id="modal-details"
+                style="margin-bottom: 1.5rem; text-align: left; background: #f8f9fa; padding: 1rem; border-radius: 8px; font-size: 0.9rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <strong>Status:</strong> <span id="modal-status" style="text-transform: capitalize;">-</span>
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    <strong>Phonemes:</strong>
+                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: 4px; margin-top: 4px;">
+                        <span style="color: #666;">Expected:</span> <span id="modal-expected-phones"
+                            style="font-family: monospace;">-</span>
+                        <span style="color: #666;">Spoken:</span> <span id="modal-observed-phones"
+                            style="font-family: monospace;">-</span>
+                    </div>
+                </div>
+                <div>
+                    <strong>Stress:</strong>
+                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: 4px; margin-top: 4px;">
+                        <span style="color: #666;">Pattern:</span>
+                        <span>
+                            <span id="modal-stress-match" style="font-family: monospace;">-</span>
+                            <span id="modal-stress-info"
+                                style="font-size: 0.8em; color: #888; margin-left: 5px;"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="modal-play-btn" class="modal-play-btn">
+                <span>▶</span> Play Audio
+            </button>
+            <div id="modal-debug-info" style="margin-top: 1rem; font-size: 0.8em; color: #999; display:none;"></div>
         </div>
     </div>
 
@@ -458,6 +603,13 @@
                 if (w.stress_error) tooltip.push('Stressed Incorrectly');
 
                 if (tooltip.length > 0) span.setAttribute('data-tooltip', tooltip.join('\n'));
+
+                // Make clickable for audio Modal
+                if (w.start !== undefined && w.end !== undefined) {
+                    span.classList.add('clickable');
+                    span.onclick = () => openWordModal(w);
+                }
+
                 container.appendChild(span);
                 resultsDiv.appendChild(container);
             });
@@ -502,6 +654,94 @@
                 alert("Please record something first!");
             }
         };
+
+        // --- Modal Logic ---
+        const modalOverlay = document.getElementById('audio-modal');
+        const modalWordText = document.getElementById('modal-word-text');
+        const modalTimestamp = document.getElementById('modal-timestamp');
+        const modalPlayBtn = document.getElementById('modal-play-btn');
+
+        // New modal fields
+        const modalStatus = document.getElementById('modal-status');
+        const modalExpectedPhones = document.getElementById('modal-expected-phones');
+        const modalObservedPhones = document.getElementById('modal-observed-phones');
+        const modalStressMatch = document.getElementById('modal-stress-match');
+        const modalStressInfo = document.getElementById('modal-stress-info');
+
+        let currentWordAudio = null;
+        // recordedAudio logic needs to reference the correct element in this file
+        // In repeat_sentence.html, audio player ID is 'audio-playback'
+        const recordedAudioPlayer = document.getElementById('audio-playback');
+
+        function openWordModal(wordData) {
+            modalWordText.innerText = wordData.word;
+            modalTimestamp.innerText = `${wordData.start}s - ${wordData.end}s`;
+
+            // Populate Status
+            modalStatus.innerText = wordData.status;
+            if (wordData.status === 'correct') {
+                modalStatus.style.color = 'green';
+            } else if (wordData.status === 'mispronounced') {
+                modalStatus.style.color = 'orange';
+            } else {
+                modalStatus.style.color = 'red';
+            }
+
+            // Populate Phonemes
+            modalExpectedPhones.innerText = wordData.expected_phones || 'N/A';
+            modalObservedPhones.innerText = wordData.observed_phones || 'N/A';
+
+            // Populate Stress
+            if (wordData.stress_details) {
+                const ref = wordData.stress_details.ref_pattern || 'N/A';
+                const obs = wordData.stress_details.observed_pattern || 'N/A';
+                modalStressMatch.innerText = `${ref} → ${obs}`;
+                modalStressInfo.innerText = wordData.stress_details.match_info || '';
+            } else {
+                modalStressMatch.innerText = "N/A";
+                modalStressInfo.innerText = "";
+            }
+
+            // Store data for playback
+            modalPlayBtn.onclick = () => playWordAudio(wordData.start, wordData.end);
+
+            modalOverlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+            if (currentWordAudio) {
+                currentWordAudio.pause();
+                currentWordAudio = null;
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = (event) => {
+            if (event.target == modalOverlay) {
+                closeModal();
+            }
+        };
+
+        function playWordAudio(start, end) {
+            if (!recordedAudioPlayer.src) return;
+
+            // Create a new audio object to avoid messing with main player
+            const audio = new Audio(recordedAudioPlayer.src);
+            currentWordAudio = audio;
+
+            audio.currentTime = start;
+            audio.play();
+
+            // Stop when reaching end
+            const duration = (end - start) * 1000;
+            setTimeout(() => {
+                if (currentWordAudio === audio) {
+                    audio.pause();
+                    currentWordAudio = null;
+                }
+            }, duration + 100); // Small buffer
+        }
 
         // Initialize
         loadTopics();

@@ -25,21 +25,25 @@ from api.file_utils import (
     FEATURE_DESCRIBE_IMAGE,
     FEATURE_RETELL_LECTURE
 )
+from src.shared.paths import (
+    USER_UPLOADS_DIR,
+    IMAGES_DIR as SHARED_IMAGES_DIR,
+    LECTURES_DIR as SHARED_LECTURES_DIR,
+    REPEAT_SENTENCE_AUDIO_DIR as SHARED_REPEAT_SENTENCE_AUDIO_DIR,
+    READ_ALOUD_REFERENCE_FILE,
+    REPEAT_SENTENCE_REFERENCE_FILE,
+    ensure_runtime_dirs,
+)
+from src.shared.services import GRAMMAR_SERVICE_URL
 
 app = Flask(__name__)
-CORPUS_DIR = os.path.join(PROJECT_ROOT, "corpus")
-DATA_DIR = os.path.join(PROJECT_ROOT, "data_2")
-IMAGES_DIR = os.path.join(DATA_DIR, "images")
-LECTURES_DIR = os.path.join(DATA_DIR, "lectures")
-REPEAT_SENTENCE_AUDIO_DIR = os.path.join(DATA_DIR, "repeat-sentence-audio")
-REPEAT_SENTENCE_JSON = os.path.join(DATA_DIR, "repeat_sentence_references.json")
-READ_ALOUD_JSON = os.path.join(DATA_DIR, "read_aloud_references.json")
-os.makedirs(CORPUS_DIR, exist_ok=True)
-os.makedirs(IMAGES_DIR, exist_ok=True)
-os.makedirs(LECTURES_DIR, exist_ok=True)
-
-# Docker Grammar Service URL
-GRAMMAR_SERVICE_URL = "http://localhost:8000/grammar"
+CORPUS_DIR = os.fspath(USER_UPLOADS_DIR)
+IMAGES_DIR = os.fspath(SHARED_IMAGES_DIR)
+LECTURES_DIR = os.fspath(SHARED_LECTURES_DIR)
+REPEAT_SENTENCE_AUDIO_DIR = os.fspath(SHARED_REPEAT_SENTENCE_AUDIO_DIR)
+REPEAT_SENTENCE_JSON = os.fspath(REPEAT_SENTENCE_REFERENCE_FILE)
+READ_ALOUD_JSON = os.fspath(READ_ALOUD_REFERENCE_FILE)
+ensure_runtime_dirs()
 
 # ============================================================================
 # JOB QUEUE SYSTEM

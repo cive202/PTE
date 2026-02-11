@@ -1,0 +1,2 @@
+file,begin,end,speaker,overall_log_likelihood,speech_log_likelihood,phone_duration_deviation,snr
+input,0.0,23.248,run_a9d2f2c8,-65.84570564516129,-67.71875842550527,3.3739201866241815,5.429591564115874

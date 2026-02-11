@@ -4,7 +4,7 @@ services:
   asr-grammar:
     image: cive202/pte-asr-grammar:latest
     build: 
-      context: ./PTE_ASR_GRAMMAR_DOCKER
+      context: ./docker/asr-grammar
     ports:
       - "8000:8000"
     container_name: pte-asr-grammar-service
@@ -15,7 +15,7 @@ services:
   wav2vec2-service:
     image: cive202/wav2vec2-phoneme-cpu:latest
     build: 
-      context: ./wav2vec2_service
+      context: ./docker/phoneme-service
     ports:
       - "8001:8001"
     container_name: wav2vec2-phoneme-cpu

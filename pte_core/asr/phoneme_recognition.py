@@ -1,8 +1,5 @@
 import requests
-import json
-import os
-
-PHONEME_SERVICE_URL = os.environ.get("PHONEME_SERVICE_URL", "http://localhost:8001/phonemes")
+from src.shared.services import PHONEME_SERVICE_URL
 
 def call_phoneme_service(wav_path, start=None, end=None):
     """

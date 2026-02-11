@@ -24,13 +24,23 @@ from pte_core.phoneme.g2p import PhonemeReferenceBuilder
 from pte_core.asr.phoneme_recognition import call_phoneme_service
 from pte_core.scoring.pronunciation import per, label_from_per, analyze_phoneme_errors
 from pte_core.scoring.stress import get_syllable_stress_score, get_syllable_stress_details
+from pte_core.scoring.accent_scorer import AccentTolerantScorer
+from src.shared.paths import (
+    MFA_BASE_DIR as SHARED_MFA_BASE_DIR,
+    MFA_RUNTIME_DIR as SHARED_MFA_RUNTIME_DIR,
+    ensure_runtime_dirs,
+)
+from src.shared.services import MFA_DOCKER_IMAGE
 
 # --- Configuration ---
-# We assume the app runs from project root C:\Users\Acer\DataScience\PTE
-MFA_BASE_DIR = PROJECT_ROOT / "PTE_MFA_TESTER_DOCKER"
+MFA_BASE_DIR = SHARED_MFA_BASE_DIR
+MFA_RUNTIME_DIR = SHARED_MFA_RUNTIME_DIR
+ensure_runtime_dirs()
 
-# Docker Mount: Maps MFA_BASE_DIR (Host) -> /data (Container)
-DOCKER_IMAGE = "mmcauliffe/montreal-forced-aligner:latest"
+# Docker Mount:
+# - MFA_BASE_DIR (Host) -> /models (Container)
+# - MFA_RUNTIME_DIR (Host) -> /runtime (Container)
+DOCKER_IMAGE = MFA_DOCKER_IMAGE
 
 # Accent Configuration
 # Paths are relative to MFA_BASE_DIR (Host) which is /data (Container)
@@ -348,18 +358,19 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
     Yields: {"type": "progress", ...} or {"type": "result", "data": (accent, tg_path)}
     """
     import time
-    output_dir_name = f"output_{accent}_{run_id}"
-    docker_output_dir = f"/data/data/{output_dir_name}"
-    host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
+    output_dir_name = f"output_{accent}"
+    docker_output_dir = f"/runtime/{run_id}/output/{accent}"
+    host_output_dir = MFA_RUNTIME_DIR / run_id / "output" / accent
     
     cmd = [
         "docker", "run", "--rm",
-        "-v", f"{MFA_BASE_DIR}:/data",
+        "-v", f"{MFA_BASE_DIR}:/models",
+        "-v", f"{MFA_RUNTIME_DIR}:/runtime",
         DOCKER_IMAGE,
         "mfa", "align",
         docker_input_dir,
-        f"/data/{conf['dict_rel']}",
-        f"/data/{conf['model_rel']}",
+        f"/models/{conf['dict_rel']}",
+        f"/models/{conf['model_rel']}",
         docker_output_dir,
         "--clean", "--quiet",
         "--beam", "100",
@@ -438,10 +449,12 @@ def run_single_alignment(accent, conf, run_id, docker_input_dir):
             return msg['data']
     return accent, None
 
-def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, base_tg, builder):
+
+def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, base_tg, builder, scorer, accent):
     """
     Helper function to analyze a single word's pronunciation (phonemes + stress).
     Designed to be run in parallel.
+    Uses AccentTolerantScorer for nuanced scoring.
     """
     res_entry = item.copy()
     
@@ -514,39 +527,61 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
         if item['status'] == 'correct':
             ref_word = item['word']
             
-            # --- A. Phoneme Analysis (MFA-based, replacing wav2vec2) ---
-            per_score = 0.0
+            # --- A. Phoneme Analysis (Accent Tolerant) ---
+            word_score_obj = None
             try:
                 # Get expected phonemes from CMUDict
                 ref_ph = builder.word_to_phonemes(ref_word)
                 
                 # Get observed phonemes from MFA TextGrid (instead of wav2vec2)
+                # If MFA succeeded, use MFA phones. If not, try wav2vec2 (fallback)
                 obs_ph = []
+                using_mfa_phones = False
+                
                 if base_tg:
                     all_mfa_phones = read_textgrid_phones(base_tg)
                     # Extract phonemes within this word's time boundaries
                     for p in all_mfa_phones:
                         # Phoneme must be within word boundaries (with small tolerance)
                         if p['start'] >= s - 0.01 and p['end'] <= e + 0.01:
-                            # MFA uses ARPA symbols, same as CMUDict
+                            # MFA uses ARPA symbols
                             obs_ph.append(p['label'])
-                
-                if obs_ph:  # Only analyze if we got phonemes from MFA
-                    v = per(ref_ph, obs_ph)
-                    per_score = 1.0 - v # Accuracy
                     
-                    res_entry['phoneme_analysis'] = analyze_phoneme_errors(ref_ph, obs_ph)
+                    if obs_ph:
+                        using_mfa_phones = True
+                
+                # Fallback to Wav2Vec2 if MFA didn't give phonemes for this word
+                if not obs_ph:
+                     obs_ph = call_phoneme_service(audio_path, s, e)
+                
+                if obs_ph:
+                    # Score using AccentTolerantScorer
+                    word_score_obj = scorer.score_word(ref_ph, obs_ph, accent)
+                    
+                    # Map to old structure for compatibility
+                    # 'per' was 0.0 (good) to 1.0 (bad)
+                    # new accuracy is 0-100 (good)
+                    # so per = 1.0 - (accuracy / 100)
+                    accuracy = word_score_obj['accuracy']
+                    per_equivalent = 1.0 - (accuracy / 100.0)
+                    
+                    res_entry['per'] = round(per_equivalent, 3)
+                    res_entry['phoneme_analysis'] = word_score_obj['alignment'] # List of (exp, spk, score)
                     res_entry['observed_phones'] = " ".join(obs_ph)
                     res_entry['expected_phones'] = " ".join(ref_ph)
-                    res_entry['per'] = round(v, 3)
+                    
+                    # Store new detailed score
+                    res_entry['accuracy_score'] = accuracy
                 else:
-                    # No MFA phonemes found - default to perfect score
+                    # No phonemes found - default to perfect score? Or fail?
+                    # If word matched in ASR but no phones, assume OK
                     res_entry['per'] = 0.0
-                    per_score = 1.0
+                    res_entry['accuracy_score'] = 100.0
+                    
             except Exception as e:
                 print(f"Phoneme analysis failed for {ref_word}: {e}")
-                per_score = 1.0  # Default to perfect on error
-                res_entry['per'] = 0.0
+                res_entry['per'] = 0.0  # Default to perfect on error
+                res_entry['accuracy_score'] = 100.0
 
             # --- B. Stress Analysis (MFA + CMUDict) ---
             stress_score = 1.0
@@ -588,8 +623,20 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
                 
             res_entry['stress_score'] = round(stress_score, 3)
 
+
             # --- C. Combined Score ---
-            combined_score = (0.7 * per_score) + (0.3 * stress_score)
+            # New scoring: use accuracy_score (0-100) directly if available
+            accuracy_score = res_entry.get('accuracy_score', 100.0)
+            
+            # Weighted combination: 70% Phoneme Accuracy + 30% Stress
+            # stress_score is 0.0-1.0, so multiply by 100
+            combined_score_val = (0.7 * accuracy_score) + (0.3 * stress_score * 100)
+            
+            # Normalize to 0.0-1.0 for compatibility with rest of system (though UI might expect %)
+            # The system seems to use 0.0-1.0 elsewhere for 'combined_score'
+            # Let's keep combined_score as 0.0-1.0
+            combined_score = combined_score_val / 100.0
+            
             res_entry['combined_score'] = round(combined_score, 3)
             
             # Decision threshold (Relaxed from 0.65)
@@ -651,7 +698,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     # Unique ID for this run
     run_id = str(uuid.uuid4())[:8]
     temp_dir_name = f"run_{run_id}"
-    temp_host_dir = MFA_BASE_DIR / "data" / temp_dir_name
+    temp_host_dir = MFA_RUNTIME_DIR / run_id / "input"
     os.makedirs(temp_host_dir, exist_ok=True)
     
     try:
@@ -661,7 +708,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         shutil.copy(text_path, temp_host_dir / "input.txt")
         
         # Docker paths
-        docker_input_dir = f"/data/data/{temp_dir_name}"
+        docker_input_dir = f"/runtime/{run_id}/input"
         
         # Load Dictionaries (Local)
         dictionaries = {}
@@ -761,8 +808,33 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             
         print(f"[DEBUG] Using base_tg: {base_tg}")
         base_words = read_textgrid_words(base_tg)
+
         print(f"[DEBUG] base_words count: {len(base_words)}")
         builder = PhonemeReferenceBuilder()
+        
+        # Initialize Scorer
+        scorer = AccentTolerantScorer()
+        
+        # Determine accent to use for scoring
+        # Use first accent from requested list, or fallback
+        scoring_accent = "Non-Native English"
+        if accents and len(accents) > 0:
+            scoring_accent = accents[0]
+            # Map simplified names back to full names if needed?
+            # validator uses "Indian", "Nigerian" keys.
+            # Scorer expects "Indian English", "Nigerian English".
+            # Let's map them.
+            accent_map = {
+                "Indian": "Indian English",
+                "Nigerian": "Nigerian English",
+                "UK": "United Kingdom",
+                "NonNative": "Non-Native English",
+                "US_ARPA": "Non-Native English", # US usually default/standard
+                "US_MFA": "Non-Native English"
+            }
+            scoring_accent = accent_map.get(scoring_accent, "Non-Native English")
+            
+        print(f"[DEBUG] Using scoring accent: {scoring_accent}")
         
         final_results_map = [None] * len(diff_analysis) # Preserve order
         pause_evals = []
@@ -792,7 +864,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     # Submit the task with a timeout
                     future = executor.submit(
                         analyze_word_pronunciation,
-                        item, word_timestamps, audio_path, base_words, base_tg, builder
+                        item, word_timestamps, audio_path, base_words, base_tg, builder, scorer, scoring_accent
                     )
                     # Wait up to 45 seconds for this word
                     res = future.result(timeout=45)
@@ -924,8 +996,8 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             # shutil.rmtree(temp_host_dir)
             # Also cleanup output dirs
             for accent in target_accents:
-                 output_dir_name = f"output_{accent}_{run_id}"
-                 host_output_dir = MFA_BASE_DIR / "data" / output_dir_name
+                 output_dir_name = f"output_{accent}"
+                 host_output_dir = MFA_RUNTIME_DIR / run_id / "output" / accent
                  # if host_output_dir.exists():
                  #     shutil.rmtree(host_output_dir)
         except Exception as e:

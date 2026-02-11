@@ -5,11 +5,11 @@ Uses TF-IDF similarity for content matching.
 """
 
 import json
-import os
 import random
 import re
-from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+
+from src.shared.paths import IMAGE_REFERENCE_FILE
 
 # Try to import sklearn, fallback to simple matching if not available
 try:
@@ -20,11 +20,7 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     print("Warning: sklearn not available, using simple keyword matching")
 
-# Project paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "data_2"
-IMAGES_DIR = DATA_DIR / "images"
-REFERENCES_FILE = DATA_DIR / "image_references.json"
+REFERENCES_FILE = IMAGE_REFERENCE_FILE
 
 
 def load_image_data() -> Dict:
