@@ -5,8 +5,10 @@ import subprocess
 import json
 import threading
 import uuid
+import shutil
 import requests
 import random
+from pathlib import Path
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 
 # Ensure project root is in path for imports
@@ -26,7 +28,6 @@ from api.file_utils import (
     FEATURE_RETELL_LECTURE
 )
 from src.shared.paths import (
-    USER_UPLOADS_DIR,
     IMAGES_DIR as SHARED_IMAGES_DIR,
     LECTURES_DIR as SHARED_LECTURES_DIR,
     REPEAT_SENTENCE_AUDIO_DIR as SHARED_REPEAT_SENTENCE_AUDIO_DIR,
@@ -37,7 +38,6 @@ from src.shared.paths import (
 from src.shared.services import GRAMMAR_SERVICE_URL
 
 app = Flask(__name__)
-CORPUS_DIR = os.fspath(USER_UPLOADS_DIR)
 IMAGES_DIR = os.fspath(SHARED_IMAGES_DIR)
 LECTURES_DIR = os.fspath(SHARED_LECTURES_DIR)
 REPEAT_SENTENCE_AUDIO_DIR = os.fspath(SHARED_REPEAT_SENTENCE_AUDIO_DIR)
@@ -51,6 +51,82 @@ ensure_runtime_dirs()
 JOB_STORE = {}  # {job_id: {status, result, error, audio_path, text_path}}
 IMAGE_JOB_STORE = {}  # {job_id: {status, result, error, image_id, audio_path}}
 LECTURE_JOB_STORE = {}  # {job_id: {status, result, error, lecture_id, audio_path}}
+KEEP_UPLOAD_ARTIFACTS = os.environ.get("PTE_KEEP_UPLOAD_ARTIFACTS", "1").lower() not in {"0", "false", "no"}
+
+
+def _maybe_cleanup(paths, force=False):
+    if KEEP_UPLOAD_ARTIFACTS and not force:
+        return
+    for candidate in paths:
+        try:
+            if candidate and os.path.exists(candidate):
+                os.remove(candidate)
+        except Exception:
+            pass
+
+
+def _persist_attempt_payload(audio_path, payload, filename):
+    if not isinstance(payload, dict):
+        return
+    try:
+        attempt_dir = Path(audio_path).resolve().parent
+        analysis_dir = attempt_dir / "analysis"
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        target = analysis_dir / filename
+        with open(target, "w", encoding="utf-8") as out_file:
+            json.dump(payload, out_file, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_result.json"):
+    if not isinstance(analysis_payload, dict):
+        return
+
+    _persist_attempt_payload(audio_path, analysis_payload, filename)
+
+    try:
+        attempt_dir = Path(audio_path).resolve().parent
+        words = analysis_payload.get("words", [])
+        if isinstance(words, list):
+            phoneme_rows = []
+            for row in words:
+                if isinstance(row, dict) and (
+                    row.get("observed_phones")
+                    or row.get("phoneme_analysis")
+                    or row.get("expected_phones")
+                ):
+                    phoneme_rows.append(row)
+            if phoneme_rows:
+                _persist_attempt_payload(
+                    audio_path,
+                    {"count": len(phoneme_rows), "words": phoneme_rows},
+                    "phoneme_data.json",
+                )
+
+        textgrid_content = analysis_payload.get("textgrid_content")
+        if textgrid_content:
+            mfa_dir = attempt_dir / "mfa"
+            mfa_dir.mkdir(parents=True, exist_ok=True)
+            (mfa_dir / "input.TextGrid").write_text(textgrid_content, encoding="utf-8")
+
+        meta = analysis_payload.get("meta")
+        if isinstance(meta, dict):
+            source_root = meta.get("mfa_output_root")
+            if source_root:
+                source_path = Path(source_root)
+                if source_path.exists() and source_path.is_dir():
+                    target_root = attempt_dir / "mfa"
+                    target_root.mkdir(parents=True, exist_ok=True)
+                    for accent_dir in source_path.iterdir():
+                        if not accent_dir.is_dir():
+                            continue
+                        destination = target_root / accent_dir.name
+                        if destination.exists():
+                            shutil.rmtree(destination)
+                        shutil.copytree(accent_dir, destination)
+    except Exception:
+        pass
 
 def run_mfa_job(job_id, audio_path, text_path):
     """Background worker for MFA alignment using the main engine."""
@@ -62,6 +138,7 @@ def run_mfa_job(job_id, audio_path, text_path):
         
         # Use the main engine from validator.py
         result = align_and_validate(audio_path, text_path, accents=[accent])
+        _persist_attempt_artifacts(audio_path, result, filename="check_result.json")
         
         JOB_STORE[job_id]['status'] = 'complete'
         JOB_STORE[job_id]['result'] = result
@@ -71,14 +148,7 @@ def run_mfa_job(job_id, audio_path, text_path):
         JOB_STORE[job_id]['status'] = 'failed'
         JOB_STORE[job_id]['error'] = str(e)
     finally:
-        # Cleanup temp files
-        try:
-            if os.path.exists(audio_path):
-                os.remove(audio_path)
-            if os.path.exists(text_path):
-                os.remove(text_path)
-        except Exception:
-            pass
+        _maybe_cleanup([audio_path, text_path])
 
 def run_image_evaluation_job(job_id, image_id, audio_path):
     """Background worker for image description evaluation with MFA phone analysis."""
@@ -100,6 +170,7 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         from api.validator import align_and_validate
         accent = IMAGE_JOB_STORE[job_id].get('accent', 'US_ARPA')
         mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
+        _persist_attempt_artifacts(audio_path, mfa_result, filename="image_mfa_result.json")
         
         # Evaluate description
         result = evaluate_description(image_id, transcription)
@@ -116,20 +187,14 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         
         IMAGE_JOB_STORE[job_id]['status'] = 'complete'
         IMAGE_JOB_STORE[job_id]['result'] = result
+        _persist_attempt_payload(audio_path, result, "image_evaluation_result.json")
     except Exception as e:
         import traceback
         traceback.print_exc()
         IMAGE_JOB_STORE[job_id]['status'] = 'failed'
         IMAGE_JOB_STORE[job_id]['error'] = str(e)
     finally:
-        # Cleanup temp files
-        try:
-            if os.path.exists(audio_path):
-                os.remove(audio_path)
-            if 'temp_text_path' in locals() and os.path.exists(temp_text_path):
-                os.remove(temp_text_path)
-        except Exception:
-            pass
+        _maybe_cleanup([audio_path, temp_text_path if 'temp_text_path' in locals() else None])
 
 def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
     """Background worker for lecture evaluation with MFA phone analysis."""
@@ -151,6 +216,7 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         from api.validator import align_and_validate
         accent = LECTURE_JOB_STORE[job_id].get('accent', 'US_ARPA')
         mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
+        _persist_attempt_artifacts(audio_path, mfa_result, filename="lecture_mfa_result.json")
         
         # Evaluate summary
         result = evaluate_lecture(lecture_id, transcription)
@@ -167,20 +233,14 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         
         LECTURE_JOB_STORE[job_id]['status'] = 'complete'
         LECTURE_JOB_STORE[job_id]['result'] = result
+        _persist_attempt_payload(audio_path, result, "lecture_evaluation_result.json")
     except Exception as e:
         import traceback
         traceback.print_exc()
         LECTURE_JOB_STORE[job_id]['status'] = 'failed'
         LECTURE_JOB_STORE[job_id]['error'] = str(e)
     finally:
-        # Cleanup temp files
-        try:
-            if os.path.exists(audio_path):
-                os.remove(audio_path)
-            if 'temp_text_path' in locals() and os.path.exists(temp_text_path):
-                os.remove(temp_text_path)
-        except Exception:
-            pass
+        _maybe_cleanup([audio_path, temp_text_path if 'temp_text_path' in locals() else None])
 
 # ============================================================================
 # UTILITY
@@ -387,12 +447,12 @@ def save():
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
     
     audio_path, text_path = get_paired_paths(feature)
-    temp_path = get_temp_filepath('upload', 'webm')
+    temp_path = get_temp_filepath('upload', 'webm', directory=os.path.dirname(audio_path))
     
     file.save(temp_path)
     
     if convert_to_wav(temp_path, audio_path):
-        os.remove(temp_path)
+        _maybe_cleanup([temp_path], force=True)
     else:
         os.rename(temp_path, audio_path)
     
@@ -415,16 +475,16 @@ def check():
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, text_path = get_paired_paths(feature)
-    temp_upload = get_temp_filepath(f'upload_{job_id}', 'tmp')
+    temp_upload = get_temp_filepath(f'upload_{job_id}', 'tmp', directory=os.path.dirname(audio_path))
     
     try:
         file.save(temp_upload)
         
         if not convert_to_wav(temp_upload, audio_path):
+            _maybe_cleanup([temp_upload], force=True)
             return jsonify({"error": "Audio conversion failed"}), 500
         
-        if os.path.exists(temp_upload):
-            os.remove(temp_upload)
+        _maybe_cleanup([temp_upload], force=True)
         
         with open(text_path, 'w', encoding='utf-8') as f:
             f.write(text)
@@ -485,10 +545,8 @@ def check_stream():
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
     accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
     
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    temp_upload = os.path.join(CORPUS_DIR, f"temp_upload_{timestamp}")
-    audio_path = os.path.join(CORPUS_DIR, f"check_{timestamp}.wav")
-    text_path = os.path.join(CORPUS_DIR, f"check_{timestamp}.txt")
+    audio_path, text_path = get_paired_paths(feature)
+    temp_upload = get_temp_filepath("temp_upload", "tmp", directory=os.path.dirname(audio_path))
     
     file.save(temp_upload)
 
@@ -496,6 +554,7 @@ def check_stream():
         try:
             yield json.dumps({"type": "progress", "percent": 2, "message": "Converting audio..."}) + "\n"
             if not convert_to_wav(temp_upload, audio_path):
+                 _maybe_cleanup([temp_upload], force=True)
                  yield json.dumps({"type": "error", "message": "Audio conversion failed"}) + "\n"
                  return
             
@@ -504,6 +563,8 @@ def check_stream():
                 
             from api.validator import align_and_validate_gen
             for update in align_and_validate_gen(audio_path, text_path, accents=[accent]):
+                if isinstance(update, dict) and update.get("type") == "result":
+                    _persist_attempt_artifacts(audio_path, update.get("data"), filename="check_stream_result.json")
                 yield json.dumps(update) + "\n"
                 
         except Exception as e:
@@ -511,11 +572,8 @@ def check_stream():
             traceback.print_exc()
             yield json.dumps({"type": "error", "message": str(e)}) + "\n"
         finally:
-            try:
-                if os.path.exists(temp_upload): os.remove(temp_upload)
-                if os.path.exists(audio_path): os.remove(audio_path)
-                if os.path.exists(text_path): os.remove(text_path)
-            except Exception: pass
+            _maybe_cleanup([temp_upload], force=True)
+            _maybe_cleanup([audio_path, text_path])
 
     return Response(generate(), mimetype='application/x-ndjson')
 
@@ -544,14 +602,14 @@ def submit_description():
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_DESCRIBE_IMAGE)
-    temp_upload = get_temp_filepath(f'img_{job_id}', 'tmp')
+    temp_upload = get_temp_filepath(f'img_{job_id}', 'tmp', directory=os.path.dirname(audio_path))
     
     try:
         file.save(temp_upload)
         if not convert_to_wav(temp_upload, audio_path):
+            _maybe_cleanup([temp_upload], force=True)
             return jsonify({"error": "Audio conversion failed"}), 500
-        if os.path.exists(temp_upload):
-            os.remove(temp_upload)
+        _maybe_cleanup([temp_upload], force=True)
         
         IMAGE_JOB_STORE[job_id] = {
             'status': 'queued',
@@ -624,14 +682,14 @@ def submit_lecture():
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_RETELL_LECTURE)
-    temp_upload = get_temp_filepath(f'lec_{job_id}', 'tmp')
+    temp_upload = get_temp_filepath(f'lec_{job_id}', 'tmp', directory=os.path.dirname(audio_path))
     
     try:
         file.save(temp_upload)
         if not convert_to_wav(temp_upload, audio_path):
+            _maybe_cleanup([temp_upload], force=True)
             return jsonify({"error": "Audio conversion failed"}), 500
-        if os.path.exists(temp_upload):
-            os.remove(temp_upload)
+        _maybe_cleanup([temp_upload], force=True)
         
         LECTURE_JOB_STORE[job_id] = {
             'status': 'queued',

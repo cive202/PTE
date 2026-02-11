@@ -793,6 +793,11 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     "pauses": [],
                     "speech_rate_scale": round(speech_rate_scale, 2),
                     "raw_word_timestamps": word_timestamps,
+                    "meta": {
+                        "mfa_run_id": run_id,
+                        "mfa_output_root": str(MFA_RUNTIME_DIR / run_id / "output"),
+                        "mfa_output_dirs": {},
+                    },
                     "summary": {
                         "total": total_words,
                         "correct": correct_count,
@@ -975,6 +980,13 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             "pauses": pause_evals,
             "speech_rate_scale": round(speech_rate_scale, 2),
             "raw_word_timestamps": word_timestamps,
+            "meta": {
+                "mfa_run_id": run_id,
+                "mfa_output_root": str(MFA_RUNTIME_DIR / run_id / "output"),
+                "mfa_output_dirs": {
+                    accent: str(path.parent) for accent, path in accent_tgs.items()
+                },
+            },
             "summary": {
                 "total": len(final_results),
                 "correct": sum(1 for w in final_results if w['status'] == 'correct'),

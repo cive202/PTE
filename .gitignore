@@ -43,7 +43,14 @@ Thumbs.db
 *.log
 *.swp
 
-# PTE Specific Transient Data
+# PTE runtime artifacts (canonical layout)
+data/processed/mfa_runs/
+data/processed/logs/
+data/user_uploads/*/
+data/user_uploads/upload_*.*
+data/user_uploads/temp_*.*
+
+# PTE runtime artifacts (legacy layout fallback)
 PTE_MFA_TESTER_DOCKER/data/output_*/
 PTE_MFA_TESTER_DOCKER/data/run_*/
 corpus/check_*
@@ -58,5 +65,6 @@ nltk_data/
 # Local Windows artifact folder created in Linux workspace
 C:/
 
-# Runtime logs
-data/processed/logs/
+# App logs
+api.log
+app.log
