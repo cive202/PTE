@@ -41,15 +41,6 @@
             border-bottom: 2px solid orange;
         }
 
-        .progress-container {
-            display: none;
-            margin-top: 1rem;
-            padding: 1.5rem;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #eee;
-        }
-
         .progress-bar {
             height: 12px;
             background: #e9ecef;
@@ -62,13 +53,6 @@
             background: linear-gradient(90deg, #4CAF50, #8BC34A);
             width: 0%;
             transition: width 0.5s ease;
-        }
-
-        .progress-text {
-            margin-top: 0.75rem;
-            font-size: 0.9rem;
-            color: #666;
-            text-align: center;
         }
     </style>
     <style>
@@ -180,15 +164,128 @@
         .modal-close:hover {
             color: #666;
         }
+
+        .tts-section {
+            margin: 1rem 0 0;
+            padding: 0.75rem;
+            background: #f6f7fb;
+            border: 1px solid #e1e6ef;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .tts-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #455a64;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tts-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tts-btn {
+            border: 1px solid #d7dde5;
+            background: #ffffff;
+            color: #2c3e50;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .tts-btn:hover:not(.loading) {
+            transform: translateY(-1px);
+            border-color: #b8c4d6;
+            box-shadow: 0 4px 10px rgba(16, 24, 40, 0.12);
+        }
+
+        .tts-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .tts-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .tts-speed {
+            font-size: 0.72rem;
+            background: #eef3f9;
+            color: #4b5b6b;
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+        }
+
+        .tts-inline-btn {
+            border: none;
+            background: transparent;
+            color: #2c3e50;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            margin-left: 0.4rem;
+            padding: 0.1rem 0.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .tts-inline-btn:hover {
+            color: #0d6efd;
+            transform: translateY(-1px);
+        }
+
+        .tts-spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid #cfd6df;
+            border-top-color: #2c3e50;
+            border-radius: 50%;
+            animation: tts-spin 0.8s linear infinite;
+        }
+
+        @keyframes tts-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="page-container">
         <div class="page-header">
-            <a href="/" class="back-link">← Back to Dashboard</a>
+            <div class="header-top">
+                <a href="/" class="back-link">← Back to Dashboard</a>
+                <div class="accent-mini">
+                    <label for="accent-selector">Accent</label>
+                    <select id="accent-selector">
+                        <option value="US_ARPA">US (ARPA)</option>
+                        <option value="US_MFA">US (MFA)</option>
+                        <option value="UK">UK</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Nigerian">Nigerian</option>
+                        <option value="NonNative">Non-Native</option>
+                    </select>
+                </div>
+            </div>
             <h1 class="page-title">Read Aloud</h1>
             <p class="page-subtitle">Read the text clearly into your microphone.</p>
+            <div class="hero-meta">
+                <span class="hero-pill">Pronunciation</span>
+                <span class="hero-pill">Stress + Pauses</span>
+                <span class="hero-pill">Accent-Aware Scoring</span>
+            </div>
         </div>
 
         <div class="task-container">
@@ -220,19 +317,6 @@
                 <div>
                     <label><strong>Reference Text</strong></label>
                     <textarea id="ref-text" placeholder="Enter text here..."></textarea>
-                </div>
-
-                <div style="margin-bottom: 1rem;">
-                    <label><strong>Accent/Region:</strong></label>
-                    <select id="accent-selector"
-                        style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
-                        <option value="US_ARPA">United States (ARPA)</option>
-                        <option value="US_MFA">United States (MFA)</option>
-                        <option value="UK">United Kingdom</option>
-                        <option value="Indian">Indian English</option>
-                        <option value="Nigerian">Nigerian English</option>
-                        <option value="NonNative">Non-Native English</option>
-                    </select>
                 </div>
 
                 <div class="controls">
@@ -276,19 +360,9 @@
 
                 <div style="margin-top: 2rem;">
                     <details>
-                        <summary>View Debug Data (JSON & TextGrid)</summary>
-                        <div style="display: flex; gap: 20px; margin-top: 10px;">
-                            <div style="flex: 1; min-width: 0;">
-                                <h4 style="margin-bottom: 5px;">API Response</h4>
-                                <pre id="json-output"
-                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #1c2e42;"></pre>
-                            </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <h4 style="margin-bottom: 5px;">TextGrid Content</h4>
-                                <pre id="textgrid-output"
-                                    style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; height: 400px; overflow-y: auto; border: 1px solid #ddd; white-space: pre-wrap; font-family: monospace;"></pre>
-                            </div>
-                        </div>
+                        <summary>View Raw JSON Data</summary>
+                        <pre id="json-output"
+                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 320px; overflow-y: auto; margin-top: 10px; border: 1px solid #1c2e42;"></pre>
                     </details>
                 </div>
             </div>
@@ -300,7 +374,16 @@
     <div id="audio-modal" class="modal-overlay">
         <div class="modal-box">
             <button class="modal-close" onclick="closeModal()">×</button>
-            <div id="modal-word-text" class="modal-word">Thinking...</div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:0.45rem; margin-bottom:0.5rem;">
+                <div id="modal-word-text" class="modal-word" style="margin-bottom:0;">Thinking...</div>
+                <button id="modal-tts-word" class="tts-btn" type="button" title="Listen to native pronunciation"
+                    style="padding:0.4rem 0.65rem;">
+                    <svg class="tts-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="currentColor"
+                            d="M3 9v6h4l5 4V5L7 9H3zm13.5 3a3.5 3.5 0 0 0-2.06-3.2v6.4A3.5 3.5 0 0 0 16.5 12zm2.5 0a6 6 0 0 1-3.54 5.5l.94 1.72A8 8 0 0 0 21 12a8 8 0 0 0-5.1-7.22l-.94 1.72A6 6 0 0 1 19 12z" />
+                    </svg>
+                </button>
+            </div>
             <div id="modal-timestamp" class="modal-time">0.00s - 0.00s</div>
 
             <div id="modal-details"
@@ -337,6 +420,63 @@
         </div>
     </div>
     <script>
+        let activeTtsAudio = null;
+        function setTtsLoading(button, isLoading) {
+            if (!button) return;
+            if (isLoading) {
+                if (!button.dataset.label) {
+                    button.dataset.label = button.innerHTML;
+                }
+                button.innerHTML = '<span class="tts-spinner"></span> Loading...';
+                button.classList.add('loading');
+                button.disabled = true;
+            } else {
+                if (button.dataset.label) {
+                    button.innerHTML = button.dataset.label;
+                }
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
+        }
+
+        function playTTS(text) {
+            const cleanText = (text || '').trim();
+            if (!cleanText) return;
+
+            const activeEl = document.activeElement;
+            const isTtsButton = activeEl && (activeEl.classList.contains('tts-btn') || activeEl.classList.contains('tts-inline-btn'));
+            const ttsButton = isTtsButton ? activeEl : null;
+
+            if (ttsButton) setTtsLoading(ttsButton, true);
+
+            if (activeTtsAudio) {
+                activeTtsAudio.pause();
+                activeTtsAudio = null;
+            }
+
+            const url = `/api/tts?text=${encodeURIComponent(cleanText)}&speed=default`;
+            const audio = new Audio(url);
+            activeTtsAudio = audio;
+
+            const clearLoading = () => {
+                if (ttsButton) setTtsLoading(ttsButton, false);
+                if (activeTtsAudio === audio) {
+                    activeTtsAudio = null;
+                }
+            };
+
+            audio.addEventListener('playing', () => {
+                if (ttsButton) setTtsLoading(ttsButton, false);
+            });
+            audio.addEventListener('ended', clearLoading);
+            audio.addEventListener('error', clearLoading);
+
+            audio.play().catch(err => {
+                console.error('TTS playback failed', err);
+                clearLoading();
+            });
+        }
+
         let mediaRecorder;
         let audioChunks = [];
         let audioBlob = null;
@@ -366,6 +506,7 @@
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
         const accentSelector = document.getElementById('accent-selector');
+        const modalTtsWord = document.getElementById('modal-tts-word');
 
         // Load saved accent from localStorage
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
@@ -562,15 +703,9 @@
         function displayResult(data) {
             progressContainer.style.display = 'none';
 
-            // Separate TextGrid content
-            let tgContent = data.textgrid_content;
-            if (tgContent) {
-                delete data.textgrid_content; // Remove from main JSON view
-                document.getElementById('textgrid-output').textContent = tgContent;
-            } else {
-                document.getElementById('textgrid-output').textContent = "No TextGrid content available.";
+            if (data.textgrid_content) {
+                delete data.textgrid_content;
             }
-
             jsonOutput.innerText = JSON.stringify(data, null, 2);
             if (data.error) {
                 statusDiv.innerText = "Error: " + data.error;
@@ -652,7 +787,6 @@
             resultsDiv.innerHTML = "";
             transcriptionBox.style.display = 'none';
             jsonOutput.innerText = "";
-            document.getElementById('textgrid-output').textContent = "";
             // document.getElementById('textgrid-container').style.display = 'none'; // ID removed
             progressContainer.style.display = 'block';
             progressFill.style.width = '2%';
@@ -768,6 +902,9 @@
 
             // Store data for playback
             modalPlayBtn.onclick = () => playWordAudio(wordData.start, wordData.end);
+            if (modalTtsWord) {
+                modalTtsWord.onclick = () => playTTS(wordData.word);
+            }
 
             modalOverlay.style.display = 'flex';
         }

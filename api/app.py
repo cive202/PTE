@@ -17,7 +17,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from api.validator import align_and_validate, align_and_validate_gen
-from api.image_evaluator import get_random_image, evaluate_description
+from api.image_evaluator import get_random_image, get_image_topics, evaluate_description
 from api.lecture_evaluator import get_random_lecture, evaluate_lecture
 from api.file_utils import (
     get_paired_paths,
@@ -27,6 +27,7 @@ from api.file_utils import (
     FEATURE_DESCRIBE_IMAGE,
     FEATURE_RETELL_LECTURE
 )
+from api.tts_handler import synthesize_speech
 from src.shared.paths import (
     IMAGES_DIR as SHARED_IMAGES_DIR,
     LECTURES_DIR as SHARED_LECTURES_DIR,
@@ -172,11 +173,9 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
         _persist_attempt_artifacts(audio_path, mfa_result, filename="image_mfa_result.json")
         
-        # Evaluate description
-        result = evaluate_description(image_id, transcription)
-        
-        # Use MFA words directly (they already contain timing and status)
+        # Evaluate description (pass MFA words so pronunciation score is computed)
         mfa_words = mfa_result.get('words', []) if mfa_result else []
+        result = evaluate_description(image_id, transcription, mfa_words=mfa_words)
         
         # Include enhanced transcription details for UI overlay
         result['transcription_details'] = {
@@ -300,6 +299,20 @@ def check_grammar():
         return (response.text, response.status_code, response.headers.items())
     except Exception as e:
         return jsonify({"error": f"Grammar service unreachable: {str(e)}"}), 503
+
+@app.route('/api/tts', methods=['GET'])
+def tts():
+    text = request.args.get('text', '').strip()
+    speed = request.args.get('speed', 'default').lower()
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+    if speed not in {"default", "slow"}:
+        speed = "default"
+    try:
+        audio_bytes = synthesize_speech(text, speed=speed)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return Response(audio_bytes, mimetype='audio/mpeg')
 
 # ============================================================================
 # ROUTES - SPEAKING TASKS
@@ -436,6 +449,21 @@ def describe_image_speaking():
 def retell_lecture_page():
     """Retell Lecture practice page."""
     return render_template('retell_lecture.html')
+
+@app.route('/speaking/summarize-group-discussion')
+def summarize_group_discussion_page():
+    """Summarize Group Discussion page (soon available)."""
+    return render_template('summarize_group_discussion.html')
+
+@app.route('/writing/summarize-written-text')
+def summarize_written_text_page():
+    """Summarize Written Text page (soon available)."""
+    return render_template('summarize_written_text.html')
+
+@app.route('/writing/write-essay')
+def write_essay_page():
+    """Write Essay page (soon available)."""
+    return render_template('write_essay.html')
 
 @app.route('/save', methods=['POST'])
 def save():
@@ -582,14 +610,24 @@ def check_stream():
 # ============================================================================
 @app.route('/describe-image/get-image', methods=['GET'])
 def get_image_task():
-    image_data = get_random_image()
+    topic = request.args.get('topic', None)
+    image_data = get_random_image(topic=topic)
     if not image_data:
         return jsonify({"error": "No images available"}), 404
     return jsonify({
         "image_id": image_data['id'],
         "image_url": f"/images/{image_data['filename']}",
-        "title": image_data['title']
+        "title": image_data['title'],
+        "topic": image_data.get('difficulty', 'General').title()
     })
+
+@app.route('/speaking/describe-image/get-topics', methods=['GET'])
+def get_describe_image_topics():
+    """Get available topic filters for describe image."""
+    topics = get_image_topics()
+    if not topics:
+        return jsonify({"error": "No topics available"}), 404
+    return jsonify({"topics": topics})
 
 @app.route('/describe-image/submit', methods=['POST'])
 def submit_description():

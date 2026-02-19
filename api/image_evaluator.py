@@ -1,24 +1,41 @@
 """
 Image Description Evaluator Module
 Handles evaluation of student image descriptions against reference descriptions.
-Uses TF-IDF similarity for content matching.
+Uses Sentence Transformers for semantic matching and Regex for structure analysis.
 """
 
 import json
 import random
 import re
+import os
 from typing import Dict, List, Tuple, Optional
+
+# Try to import sentence_transformers for semantic matching
+try:
+    from sentence_transformers import SentenceTransformer, util
+    TRANSFORMER_AVAILABLE = True
+except ImportError:
+    TRANSFORMER_AVAILABLE = False
+    print("Warning: sentence-transformers not available, semantic scoring will be disabled")
 
 from src.shared.paths import IMAGE_REFERENCE_FILE
 
-# Try to import sklearn, fallback to simple matching if not available
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
-    SKLEARN_AVAILABLE = True
-except ImportError:
-    SKLEARN_AVAILABLE = False
-    print("Warning: sklearn not available, using simple keyword matching")
+# Global model cache — loaded eagerly at import so background threads can use it
+SEMANTIC_MODEL = None
+MODEL_NAME = 'all-MiniLM-L6-v2'
+
+def _eager_load_model():
+    """Pre-load the model at import time so background threads don't race."""
+    global SEMANTIC_MODEL
+    if TRANSFORMER_AVAILABLE and SEMANTIC_MODEL is None:
+        try:
+            print(f"[image_evaluator] Pre-loading SentenceTransformer: {MODEL_NAME}...")
+            SEMANTIC_MODEL = SentenceTransformer(MODEL_NAME)
+            print(f"[image_evaluator] Model ready.")
+        except Exception as e:
+            print(f"[image_evaluator] Failed to pre-load model: {e}")
+
+_eager_load_model()
 
 REFERENCES_FILE = IMAGE_REFERENCE_FILE
 
@@ -32,14 +49,31 @@ def load_image_data() -> Dict:
         return json.load(f)
 
 
-def get_random_image() -> Optional[Dict]:
-    """Get a random image from the available set."""
+def get_image_topics() -> List[str]:
+    """Get unique image topics derived from image difficulty levels."""
+    data = load_image_data()
+    images = data.get("images", [])
+    topics = sorted({img.get("difficulty", "General").title() for img in images if isinstance(img, dict)})
+    return topics
+
+
+def get_random_image(topic: Optional[str] = None) -> Optional[Dict]:
+    """Get a random image from the available set, optionally filtered by topic."""
     data = load_image_data()
     images = data.get("images", [])
     
     if not images:
         return None
-    
+
+    if topic:
+        topic_normalized = topic.strip().lower()
+        filtered = [
+            img for img in images
+            if str(img.get("difficulty", "General")).strip().lower() == topic_normalized
+        ]
+        if filtered:
+            images = filtered
+
     return random.choice(images)
 
 
@@ -53,6 +87,14 @@ def get_image_by_id(image_id: str) -> Optional[Dict]:
             return img
     
     return None
+
+
+def get_semantic_model():
+    """Return the pre-loaded model (or load it if somehow not ready)."""
+    global SEMANTIC_MODEL
+    if SEMANTIC_MODEL is None and TRANSFORMER_AVAILABLE:
+        _eager_load_model()
+    return SEMANTIC_MODEL
 
 
 def preprocess_text(text: str) -> str:
@@ -80,98 +122,185 @@ def calculate_keyword_coverage(keywords: List[str], student_text: str) -> float:
     return matched / len(keywords)
 
 
-def calculate_length_score(reference: str, student_text: str) -> float:
+def calculate_semantic_similarity(reference: str, student_text: str) -> float:
     """
-    Score based on length appropriateness.
-    Penalize if too short or excessively long.
+    Calculate semantic similarity using Sentence Transformers.
+    Returns a score between 0.0 and 1.0.
     """
-    ref_words = len(reference.split())
-    student_words = len(student_text.split())
-    
-    if student_words == 0:
+    model = get_semantic_model()
+    if model is None:
         return 0.0
     
-    ratio = student_words / ref_words
-    
-    # Ideal range: 0.7 to 1.5 of reference length
-    if 0.7 <= ratio <= 1.5:
-        return 1.0
-    elif ratio < 0.7:
-        # Too short - proportional penalty
-        return ratio / 0.7
-    else:
-        # Too long - gentle penalty
-        return max(0.5, 1.5 / ratio)
-
-
-def tfidf_similarity(reference: str, student_text: str) -> float:
-    """Calculate TF-IDF cosine similarity between texts."""
-    if not SKLEARN_AVAILABLE:
-        # Fallback to simple word overlap
-        ref_words = set(preprocess_text(reference).split())
-        student_words = set(preprocess_text(student_text).split())
-        
-        if not ref_words or not student_words:
-            return 0.0
-        
-        overlap = len(ref_words & student_words)
-        return overlap / len(ref_words)
-    
-    # Use TF-IDF
-    vectorizer = TfidfVectorizer()
     try:
-        tfidf_matrix = vectorizer.fit_transform([reference, student_text])
-        similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-        return float(similarity)
-    except:
+        # Encode sentences to get their embeddings
+        embedding_1 = model.encode(reference, convert_to_tensor=True)
+        embedding_2 = model.encode(student_text, convert_to_tensor=True)
+        
+        # Compute cosine similarity
+        score = util.pytorch_cos_sim(embedding_1, embedding_2)
+        return float(score.item())
+    except Exception as e:
+        print(f"Semantic calculation error: {e}")
         return 0.0
 
 
-def calculate_score(reference: str, student_text: str, keywords: List[str]) -> Tuple[int, Dict]:
+def check_structure(text: str) -> Dict[str, bool]:
     """
-    Calculate PTE-style score (0-90) for image description.
-    
+    Check for structural elements using Regex.
+    Returns dict: {'has_intro': bool, 'has_conclusion': bool, 'has_trends': bool}
+    """
+    text_lower = text.lower().strip()
+    if not text_lower:
+        return {'has_intro': False, 'has_conclusion': False, 'has_trends': False}
+
+    # 1. Intro Check (Usually at the start)
+    # Pattern: "The [chart/graph...] shows/displays..."
+    intro_pattern = r"(the|this)\s+(image|chart|graph|map|table|diagram|bar|line|pie)\s+(shows|displays|illustrates|depicts|presents|gives|represented)"
+    has_intro = bool(re.search(intro_pattern, text_lower))
+
+    # 2. Conclusion Check
+    # Pattern: "Overall", "In conclusion", "To summarize"
+    conclusion_pattern = r"(overall|in conclusion|to conclude|to summarize|in summary|generally speaking)"
+    has_conclusion = bool(re.search(conclusion_pattern, text_lower))
+
+    # 3. Trend/Logic Check
+    # Pattern: "increase", "decrease", "stable", "fluctuate", "highest", "lowest"
+    trend_pattern = r"(increase|decrease|rise|fall|drop|climb|fluctuate|stable|steady|constant|trend|highest|lowest|maximum|minimum|peak)"
+    has_trends = bool(re.search(trend_pattern, text_lower))
+
+    return {
+        'has_intro': has_intro,
+        'has_conclusion': has_conclusion,
+        'has_trends': has_trends
+    }
+
+
+def compute_pronunciation_score(mfa_words: List[Dict]) -> Tuple[float, float]:
+    """
+    Derive a pronunciation score (0-90) from MFA word-level data.
+
+    Uses `accuracy_score` per word (0-100) if available, otherwise falls back
+    to binary correct/mispronounced status.
+
     Returns:
-        (score, details) where details contains breakdown
+        (pronun_score_0_to_90, raw_accuracy_0_to_1)
+    """
+    if not mfa_words:
+        return 0.0, 0.0
+
+    scored_words = []
+    for w in mfa_words:
+        status = w.get('status', 'unknown')
+        if status == 'inserted':  # extra word — penalise
+            scored_words.append(0.0)
+            continue
+        acc = w.get('accuracy_score')
+        if acc is not None:
+            scored_words.append(float(acc) / 100.0)
+        elif status == 'correct':
+            scored_words.append(1.0)
+        elif status == 'mispronounced':
+            scored_words.append(0.0)
+        # deleted / unknown words are skipped (not penalised twice)
+
+    if not scored_words:
+        return 0.0, 0.0
+
+    raw = sum(scored_words) / len(scored_words)  # 0.0 – 1.0
+    pronun_score = round(raw * 90, 1)
+    return pronun_score, raw
+
+
+def calculate_score(
+    reference: str,
+    student_text: str,
+    keywords: List[str],
+    mfa_words: Optional[List[Dict]] = None,
+) -> Tuple[int, Dict]:
+    """
+    Calculate PTE-style score (0-90) for image description — Hybrid engine.
+
+    Sub-scores (matching APEuni's Content / Pronun / Fluency breakdown):
+    - Content  (Semantic Match + Keyword Coverage): 0-90
+    - Pronun   (MFA word-level accuracy):           0-90
+    - Fluency  (length ratio + structure):          0-90
+    - Total    (weighted average of the three):     0-90
+
+    Weights for total:
+        Content  40%  (semantic 26.7% + keyword 13.3%)
+        Pronun   30%
+        Fluency  30%  (structure 15% + length 15%)
     """
     if not student_text or len(student_text.strip()) < 10:
         return 0, {
             "content_score": 0,
-            "keyword_score": 0,
-            "length_score": 0,
+            "pronun_score": 0,
             "fluency_score": 0,
-            "feedback": "Description too short or empty."
+            "keyword_score": 0,
+            "structure_score": 0,
+            "feedback": "Description too short or empty.",
+            "word_count": 0,
         }
-    
-    # 1. Content accuracy (0-50 points) - TF-IDF similarity
-    content_similarity = tfidf_similarity(reference, student_text)
-    content_score = content_similarity * 50
-    
-    # 2. Keyword coverage (0-20 points)
-    keyword_coverage = calculate_keyword_coverage(keywords, student_text)
-    keyword_score = keyword_coverage * 20
-    
-    # 3. Length appropriateness (0-10 points)
-    length_ratio = calculate_length_score(reference, student_text)
-    length_score = length_ratio * 10
-    
-    # 4. Fluency (0-10 points) - placeholder for now
-    # Could use ASR confidence or grammar check in future
-    fluency_score = 10
-    
-    # Total score (capped at 90)
-    total_score = int(min(90, content_score + keyword_score + length_score + fluency_score))
-    
+
+    # ── 1. Content: Semantic Match (26.7% of total → 24 pts) ──────────────
+    semantic_sim = max(0.0, calculate_semantic_similarity(reference, student_text))
+    semantic_pts = semantic_sim * 24  # out of 24
+
+    # ── 2. Content: Keyword Coverage (13.3% of total → 12 pts) ───────────
+    keyword_cov = calculate_keyword_coverage(keywords, student_text)
+    keyword_pts = keyword_cov * 12   # out of 12
+
+    content_raw = semantic_pts + keyword_pts  # 0-36 pts
+    # Scale to 0-90 for display
+    content_score_90 = round(content_raw / 36 * 90, 1)
+
+    # ── 3. Pronunciation (30% of total → 27 pts) ─────────────────────────
+    pronun_score_90, pronun_raw = compute_pronunciation_score(mfa_words or [])
+    pronun_pts = pronun_raw * 27     # 0-27 pts for total
+
+    # ── 4. Fluency: Structure (15% of total → 13.5 pts) ──────────────────
+    structure = check_structure(student_text)
+    structure_pts = 0.0
+    if structure['has_intro']:      structure_pts += 4.5
+    if structure['has_conclusion']: structure_pts += 4.5
+    if structure['has_trends']:     structure_pts += 4.5
+
+    # ── 5. Fluency: Length ratio (15% of total → 13.5 pts) ───────────────
+    ref_len = len(reference.split())
+    stu_len = len(student_text.split())
+    if ref_len > 0:
+        ratio = stu_len / ref_len
+        if 0.6 <= ratio <= 1.5:
+            length_pts = 13.5
+        elif ratio < 0.6:
+            length_pts = ratio / 0.6 * 13.5
+        else:
+            length_pts = max(6.0, 1.5 / ratio * 13.5)
+    else:
+        length_pts = 0.0
+
+    fluency_pts = structure_pts + length_pts  # 0-27 pts
+    fluency_score_90 = round(fluency_pts / 27 * 90, 1)
+
+    # ── Total ─────────────────────────────────────────────────────────────
+    raw_total = content_raw + pronun_pts + fluency_pts  # 0-90
+    total_score = int(min(90, raw_total))
+
     details = {
-        "content_score": round(content_score, 1),
-        "keyword_score": round(keyword_score, 1),
-        "length_score": round(length_score, 1),
-        "fluency_score": round(fluency_score, 1),
-        "content_similarity": round(content_similarity * 100, 1),
-        "keyword_coverage": round(keyword_coverage * 100, 1),
-        "word_count": len(student_text.split())
+        # APEuni-style 0-90 sub-scores
+        "content_score": content_score_90,
+        "pronun_score": pronun_score_90,
+        "fluency_score": fluency_score_90,
+        # Legacy breakdown (kept for backward compat)
+        "keyword_score": round(keyword_pts, 1),
+        "structure_score": round(structure_pts, 1),
+        # Raw metrics
+        "semantic_similarity": round(semantic_sim * 100, 1),
+        "keyword_coverage": round(keyword_cov * 100, 1),
+        "structure_metrics": structure,
+        "word_count": stu_len,
     }
-    
+
     return total_score, details
 
 
@@ -179,71 +308,60 @@ def generate_feedback(score: int, details: Dict, keywords: List[str], student_te
     """Generate human-readable feedback based on score and details."""
     feedback_parts = []
     
-    # Overall performance
-    if score >= 80:
-        feedback_parts.append("Excellent description! You captured the key information effectively.")
-    elif score >= 65:
-        feedback_parts.append("Good description with most important details covered.")
-    elif score >= 50:
-        feedback_parts.append("Adequate description, but some key details are missing.")
-    else:
-        feedback_parts.append("Your description needs significant improvement.")
+    # Structure Feedback
+    struct = details.get("structure_metrics", {})
+    if not struct.get("has_intro"):
+        feedback_parts.append("Start with an introduction like 'The chart shows...'.")
+    if not struct.get("has_conclusion"):
+        feedback_parts.append("Add a conclusion starting with 'Overall' or 'In conclusion'.")
+    if not struct.get("has_trends"):
+        feedback_parts.append("Mention trends using words like 'increase', 'decrease', or 'highest'.")
+
+    # Semantic Feedback
+    content_sim = details.get("semantic_similarity", 0)
+    if content_sim < 60:
+        feedback_parts.append("Your description doesn't fully capture the meaning of the image. Try to be more specific.")
     
-    # Content similarity feedback
-    content_sim = details.get("content_similarity", 0)
-    if content_sim < 50:
-        feedback_parts.append("Try to include more specific details from the image.")
-    
-    # Keyword coverage feedback
+    # Keyword Feedback
     keyword_cov = details.get("keyword_coverage", 0)
-    if keyword_cov < 60:
-        missing_keywords = []
-        student_lower = student_text.lower()
-        for kw in keywords[:5]:  # Check first 5 keywords
-            if kw.lower() not in student_lower:
-                missing_keywords.append(kw)
-        
-        if missing_keywords:
-            feedback_parts.append(f"Consider mentioning: {', '.join(missing_keywords[:3])}.")
-    
-    # Length feedback
-    word_count = details.get("word_count", 0)
-    if word_count < 30:
-        feedback_parts.append("Your description is too brief. Add more details.")
-    elif word_count > 150:
-        feedback_parts.append("Try to be more concise while keeping key information.")
+    if keyword_cov < 50:
+        missing = [k for k in keywords if k.lower() not in student_text.lower()][:3]
+        if missing:
+            feedback_parts.append(f"Try to use key words: {', '.join(missing)}.")
+
+    if not feedback_parts:
+        feedback_parts.append("Excellent description! You covered content, structure, and keywords well.")
     
     return " ".join(feedback_parts)
 
 
-def evaluate_description(image_id: str, student_text: str) -> Dict:
+def evaluate_description(
+    image_id: str,
+    student_text: str,
+    mfa_words: Optional[List[Dict]] = None,
+) -> Dict:
     """
     Main evaluation function.
-    
+
     Args:
-        image_id: ID of the image being described
-        student_text: Student's transcribed description
-    
-    Returns:
-        Dictionary with score, feedback, and details
+        image_id:     ID of the image being described.
+        student_text: ASR transcription of the student's speech.
+        mfa_words:    Optional list of MFA word dicts (from align_and_validate).
+                      When provided, pronunciation score is computed from them.
     """
-    # Get image data
     image_data = get_image_by_id(image_id)
     if not image_data:
-        return {
-            "error": "Image not found",
-            "score": 0
-        }
-    
+        return {"error": "Image not found", "score": 0}
+
     reference = image_data.get("reference", "")
-    keywords = image_data.get("keywords", [])
-    
-    # Calculate score
-    score, details = calculate_score(reference, student_text, keywords)
-    
+    keywords  = image_data.get("keywords", [])
+
+    # Calculate score (passes MFA words for pronunciation scoring)
+    score, details = calculate_score(reference, student_text, keywords, mfa_words=mfa_words)
+
     # Generate feedback
     feedback = generate_feedback(score, details, keywords, student_text)
-    
+
     return {
         "score": score,
         "feedback": feedback,
@@ -251,13 +369,13 @@ def evaluate_description(image_id: str, student_text: str) -> Dict:
         "image_title": image_data.get("title", ""),
         "transcription": student_text,
         "reference": reference,
-        "keywords": keywords
+        "keywords": keywords,
     }
 
 
 if __name__ == "__main__":
     # Test the evaluator
-    print("Testing Image Evaluator...")
+    print("Testing Image Evaluator (Hybrid AI)...")
     
     # Load a sample image
     img = get_random_image()
@@ -266,9 +384,18 @@ if __name__ == "__main__":
         print(f"Reference: {img['reference'][:100]}...")
         
         # Test with a sample student response
-        sample_response = "The bar chart shows sales data for four quarters with an increasing trend."
-        result = evaluate_description(img['id'], sample_response)
-        
-        print(f"\nScore: {result['score']}/90")
-        print(f"Feedback: {result['feedback']}")
+        # 1. Good response
+        good_response = "The bar chart shows sales data for four quarters. Overall, there is an increasing trend in revenue."
+        print(f"\n--- Good Response: {good_response} ---")
+        result = evaluate_description(img['id'], good_response)
+        print(f"Score: {result['score']}/90")
         print(f"Details: {result['details']}")
+        print(f"Feedback: {result['feedback']}")
+
+        # 2. Bad response
+        bad_response = "I see a picture with some blue bars and numbers."
+        print(f"\n--- Bad Response: {bad_response} ---")
+        result = evaluate_description(img['id'], bad_response)
+        print(f"Score: {result['score']}/90")
+        print(f"Details: {result['details']}")
+        print(f"Feedback: {result['feedback']}")

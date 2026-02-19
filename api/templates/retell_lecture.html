@@ -5,13 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PTE - Retell Lecture</title>
+    <link rel="stylesheet" href="/static/css/style.css">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
@@ -154,50 +152,18 @@
             }
         }
 
-        .progress-container {
-            display: none;
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background: #f0f0f0;
-            border-radius: 8px;
-        }
-
-        .progress-container.active {
-            display: block;
-        }
-
         .progress-bar {
-            height: 24px;
-            background: #e0e0e0;
-            border-radius: 12px;
+            height: 12px;
+            background: #e9ecef;
+            border-radius: 6px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3498db, #2ecc71);
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
             width: 0%;
             transition: width 0.5s ease;
-            animation: pulse-progress 1.5s infinite;
-        }
-
-        @keyframes pulse-progress {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-        }
-
-        .progress-text {
-            margin-top: 0.75rem;
-            font-size: 0.95rem;
-            color: #666;
-            text-align: center;
         }
 
         #status {
@@ -384,14 +350,32 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="nav-links">
-            <a href="/">← Back to Dashboard</a>
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-top">
+                <a href="/" class="back-link">← Back to Dashboard</a>
+                <div class="accent-mini">
+                    <label for="accent-selector">Accent</label>
+                    <select id="accent-selector">
+                        <option value="US_ARPA">US (ARPA)</option>
+                        <option value="US_MFA">US (MFA)</option>
+                        <option value="UK">UK</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Nigerian">Nigerian</option>
+                        <option value="NonNative">Non-Native</option>
+                    </select>
+                </div>
+            </div>
+            <h1 class="page-title">Retell Lecture</h1>
+            <p class="page-subtitle">Listen to the lecture and summarize the main points.</p>
+            <div class="hero-meta">
+                <span class="hero-pill">Audio Comprehension</span>
+                <span class="hero-pill">Summary Precision</span>
+                <span class="hero-pill">AI Fluency Score</span>
+            </div>
         </div>
 
-        <h1>🎤 Retell Lecture</h1>
-        <p class="subtitle">Listen to the lecture and summarize the main points</p>
-
+        <div class="task-container">
         <div class="instructions">
             <strong>Instructions:</strong>
             <ol style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
@@ -422,8 +406,7 @@
         </div>
 
         <!-- Audio Playback -->
-        <div id="audioPlayback"
-            style="display:none; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 6px;">
+        <div id="audioPlayback" style="display:none; margin: 1.5rem 0;">
             <h4 style="margin: 0 0 0.5rem 0; color: #495057;">🎧 Your Recording</h4>
             <audio id="audioPlayer" controls style="width: 100%; margin-bottom: 0.5rem;"></audio>
             <p style="margin: 0; font-size: 0.9rem; color: #666;">Listen to your recording before submitting</p>
@@ -495,6 +478,7 @@
             </div>
         </div>
     </div>
+    </div>
 
     <script>
         let mediaRecorder;
@@ -521,6 +505,13 @@
         const progressText = document.getElementById('progressText');
         const results = document.getElementById('results');
         const jsonOutput = document.getElementById('json-output');
+        const accentSelector = document.getElementById('accent-selector');
+
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        accentSelector.value = savedAccent;
+        accentSelector.addEventListener('change', () => {
+            localStorage.setItem('selectedAccent', accentSelector.value);
+        });
 
         // Load initial lecture task
         loadNewLecture();
@@ -630,6 +621,7 @@
             const formData = new FormData();
             formData.append('audio', audioBlob, 'summary.wav');
             formData.append('lecture_id', currentLectureId);
+            formData.append('accent', accentSelector.value);
 
             try {
                 const res = await fetch('/retell-lecture/submit', { method: 'POST', body: formData });
@@ -685,6 +677,9 @@
 
         async function displayResult(result) {
             currentResult = result;
+            if (result.textgrid_content) {
+                delete result.textgrid_content;
+            }
             jsonOutput.innerText = JSON.stringify(result, null, 2);
 
             document.getElementById('scoreNumber').textContent = result.score;
