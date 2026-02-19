@@ -3,6 +3,7 @@ import sys
 import datetime
 import subprocess
 import json
+import re
 import threading
 import uuid
 import shutil
@@ -17,8 +18,11 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from api.validator import align_and_validate, align_and_validate_gen
-from api.image_evaluator import get_random_image, get_image_topics, evaluate_description
+from api.image_evaluator import get_random_image, get_image_catalog, infer_chart_type, evaluate_description
 from api.lecture_evaluator import get_random_lecture, evaluate_lecture
+from pte_core.phoneme.g2p import PhonemeReferenceBuilder
+from pte_core.asr.phoneme_recognition import call_phoneme_service
+from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from api.file_utils import (
     get_paired_paths,
     get_temp_filepath,
@@ -53,6 +57,34 @@ JOB_STORE = {}  # {job_id: {status, result, error, audio_path, text_path}}
 IMAGE_JOB_STORE = {}  # {job_id: {status, result, error, image_id, audio_path}}
 LECTURE_JOB_STORE = {}  # {job_id: {status, result, error, lecture_id, audio_path}}
 KEEP_UPLOAD_ARTIFACTS = os.environ.get("PTE_KEEP_UPLOAD_ARTIFACTS", "1").lower() not in {"0", "false", "no"}
+WORD_PRACTICE_ACCENT_MAP = {
+    "Indian": "Indian English",
+    "Nigerian": "Nigerian English",
+    "UK": "United Kingdom",
+    "NonNative": "Non-Native English",
+    "US_ARPA": "Non-Native English",
+    "US_MFA": "Non-Native English",
+}
+_WORD_PRACTICE_BUILDER = None
+_WORD_PRACTICE_SCORER = None
+
+
+def _get_word_practice_builder():
+    global _WORD_PRACTICE_BUILDER
+    if _WORD_PRACTICE_BUILDER is None:
+        _WORD_PRACTICE_BUILDER = PhonemeReferenceBuilder()
+    return _WORD_PRACTICE_BUILDER
+
+
+def _get_word_practice_scorer():
+    global _WORD_PRACTICE_SCORER
+    if _WORD_PRACTICE_SCORER is None:
+        _WORD_PRACTICE_SCORER = AccentTolerantScorer()
+    return _WORD_PRACTICE_SCORER
+
+
+def _map_word_practice_accent(raw_accent):
+    return WORD_PRACTICE_ACCENT_MAP.get(raw_accent, "Non-Native English")
 
 
 def _maybe_cleanup(paths, force=False):
@@ -313,6 +345,73 @@ def tts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return Response(audio_bytes, mimetype='audio/mpeg')
+
+@app.route('/api/word-practice', methods=['POST'])
+def word_practice():
+    """
+    Fast single-word pronunciation check using phoneme service only (no MFA).
+    """
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    raw_word = request.form.get('word', '')
+    accent = request.form.get('accent', 'US_ARPA')
+    clean_word = re.sub(r"[^a-zA-Z']+", "", raw_word).lower()
+    if not clean_word:
+        return jsonify({"error": "No valid word provided"}), 400
+
+    uploaded = request.files['audio']
+    temp_input = get_temp_filepath('word_practice', 'webm')
+    temp_wav = get_temp_filepath('word_practice', 'wav')
+    processing_path = temp_wav
+
+    try:
+        uploaded.save(temp_input)
+        if not convert_to_wav(temp_input, temp_wav):
+            processing_path = temp_input
+
+        builder = _get_word_practice_builder()
+        scorer = _get_word_practice_scorer()
+        expected_phones = builder.word_to_phonemes(clean_word)
+        observed_phones = call_phoneme_service(processing_path)
+
+        if not observed_phones:
+            return jsonify({
+                "error": "Could not detect phonemes from this recording. Please try again with clearer pronunciation."
+            }), 422
+
+        scoring_accent = _map_word_practice_accent(accent)
+        score_obj = scorer.score_word(expected_phones, observed_phones, scoring_accent)
+        accuracy = float(score_obj.get('accuracy', 0.0))
+        if accuracy >= 75:
+            status = "correct"
+        elif accuracy >= 55:
+            status = "acceptable"
+        else:
+            status = "mispronounced"
+
+        alignment = []
+        for exp, obs, score in score_obj.get('alignment', []):
+            alignment.append({
+                "expected": exp,
+                "observed": obs,
+                "score": round(float(score), 2)
+            })
+
+        return jsonify({
+            "word": clean_word,
+            "accent": scoring_accent,
+            "status": status,
+            "accuracy": round(accuracy, 1),
+            "expected_phones": " ".join(expected_phones),
+            "observed_phones": " ".join(observed_phones),
+            "alignment": alignment,
+            "method": "phoneme_service_only"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        _maybe_cleanup([temp_input, temp_wav], force=True)
 
 # ============================================================================
 # ROUTES - SPEAKING TASKS
@@ -610,24 +709,56 @@ def check_stream():
 # ============================================================================
 @app.route('/describe-image/get-image', methods=['GET'])
 def get_image_task():
-    topic = request.args.get('topic', None)
-    image_data = get_random_image(topic=topic)
+    topic = request.args.get('topic', None)  # Backward-compatible alias for difficulty
+    difficulty = request.args.get('difficulty', None)
+    chart_type = request.args.get('chart_type', None)
+    image_id = request.args.get('image_id', None)
+    exclude_id = request.args.get('exclude_id', None)
+    image_data = get_random_image(
+        topic=topic,
+        difficulty=difficulty,
+        chart_type=chart_type,
+        image_id=image_id,
+        exclude_id=exclude_id,
+    )
     if not image_data:
         return jsonify({"error": "No images available"}), 404
+
+    difficulty_value = str(image_data.get('difficulty', 'general')).strip().lower() or "general"
+    chart_type_value = infer_chart_type(image_data)
+
     return jsonify({
         "image_id": image_data['id'],
         "image_url": f"/images/{image_data['filename']}",
         "title": image_data['title'],
-        "topic": image_data.get('difficulty', 'General').title()
+        "topic": difficulty_value.title(),
+        "difficulty": difficulty_value,
+        "chart_type": chart_type_value
     })
 
 @app.route('/speaking/describe-image/get-topics', methods=['GET'])
 def get_describe_image_topics():
     """Get available topic filters for describe image."""
-    topics = get_image_topics()
-    if not topics:
+    catalog = get_image_catalog()
+    if not catalog:
         return jsonify({"error": "No topics available"}), 404
-    return jsonify({"topics": topics})
+
+    # Keep difficulty order stable for UI
+    preferred_difficulty_order = {"easy": 0, "medium": 1, "difficult": 2}
+    difficulties = sorted(
+        {item.get("difficulty", "general") for item in catalog},
+        key=lambda value: (preferred_difficulty_order.get(value, 99), value),
+    )
+    chart_types = ["bargraph", "piechart", "other"]
+
+    return jsonify({
+        "topics": [item.get("title", "Untitled") for item in catalog],
+        "images": catalog,
+        "filters": {
+            "difficulty": difficulties,
+            "chart_type": chart_types,
+        }
+    })
 
 @app.route('/describe-image/submit', methods=['POST'])
 def submit_description():

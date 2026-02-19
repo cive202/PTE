@@ -84,6 +84,124 @@
             flex-wrap: wrap;
         }
 
+        .di-main-controls {
+            margin: 1.2rem 0;
+            display: flex;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .di-main-controls .btn {
+            min-width: 150px;
+        }
+
+        .topic-filter-shell {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1rem auto 0.85rem;
+            max-width: 860px;
+            padding: 0.85rem;
+            border: 1px solid #d6e1ed;
+            border-radius: 14px;
+            background: #f7fbff;
+        }
+
+        .filter-col {
+            min-width: 0;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #4f637c;
+            margin-bottom: 0.35rem;
+        }
+
+        .filter-select {
+            width: 100%;
+            border: 1px solid #c9d8ea;
+            background: #ffffff;
+            color: #23364f;
+            border-radius: 10px;
+            padding: 0.45rem 0.65rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .topic-count {
+            text-align: center;
+            color: #5d728a;
+            font-size: 0.9rem;
+            margin-bottom: 0.7rem;
+            font-weight: 600;
+        }
+
+        .topic-grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 0.8rem;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .topic-card {
+            background: #ffffff;
+            border: 1px solid #d5e2f0;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-2px);
+            border-color: #0f6ac9;
+            box-shadow: 0 8px 16px rgba(15, 106, 201, 0.13);
+        }
+
+        .topic-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1d2f45;
+            margin-bottom: 0.45rem;
+            line-height: 1.35;
+        }
+
+        .topic-card-meta {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .topic-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            border: 1px solid #d2ddea;
+            background: #f6f9fe;
+            color: #3a516d;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 0.16rem 0.52rem;
+        }
+
+        .topic-empty {
+            grid-column: 1 / -1;
+            border: 1px dashed #c6d7ec;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            color: #526983;
+            background: #f9fcff;
+            font-weight: 600;
+        }
+
         button {
             padding: 0.75rem 1.5rem;
             cursor: pointer;
@@ -125,36 +243,10 @@
             background: #7f8c8d;
         }
 
-        .recording-indicator {
-            display: none;
-            color: #e74c3c;
-            font-weight: bold;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .recording-indicator.active {
-            display: flex;
-        }
-
-        .pulse {
-            width: 12px;
-            height: 12px;
-            background: #e74c3c;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
+        .recording-pill {
+            font-weight: 700;
+            color: #c93434;
+            margin-left: 0.2rem;
         }
 
         .progress-bar {
@@ -604,19 +696,60 @@
         }
 
         /* Audio Playback */
-        #audioPlayback {
+        #audio-uploaded-info {
+            margin-top: 1rem;
             display: none;
-            margin: 1.5rem 0;
+            border: 1px solid #c8d8eb;
+            background: #f5f9ff;
+            color: #2c3e50;
+            border-radius: 14px;
+            padding: 0.35rem 0.75rem;
+            font-weight: 600;
         }
 
-        #audioPlayback h4 {
-            margin: 0 0 0.5rem 0;
-            color: #495057;
+        #audioPlayback {
+            display: none;
+            margin: 0.75rem 0;
+            border: 1px solid #c8d8eb !important;
+            background: #f5f9ff !important;
+            border-radius: 14px !important;
+            padding: 0.55rem 0.75rem !important;
+            box-shadow: none !important;
         }
 
         #audioPlayer {
             width: 100%;
-            margin-bottom: 0.5rem;
+            margin-top: 0;
+            color-scheme: only light;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #dbe6f2;
+        }
+
+        #audioPlayer::-webkit-media-controls-enclosure {
+            background: #ffffff;
+            border: 1px solid #dbe6f2;
+            border-radius: 999px;
+        }
+
+        #audioPlayer::-webkit-media-controls-panel {
+            background: #ffffff;
+        }
+
+        @media (max-width: 900px) {
+            .di-main-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .di-main-controls .btn {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .topic-filter-shell {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Ideal Answer Section */
@@ -699,10 +832,19 @@
         <div class="task-container">
             <div id="topic-selection-phase">
                 <h2 style="text-align:center; margin-bottom: 1rem;">Choose a Topic</h2>
-                <p style="text-align:center; color:#60748d; margin-top:0;">Start with your preferred image category.</p>
-                <div id="topic-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; max-width: 760px; margin: 1rem auto 0;">
+                <p style="text-align:center; color:#60748d; margin-top:0;">Browse all topics first, then narrow by type and difficulty.</p>
+                <div class="topic-filter-shell">
+                    <div class="filter-col">
+                        <div class="filter-label">Category</div>
+                        <select id="type-filter-select" class="filter-select"></select>
+                    </div>
+                    <div class="filter-col">
+                        <div class="filter-label">Difficulty</div>
+                        <select id="difficulty-filter-select" class="filter-select"></select>
+                    </div>
                 </div>
+                <div id="topic-count" class="topic-count"></div>
+                <div id="topic-grid" class="topic-grid-cards"></div>
             </div>
 
             <div id="active-phase" style="display:none;">
@@ -729,30 +871,28 @@
             <p style="color: #999;">Loading...</p>
         </div>
 
-        <div class="controls">
-            <button id="btnRecord" class="btn-primary">Start Recording</button>
-            <button id="btnStop" class="btn-secondary" disabled>Stop Recording</button>
-            <button id="btnRerecord" class="btn-secondary" style="display:none;">Re-record</button>
-            <button id="btnSubmit" class="btn-success" disabled>Submit Description</button>
-            <button id="btnNewImage" class="btn-secondary">New Image</button>
-            <div class="recording-indicator" id="recordingIndicator">
-                <div class="pulse"></div>
-                Recording...
-            </div>
+        <div class="di-main-controls">
+            <button id="btnRecord" class="btn primary">Start Recording</button>
+            <button id="btnStop" class="btn danger" disabled>Stop</button>
+            <button id="btnRerecord" class="btn secondary" style="display:none;">Re-record</button>
+            <button id="btnSubmit" class="btn success" disabled>Submit Description</button>
+            <button id="btnNewImage" class="btn secondary">New Image</button>
+            <span id="recordingIndicator" class="recording-pill" style="display:none;">🔴 Recording...</span>
         </div>
+
+        <div id="audio-uploaded-info"></div>
 
         <!-- Audio Playback -->
         <div id="audioPlayback">
             <strong>Your Recording:</strong>
-            <audio id="audioPlayer" controls style="width: 100%; margin: 0.5rem 0;"></audio>
-            <p style="margin: 0; font-size: 0.9rem; color: #666;">Listen to your recording before submitting</p>
+            <audio id="audioPlayer" controls></audio>
         </div>
 
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
-            <div id="progressText" class="progress-text">Processing...</div>
+            <div id="progressText" class="progress-text">Initializing...</div>
         </div>
 
         <div id="status"></div>
@@ -868,6 +1008,18 @@
             </div>
 
             <button id="modal-play-btn" class="modal-play-btn">▶ Play Segment</button>
+            <div
+                style="margin-top:0.9rem; text-align:left; padding:0.8rem; border-radius:10px; border:1px solid #d8e1ed; background:#f7fbff;">
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                    <button id="word-practice-record-btn" class="btn secondary" type="button"
+                        style="padding:0.45rem 0.75rem;">Test This Word</button>
+                    <button id="word-practice-stop-btn" class="btn secondary" type="button"
+                        style="padding:0.45rem 0.75rem;" disabled>Stop</button>
+                    <span id="word-practice-status" style="font-size:0.82rem; color:#5b6e84;">Fast phoneme check
+                        (no MFA)</span>
+                </div>
+                <div id="word-practice-result" style="margin-top:0.55rem; font-size:0.82rem; color:#2d3d52;"></div>
+            </div>
         </div>
     </div>
 
@@ -934,12 +1086,21 @@
         let audioBlob = null;
         let currentImageId = null;
         let selectedTopic = null;
+        let allImageTopics = [];
+        let filteredImageTopics = [];
+        let selectedTypeFilter = 'all';
+        let selectedDifficultyFilter = 'all';
+        let availableTypeFilters = ['bargraph', 'piechart', 'other'];
+        let availableDifficultyFilters = [];
         let pollInterval = null;
         let currentResult = null; // Store result for ideal answer display
 
         const topicSelectionPhase = document.getElementById('topic-selection-phase');
         const activePhase = document.getElementById('active-phase');
         const topicGrid = document.getElementById('topic-grid');
+        const topicCount = document.getElementById('topic-count');
+        const typeFilterSelect = document.getElementById('type-filter-select');
+        const difficultyFilterSelect = document.getElementById('difficulty-filter-select');
         const topicBadge = document.getElementById('topic-badge');
         const btnChangeTopic = document.getElementById('btn-change-topic');
         const btnRecord = document.getElementById('btnRecord');
@@ -948,6 +1109,7 @@
         const btnSubmit = document.getElementById('btnSubmit');
         const btnNewImage = document.getElementById('btnNewImage');
         const recordingIndicator = document.getElementById('recordingIndicator');
+        const audioUploadedInfo = document.getElementById('audio-uploaded-info');
         const audioPlayback = document.getElementById('audioPlayback');
         const audioPlayer = document.getElementById('audioPlayer');
         const imageContainer = document.getElementById('imageContainer');
@@ -960,6 +1122,10 @@
         const jsonOutput = document.getElementById('json-output');
         const accentSelector = document.getElementById('accent-selector');
         const modalTtsWord = document.getElementById('modal-tts-word');
+        const wordPracticeRecordBtn = document.getElementById('word-practice-record-btn');
+        const wordPracticeStopBtn = document.getElementById('word-practice-stop-btn');
+        const wordPracticeStatus = document.getElementById('word-practice-status');
+        const wordPracticeResult = document.getElementById('word-practice-result');
 
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
         accentSelector.value = savedAccent;
@@ -970,6 +1136,107 @@
         // Load topic selection on page load
         loadTopics();
 
+        function chartTypeLabel(value) {
+            const labels = {
+                bargraph: 'Bar Graph',
+                piechart: 'Pie Chart',
+                other: 'Other'
+            };
+            return labels[value] || 'Other';
+        }
+
+        function chartTypeIcon(value) {
+            const icons = {
+                bargraph: '📊',
+                piechart: '🥧',
+                other: '🖼️'
+            };
+            return icons[value] || '🖼️';
+        }
+
+        function difficultyLabel(value) {
+            if (!value) return 'General';
+            return value.charAt(0).toUpperCase() + value.slice(1);
+        }
+
+        function renderFilterSelect(selectEl, options, selectedValue, getLabel) {
+            selectEl.innerHTML = '';
+            options.forEach((option) => {
+                const optionEl = document.createElement('option');
+                optionEl.value = option;
+                optionEl.textContent = getLabel(option);
+                selectEl.appendChild(optionEl);
+            });
+            selectEl.value = selectedValue;
+        }
+
+        function renderFilterControls() {
+            renderFilterSelect(
+                typeFilterSelect,
+                ['all', ...availableTypeFilters],
+                selectedTypeFilter,
+                (value) => value === 'all' ? 'All Categories' : chartTypeLabel(value)
+            );
+
+            renderFilterSelect(
+                difficultyFilterSelect,
+                ['all', ...availableDifficultyFilters],
+                selectedDifficultyFilter,
+                (value) => value === 'all' ? 'All Levels' : difficultyLabel(value)
+            );
+        }
+
+        function renderTopicCards() {
+            topicGrid.innerHTML = '';
+            if (!filteredImageTopics.length) {
+                const empty = document.createElement('div');
+                empty.className = 'topic-empty';
+                empty.textContent = 'No topics match this filter. Try a different Type or Difficulty.';
+                topicGrid.appendChild(empty);
+                return;
+            }
+
+            filteredImageTopics.forEach((topicItem) => {
+                const card = document.createElement('div');
+                card.className = 'topic-card';
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.innerHTML = `
+                    <div class="topic-card-title">${chartTypeIcon(topicItem.chart_type)} ${topicItem.title}</div>
+                    <div class="topic-card-meta">
+                        <span class="topic-meta-pill">${chartTypeLabel(topicItem.chart_type)}</span>
+                        <span class="topic-meta-pill">${difficultyLabel(topicItem.difficulty)}</span>
+                    </div>
+                `;
+                card.onclick = () => selectTopic(topicItem);
+                card.onkeydown = (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectTopic(topicItem);
+                    }
+                };
+                topicGrid.appendChild(card);
+            });
+        }
+
+        function applyTopicFilters() {
+            filteredImageTopics = allImageTopics.filter((topicItem) => {
+                const typeMatches = selectedTypeFilter === 'all' || topicItem.chart_type === selectedTypeFilter;
+                const difficultyMatches = selectedDifficultyFilter === 'all' || topicItem.difficulty === selectedDifficultyFilter;
+                return typeMatches && difficultyMatches;
+            });
+
+            const difficultyRank = { easy: 1, medium: 2, difficult: 3 };
+            filteredImageTopics.sort((a, b) => {
+                const diffCompare = (difficultyRank[a.difficulty] || 99) - (difficultyRank[b.difficulty] || 99);
+                if (diffCompare !== 0) return diffCompare;
+                return String(a.title || '').localeCompare(String(b.title || ''));
+            });
+
+            topicCount.textContent = `Showing ${filteredImageTopics.length} of ${allImageTopics.length} topics`;
+            renderTopicCards();
+        }
+
         async function loadTopics() {
             try {
                 const response = await fetch('/speaking/describe-image/get-topics');
@@ -979,63 +1246,128 @@
                     return;
                 }
 
-                topicGrid.innerHTML = '';
-                data.topics.forEach(topic => {
-                    const item = document.createElement('div');
-                    item.style.cssText = `
-                        background: #fff;
-                        border: 1px solid #d5e2f0;
-                        padding: 1rem 1.2rem;
-                        border-radius: 10px;
-                        cursor: pointer;
-                        font-weight: 600;
-                        transition: all 0.2s;
-                        text-align: center;
-                    `;
-                    item.textContent = topic;
-                    item.onmouseover = () => {
-                        item.style.borderColor = '#0f6ac9';
-                        item.style.transform = 'translateY(-1px)';
-                    };
-                    item.onmouseout = () => {
-                        item.style.borderColor = '#d5e2f0';
-                        item.style.transform = 'none';
-                    };
-                    item.onclick = () => selectTopic(topic);
-                    topicGrid.appendChild(item);
-                });
+                if (Array.isArray(data.images) && data.images.length > 0) {
+                    allImageTopics = data.images.map((item) => ({
+                        id: item.id,
+                        title: item.title || 'Untitled',
+                        difficulty: (item.difficulty || 'general').toLowerCase(),
+                        chart_type: (item.chart_type || 'other').toLowerCase(),
+                    }));
+                } else {
+                    // Backward-compatible fallback
+                    allImageTopics = (data.topics || []).map((topic, index) => ({
+                        id: `topic_${index}`,
+                        title: String(topic),
+                        difficulty: 'general',
+                        chart_type: 'other',
+                    }));
+                }
+
+                const difficultyFilters = data.filters && Array.isArray(data.filters.difficulty)
+                    ? data.filters.difficulty
+                    : Array.from(new Set(allImageTopics.map((item) => item.difficulty)));
+                availableDifficultyFilters = difficultyFilters.map((value) => String(value).toLowerCase());
+
+                const typeFilters = data.filters && Array.isArray(data.filters.chart_type)
+                    ? data.filters.chart_type
+                    : Array.from(new Set(allImageTopics.map((item) => item.chart_type)));
+                availableTypeFilters = typeFilters.map((value) => String(value).toLowerCase());
+
+                selectedTypeFilter = 'all';
+                selectedDifficultyFilter = 'all';
+                renderFilterControls();
+                applyTopicFilters();
             } catch (err) {
                 showStatus('Failed to load topics: ' + err.message, 'error');
             }
         }
 
-        function selectTopic(topic) {
-            selectedTopic = topic;
-            topicBadge.textContent = `Topic: ${topic}`;
-            topicSelectionPhase.style.display = 'none';
-            activePhase.style.display = 'block';
-            loadNewImage();
+        if (typeFilterSelect) {
+            typeFilterSelect.addEventListener('change', () => {
+                selectedTypeFilter = typeFilterSelect.value || 'all';
+                applyTopicFilters();
+            });
         }
 
-        function loadNewImage() {
-            if (!selectedTopic) return;
-            fetch(`/describe-image/get-image?topic=${encodeURIComponent(selectedTopic)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        showStatus(data.error, 'error');
-                        return;
+        if (difficultyFilterSelect) {
+            difficultyFilterSelect.addEventListener('change', () => {
+                selectedDifficultyFilter = difficultyFilterSelect.value || 'all';
+                applyTopicFilters();
+            });
+        }
+
+        function selectTopic(topicItem) {
+            selectedTopic = topicItem;
+            topicSelectionPhase.style.display = 'none';
+            activePhase.style.display = 'block';
+            loadNewImage(topicItem.id);
+        }
+
+        async function loadNewImage(preferredImageId = null) {
+            if (!selectedTopic && !preferredImageId) return;
+
+            const buildQuery = (withExclude = true) => {
+                const params = new URLSearchParams();
+                if (preferredImageId) {
+                    params.set('image_id', preferredImageId);
+                } else {
+                    const effectiveDifficulty = selectedDifficultyFilter !== 'all'
+                        ? selectedDifficultyFilter
+                        : (selectedTopic && selectedTopic.difficulty ? selectedTopic.difficulty : 'all');
+                    const effectiveType = selectedTypeFilter !== 'all'
+                        ? selectedTypeFilter
+                        : (selectedTopic && selectedTopic.chart_type ? selectedTopic.chart_type : 'all');
+
+                    if (effectiveDifficulty !== 'all') {
+                        params.set('difficulty', effectiveDifficulty);
                     }
-                    currentImageId = data.image_id;
-                    imageTitle.textContent = data.title;
-                    imageContainer.innerHTML = `<img src="${data.image_url}" alt="${data.title}">`;
-                    topicBadge.textContent = `Topic: ${data.topic || selectedTopic}`;
-                    results.classList.remove('show');
-                    statusDiv.classList.remove('show');
-                })
-                .catch(err => {
-                    showStatus('Failed to load image: ' + err.message, 'error');
-                });
+                    if (effectiveType !== 'all') {
+                        params.set('chart_type', effectiveType);
+                    }
+                    if (withExclude && currentImageId) {
+                        params.set('exclude_id', currentImageId);
+                    }
+                }
+                return params.toString();
+            };
+
+            try {
+                let response = await fetch(`/describe-image/get-image?${buildQuery(true)}`);
+                let data = await response.json();
+
+                // If filter set has only one item, retry without exclude filter.
+                if ((data && data.error) && !preferredImageId && currentImageId) {
+                    response = await fetch(`/describe-image/get-image?${buildQuery(false)}`);
+                    data = await response.json();
+                }
+
+                if (data.error) {
+                    showStatus(data.error, 'error');
+                    return;
+                }
+
+                currentImageId = data.image_id;
+                imageTitle.textContent = data.title;
+                imageContainer.innerHTML = `<img src="${data.image_url}" alt="${data.title}">`;
+                topicBadge.textContent = `${data.title} • ${difficultyLabel(data.difficulty)} • ${chartTypeLabel(data.chart_type)}`;
+
+                results.classList.remove('show');
+                statusDiv.classList.remove('show');
+                audioBlob = null;
+                audioPlayer.src = '';
+                audioPlayback.style.display = 'none';
+                audioUploadedInfo.style.display = 'none';
+                audioUploadedInfo.textContent = '';
+                progressContainer.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Initializing...';
+                btnRecord.disabled = false;
+                btnStop.disabled = true;
+                btnSubmit.disabled = true;
+                btnRerecord.style.display = 'none';
+            } catch (err) {
+                showStatus('Failed to load image: ' + err.message, 'error');
+            }
         }
 
         btnChangeTopic.onclick = () => {
@@ -1044,10 +1376,14 @@
             results.classList.remove('show');
             statusDiv.classList.remove('show');
             audioPlayback.style.display = 'none';
+            audioUploadedInfo.style.display = 'none';
+            audioUploadedInfo.textContent = '';
+            progressContainer.style.display = 'none';
             btnSubmit.disabled = true;
+            btnRerecord.style.display = 'none';
         };
 
-        btnNewImage.onclick = loadNewImage;
+        btnNewImage.onclick = () => loadNewImage();
 
         btnRecord.onclick = async () => {
             try {
@@ -1064,18 +1400,20 @@
                     const audioUrl = URL.createObjectURL(audioBlob);
                     audioPlayer.src = audioUrl;
                     audioPlayback.style.display = 'block';
+                    audioUploadedInfo.textContent = "Audio uploaded: describe_image_recording.wav";
+                    audioUploadedInfo.style.display = 'block';
 
                     // Enable buttons
                     btnSubmit.disabled = false;
                     btnRerecord.style.display = 'inline-block';
-                    recordingIndicator.classList.remove('active');
+                    recordingIndicator.style.display = 'none';
                     showStatus('Recording complete. You can listen to it or submit directly.', 'success');
                 };
 
                 mediaRecorder.start();
                 btnRecord.disabled = true;
                 btnStop.disabled = false;
-                recordingIndicator.classList.add('active');
+                recordingIndicator.style.display = 'inline';
                 results.classList.remove('show');
                 statusDiv.classList.remove('show');
             } catch (err) {
@@ -1088,6 +1426,7 @@
                 mediaRecorder.stop();
                 btnRecord.disabled = false;
                 btnStop.disabled = true;
+                recordingIndicator.style.display = 'none';
             }
         };
 
@@ -1096,6 +1435,8 @@
             audioBlob = null;
             audioPlayer.src = '';
             audioPlayback.style.display = 'none';
+            audioUploadedInfo.style.display = 'none';
+            audioUploadedInfo.textContent = '';
             btnRerecord.style.display = 'none';
             btnSubmit.disabled = true;
             statusDiv.classList.remove('show');
@@ -1107,9 +1448,9 @@
             results.classList.remove('show');
             statusDiv.classList.remove('show');
 
-            progressContainer.classList.add('active');
-            progressFill.style.width = '10%';
-            progressText.textContent = '📤 Uploading audio...';
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '2%';
+            progressText.textContent = 'Starting...';
             btnSubmit.disabled = true;
 
             const formData = new FormData();
@@ -1123,15 +1464,15 @@
                 const data = await res.json();
 
                 if (data.error) {
-                    progressContainer.classList.remove('active');
+                    progressContainer.style.display = 'none';
                     showStatus('Error: ' + data.error, 'error');
                     btnSubmit.disabled = false;
                     return;
                 }
 
                 const jobId = data.job_id;
-                progressFill.style.width = '20%';
-                progressText.textContent = '🔄 Evaluating... (~10 seconds)';
+                progressFill.style.width = '18%';
+                progressText.textContent = '18% - Uploading audio...';
 
                 // Poll for result
                 let elapsed = 0;
@@ -1139,9 +1480,9 @@
 
                 pollInterval = setInterval(async () => {
                     elapsed += 2;
-                    const progress = Math.min(20 + (elapsed / estimatedTime) * 70, 90);
+                    const progress = Math.min(22 + (elapsed / estimatedTime) * 68, 92);
                     progressFill.style.width = progress + '%';
-                    progressText.textContent = `🔄 Processing... (${elapsed}s elapsed)`;
+                    progressText.textContent = `${Math.round(progress)}% - Processing (${elapsed}s)...`;
 
                     try {
                         const statusRes = await fetch(`/describe-image/status/${jobId}`);
@@ -1152,13 +1493,13 @@
                             progressFill.style.width = '100%';
                             progressText.textContent = '✅ Complete!';
                             setTimeout(() => {
-                                progressContainer.classList.remove('active');
+                                progressContainer.style.display = 'none';
                                 displayResult(status.result);
                             }, 500);
                             btnSubmit.disabled = false;
                         } else if (status.status === 'failed') {
                             clearInterval(pollInterval);
-                            progressContainer.classList.remove('active');
+                            progressContainer.style.display = 'none';
                             showStatus('Error: ' + status.error, 'error');
                             btnSubmit.disabled = false;
                         }
@@ -1168,7 +1509,7 @@
                 }, 2000);
 
             } catch (err) {
-                progressContainer.classList.remove('active');
+                progressContainer.style.display = 'none';
                 showStatus('Submission failed: ' + err.message, 'error');
                 btnSubmit.disabled = false;
             }
@@ -1349,11 +1690,136 @@
         const wordModal = document.getElementById('word-modal');
         const modalPlayBtn = document.getElementById('modal-play-btn');
         let currentWordAudio = null;
+        let currentModalWord = "";
+        let wordPracticeRecorder = null;
+        let wordPracticeChunks = [];
+        let wordPracticeStream = null;
+
+        function stopWordPracticeStream() {
+            if (wordPracticeStream) {
+                for (const track of wordPracticeStream.getTracks()) {
+                    track.stop();
+                }
+                wordPracticeStream = null;
+            }
+        }
+
+        async function submitWordPractice(blob, word) {
+            if (!wordPracticeStatus || !wordPracticeResult) {
+                return;
+            }
+            wordPracticeStatus.textContent = "Analyzing...";
+            wordPracticeStatus.style.color = "#5b6e84";
+
+            const formData = new FormData();
+            formData.append('audio', blob, 'word_practice.webm');
+            formData.append('word', word);
+            formData.append('accent', accentSelector.value);
+
+            try {
+                const response = await fetch('/api/word-practice', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Word practice failed');
+                }
+                const statusColor = data.status === 'correct'
+                    ? '#1f8a4c'
+                    : data.status === 'acceptable'
+                        ? '#b76b00'
+                        : '#c93434';
+                wordPracticeStatus.textContent = `${data.status.toUpperCase()} • ${data.accuracy}%`;
+                wordPracticeStatus.style.color = statusColor;
+                wordPracticeResult.innerHTML = `
+                    <div><strong>Expected:</strong> ${data.expected_phones || '-'}</div>
+                    <div><strong>Spoken:</strong> ${data.observed_phones || '-'}</div>
+                `;
+            } catch (err) {
+                wordPracticeStatus.textContent = err.message || 'Word practice failed';
+                wordPracticeStatus.style.color = '#c93434';
+                wordPracticeResult.textContent = '';
+            }
+        }
+
+        async function startWordPracticeRecording() {
+            if (!currentModalWord) {
+                return;
+            }
+            try {
+                wordPracticeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                wordPracticeRecorder = new MediaRecorder(wordPracticeStream);
+                wordPracticeChunks = [];
+                wordPracticeRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        wordPracticeChunks.push(event.data);
+                    }
+                };
+                wordPracticeRecorder.onstop = async () => {
+                    const blob = new Blob(wordPracticeChunks, { type: 'audio/webm' });
+                    stopWordPracticeStream();
+                    if (wordPracticeRecordBtn) {
+                        wordPracticeRecordBtn.disabled = false;
+                    }
+                    if (wordPracticeStopBtn) {
+                        wordPracticeStopBtn.disabled = true;
+                    }
+                    await submitWordPractice(blob, currentModalWord);
+                };
+                if (wordPracticeStatus) {
+                    wordPracticeStatus.textContent = "Recording... say this word clearly";
+                    wordPracticeStatus.style.color = "#5b6e84";
+                }
+                if (wordPracticeResult) {
+                    wordPracticeResult.textContent = "";
+                }
+                if (wordPracticeRecordBtn) {
+                    wordPracticeRecordBtn.disabled = true;
+                }
+                if (wordPracticeStopBtn) {
+                    wordPracticeStopBtn.disabled = false;
+                }
+                wordPracticeRecorder.start();
+            } catch (err) {
+                if (wordPracticeStatus) {
+                    wordPracticeStatus.textContent = `Mic error: ${err.message}`;
+                    wordPracticeStatus.style.color = '#c93434';
+                }
+            }
+        }
+
+        function stopWordPracticeRecording() {
+            if (wordPracticeRecorder && wordPracticeRecorder.state === 'recording') {
+                wordPracticeRecorder.stop();
+            }
+        }
+
+        if (wordPracticeRecordBtn) {
+            wordPracticeRecordBtn.onclick = () => startWordPracticeRecording();
+        }
+        if (wordPracticeStopBtn) {
+            wordPracticeStopBtn.onclick = () => stopWordPracticeRecording();
+        }
 
         function openWordModal(wordData, displayWord) {
             document.getElementById('modal-word-title').textContent = displayWord || wordData.word || '?';
             document.getElementById('modal-timestamp').textContent =
                 `${(wordData.start || 0).toFixed(2)}s – ${(wordData.end || 0).toFixed(2)}s`;
+            currentModalWord = (displayWord || wordData.word || '').trim();
+            if (wordPracticeStatus) {
+                wordPracticeStatus.textContent = "Fast phoneme check (no MFA)";
+                wordPracticeStatus.style.color = "#5b6e84";
+            }
+            if (wordPracticeResult) {
+                wordPracticeResult.textContent = "";
+            }
+            if (wordPracticeRecordBtn) {
+                wordPracticeRecordBtn.disabled = false;
+            }
+            if (wordPracticeStopBtn) {
+                wordPracticeStopBtn.disabled = true;
+            }
 
             // Status
             const statusEl = document.getElementById('modal-status');
@@ -1391,6 +1857,8 @@
 
         function closeModal() {
             wordModal.style.display = 'none';
+            stopWordPracticeRecording();
+            stopWordPracticeStream();
             if (currentWordAudio) {
                 currentWordAudio.pause();
                 currentWordAudio = null;

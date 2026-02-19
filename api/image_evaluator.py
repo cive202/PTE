@@ -39,6 +39,12 @@ _eager_load_model()
 
 REFERENCES_FILE = IMAGE_REFERENCE_FILE
 
+CHART_TYPE_LABELS = {
+    "bargraph": "Bar Graph",
+    "piechart": "Pie Chart",
+    "other": "Other",
+}
+
 
 def load_image_data() -> Dict:
     """Load image reference data from JSON file."""
@@ -57,22 +63,101 @@ def get_image_topics() -> List[str]:
     return topics
 
 
-def get_random_image(topic: Optional[str] = None) -> Optional[Dict]:
-    """Get a random image from the available set, optionally filtered by topic."""
+def _normalize_chart_type(chart_type: Optional[str]) -> str:
+    if not chart_type:
+        return "other"
+    normalized = str(chart_type).strip().lower().replace(" ", "")
+    if normalized in {"bar", "barchart", "bargraph", "bar_graph"}:
+        return "bargraph"
+    if normalized in {"pie", "piechart", "pie_graph"}:
+        return "piechart"
+    return "other"
+
+
+def infer_chart_type(image: Dict) -> str:
+    """Infer chart type from filename/title/reference/keywords."""
+    if not isinstance(image, dict):
+        return "other"
+
+    signals = []
+    for key in ("filename", "title", "reference"):
+        value = image.get(key)
+        if value:
+            signals.append(str(value).lower())
+
+    keywords = image.get("keywords", [])
+    if isinstance(keywords, list):
+        signals.extend(str(k).lower() for k in keywords)
+
+    merged = " ".join(signals)
+    if ("bar chart" in merged) or ("bar_graph" in merged) or ("bar-chart" in merged):
+        return "bargraph"
+    if ("pie chart" in merged) or ("pie_graph" in merged) or ("pie-chart" in merged):
+        return "piechart"
+    return "other"
+
+
+def get_image_catalog() -> List[Dict]:
+    """Return normalized metadata for all describe-image entries."""
     data = load_image_data()
     images = data.get("images", [])
-    
+    catalog = []
+    for img in images:
+        if not isinstance(img, dict):
+            continue
+        difficulty = str(img.get("difficulty", "general")).strip().lower() or "general"
+        chart_type = infer_chart_type(img)
+        catalog.append({
+            "id": img.get("id", ""),
+            "title": img.get("title", "Untitled"),
+            "filename": img.get("filename", ""),
+            "difficulty": difficulty,
+            "difficulty_label": difficulty.title(),
+            "chart_type": chart_type,
+            "chart_type_label": CHART_TYPE_LABELS.get(chart_type, "Other"),
+        })
+    return catalog
+
+
+def get_random_image(
+    topic: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    chart_type: Optional[str] = None,
+    image_id: Optional[str] = None,
+    exclude_id: Optional[str] = None,
+) -> Optional[Dict]:
+    """Get a random image, optionally filtered by difficulty/type or direct image_id."""
+    data = load_image_data()
+    images = data.get("images", [])
+
     if not images:
         return None
 
-    if topic:
-        topic_normalized = topic.strip().lower()
+    if image_id:
         filtered = [
             img for img in images
-            if str(img.get("difficulty", "General")).strip().lower() == topic_normalized
+            if str(img.get("id", "")).strip() == str(image_id).strip()
         ]
         if filtered:
-            images = filtered
+            return filtered[0]
+
+    difficulty_filter = difficulty or topic
+    if difficulty_filter:
+        difficulty_normalized = str(difficulty_filter).strip().lower()
+        images = [
+            img for img in images
+            if str(img.get("difficulty", "General")).strip().lower() == difficulty_normalized
+        ]
+
+    if chart_type:
+        chart_type_normalized = _normalize_chart_type(chart_type)
+        images = [img for img in images if infer_chart_type(img) == chart_type_normalized]
+
+    if exclude_id:
+        images = [img for img in images if str(img.get("id", "")).strip() != str(exclude_id).strip()]
+
+    if not images:
+        return None
 
     return random.choice(images)
 

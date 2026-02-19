@@ -79,9 +79,9 @@
         }
 
         .mispronounced {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #f0c36d;
         }
 
         .inserted {
@@ -99,6 +99,82 @@
         #progress-bar {
             width: 0%;
             transition: width 0.3s ease-in-out;
+        }
+
+        .rs-main-controls {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            flex-wrap: wrap;
+        }
+
+        .rs-main-controls .btn {
+            min-width: 150px;
+        }
+
+        .recording-pill {
+            font-weight: 700;
+            color: #c93434;
+            margin-left: 0.2rem;
+        }
+
+        #audio-uploaded-info {
+            margin-top: 1rem;
+            display: none;
+            border: 1px solid #c8d8eb;
+            background: #f5f9ff;
+            color: #2c3e50;
+            border-radius: 14px;
+            padding: 0.35rem 0.75rem;
+            font-weight: 600;
+        }
+
+        #audio-playback-container {
+            display: none;
+            margin-top: 0.75rem;
+            border: 1px solid #c8d8eb !important;
+            background: #f5f9ff !important;
+            border-radius: 14px !important;
+            padding: 0.55rem 0.75rem !important;
+            box-shadow: none !important;
+        }
+
+        #audio-playback-container strong {
+            color: #334960;
+            display: block;
+            margin-bottom: 0.35rem;
+        }
+
+        #audio-playback {
+            width: 100%;
+            margin-top: 0;
+            color-scheme: only light;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #dbe6f2;
+        }
+
+        #audio-playback::-webkit-media-controls-enclosure {
+            background: #ffffff;
+            border: 1px solid #dbe6f2;
+            border-radius: 999px;
+        }
+
+        #audio-playback::-webkit-media-controls-panel {
+            background: #ffffff;
+        }
+
+        @media (max-width: 900px) {
+            .rs-main-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .rs-main-controls .btn {
+                width: 100%;
+                min-width: 0;
+            }
         }
     </style>
     <style>
@@ -325,25 +401,26 @@
                 <div class="instruction" id="task-instruction">Listen to the sentence...</div>
                 <div id="sentence-display" class="sentence-display"></div>
 
-                <div class="controls" style="margin-top: 1rem;">
-                    <!-- New Controls -->
+                <div class="rs-main-controls">
                     <button id="btn-play-prompt" class="btn secondary">Play Prompt Again</button>
                     <button id="btn-record" class="btn primary" disabled>Record</button>
                     <button id="btn-stop" class="btn danger" disabled>Stop</button>
-                    <button id="btn-check-manual" class="btn primary" disabled>Check Pronunciation</button>
-                    <span id="recording-indicator" style="display:none; color: red;">🔴 Recording...</span>
+                    <button id="btn-check-manual" class="btn success" disabled>Check Pronunciation</button>
+                    <span id="recording-indicator" class="recording-pill" style="display:none;">🔴 Recording...</span>
                 </div>
 
-                <div id="audio-playback-container" style="display:none; margin-top: 1rem;">
+                <div id="audio-uploaded-info"></div>
+
+                <div id="audio-playback-container">
                     <strong>Your Recording:</strong>
-                    <audio id="audio-playback" controls style="width: 100%;"></audio>
+                    <audio id="audio-playback" controls></audio>
                 </div>
 
                 <div id="progress-container" class="progress-container">
                     <div class="progress-bar">
                         <div id="progress-fill" class="progress-fill"></div>
                     </div>
-                    <div id="progress-text" class="progress-text">0%</div>
+                    <div id="progress-text" class="progress-text">Initializing...</div>
                 </div>
 
                 <div id="results-container" style="margin-top: 2rem;">
@@ -413,6 +490,18 @@
             <button id="modal-play-btn" class="modal-play-btn">
                 <span>▶</span> Play Audio
             </button>
+            <div
+                style="margin-top:0.9rem; text-align:left; padding:0.8rem; border-radius:10px; border:1px solid #d8e1ed; background:#f7fbff;">
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                    <button id="word-practice-record-btn" class="btn secondary" type="button"
+                        style="padding:0.45rem 0.75rem;">Test This Word</button>
+                    <button id="word-practice-stop-btn" class="btn secondary" type="button"
+                        style="padding:0.45rem 0.75rem;" disabled>Stop</button>
+                    <span id="word-practice-status" style="font-size:0.82rem; color:#5b6e84;">Fast phoneme check
+                        (no MFA)</span>
+                </div>
+                <div id="word-practice-result" style="margin-top:0.55rem; font-size:0.82rem; color:#2d3d52;"></div>
+            </div>
             <div id="modal-debug-info" style="margin-top: 1rem; font-size: 0.8em; color: #999; display:none;"></div>
         </div>
     </div>
@@ -493,10 +582,18 @@
         const statusDiv = document.getElementById('status');
         const resultsDiv = document.getElementById('results');
         const metricsDiv = document.getElementById('metrics');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const audioPlaybackContainer = document.getElementById('audio-playback-container');
+        const audioPlaybackPlayer = document.getElementById('audio-playback');
+        const audioUploadedInfo = document.getElementById('audio-uploaded-info');
         const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
         const accentSelector = document.getElementById('accent-selector');
+        const wordPracticeRecordBtn = document.getElementById('word-practice-record-btn');
+        const wordPracticeStopBtn = document.getElementById('word-practice-stop-btn');
+        const wordPracticeStatus = document.getElementById('word-practice-status');
+        const wordPracticeResult = document.getElementById('word-practice-result');
 
         // Load saved accent from localStorage
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
@@ -569,11 +666,39 @@
             resultsDiv.innerHTML = '';
             statusDiv.innerText = '';
             metricsDiv.innerHTML = '';
+            sentenceDisplay.style.display = 'none';
+            audioBlob = null;
+            audioPlaybackPlayer.src = '';
+            audioPlaybackContainer.style.display = 'none';
+            audioUploadedInfo.style.display = 'none';
+            audioUploadedInfo.textContent = '';
             progressContainer.style.display = 'none';
+            btnRecord.disabled = true;
+            btnStop.disabled = true;
+            document.getElementById('btn-check-manual').disabled = true;
         };
 
         async function startTask(topic) {
             instruction.innerText = "Loading audio...";
+            if (currentPromptAudio) {
+                currentPromptAudio.pause();
+                currentPromptAudio.currentTime = 0;
+            }
+            resultsDiv.innerHTML = '';
+            statusDiv.innerText = '';
+            metricsDiv.innerHTML = '';
+            sentenceDisplay.style.display = 'none';
+            audioBlob = null;
+            audioPlaybackPlayer.src = '';
+            audioPlaybackContainer.style.display = 'none';
+            audioUploadedInfo.style.display = 'none';
+            audioUploadedInfo.textContent = '';
+            progressContainer.style.display = 'none';
+            progressFill.style.width = '0%';
+            progressText.innerText = 'Initializing...';
+            btnRecord.disabled = true;
+            btnStop.disabled = true;
+            document.getElementById('btn-check-manual').disabled = true;
 
             try {
                 const response = await fetch(`/speaking/repeat-sentence/get-task?topic=${encodeURIComponent(topic)}`);
@@ -622,26 +747,42 @@
             mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
             mediaRecorder.onstop = async () => {
                 audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                document.getElementById('audio-playback').src = URL.createObjectURL(audioBlob);
-                document.getElementById('audio-playback-container').style.display = 'block';
+                audioPlaybackPlayer.src = URL.createObjectURL(audioBlob);
+                audioPlaybackContainer.style.display = 'block';
+                audioUploadedInfo.textContent = "Audio uploaded: repeat_sentence_recording.wav";
+                audioUploadedInfo.style.display = 'block';
+                recordingIndicator.style.display = 'none';
+                document.getElementById('btn-check-manual').disabled = false;
+                statusDiv.innerText = "Recording finished. Checking pronunciation...";
                 await checkPronunciation();
             };
             mediaRecorder.start();
             btnRecord.disabled = true;
             btnStop.disabled = false;
-            document.getElementById('recording-indicator').style.display = 'inline';
+            recordingIndicator.style.display = 'inline';
+            statusDiv.innerText = "Recording...";
         };
 
         btnStop.onclick = () => {
+            if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+                return;
+            }
             mediaRecorder.stop();
             btnStop.disabled = true;
-            document.getElementById('recording-indicator').style.display = 'none';
-            document.getElementById('btn-check-manual').disabled = false; // Enable manual check
+            recordingIndicator.style.display = 'none';
+            document.getElementById('btn-check-manual').disabled = false;
         };
 
         async function checkPronunciation() {
+            if (!audioBlob) {
+                alert("No audio recorded! Please record first.");
+                return;
+            }
             progressContainer.style.display = 'block';
+            progressFill.style.width = '2%';
+            progressText.innerText = 'Starting...';
             statusDiv.innerText = "Analyzing your speech...";
+            document.getElementById('btn-check-manual').disabled = true;
 
             const formData = new FormData();
             formData.append('audio', audioBlob, 'rs.wav');
@@ -681,17 +822,21 @@
                             progressText.innerText = `${data.percent}% - ${data.message}`;
                         } else if (data.type === 'result') {
                             progressFill.style.width = '100%';
-                            progressText.innerText = "Complete!";
-                            handleResult(data.data);
+                            progressText.innerText = "✅ Complete!";
+                            setTimeout(() => handleResult(data.data), 400);
                         }
                     }
                 }
             } catch (err) {
+                progressContainer.style.display = 'none';
                 statusDiv.innerText = "Error: " + err.message;
+            } finally {
+                document.getElementById('btn-check-manual').disabled = false;
             }
         }
 
         function handleResult(data) {
+            progressContainer.style.display = 'none';
             sentenceDisplay.style.display = 'block';
             sentenceDisplay.innerText = currentSentence;
             statusDiv.innerText = `Accuracy: ${(data.summary.correct / data.summary.total * 100).toFixed(1)}%`;
@@ -710,8 +855,15 @@
                     if (w.stress_error) className += ' stress-error';
                 } else if (w.status === 'inserted') {
                     className += ' inserted';
+                } else if (w.status === 'omitted') {
+                    className += ' wrong';
+                    span.style.textDecoration = 'line-through';
+                    span.style.opacity = '0.55';
+                } else if (w.status === 'mispronounced') {
+                    className += ' stress-error';
+                    span.style.border = '1px solid orange';
                 } else {
-                    className += ' mispronounced';
+                    className += ' wrong';
                 }
                 span.className = className;
 
@@ -782,13 +934,120 @@
         const modalTtsWord = document.getElementById('modal-tts-word');
 
         let currentWordAudio = null;
+        let currentModalWord = "";
+        let wordPracticeRecorder = null;
+        let wordPracticeChunks = [];
+        let wordPracticeStream = null;
         // recordedAudio logic needs to reference the correct element in this file
         // In repeat_sentence.html, audio player ID is 'audio-playback'
         const recordedAudioPlayer = document.getElementById('audio-playback');
 
+        function stopWordPracticeStream() {
+            if (wordPracticeStream) {
+                for (const track of wordPracticeStream.getTracks()) {
+                    track.stop();
+                }
+                wordPracticeStream = null;
+            }
+        }
+
+        async function submitWordPractice(blob, word) {
+            wordPracticeStatus.textContent = "Analyzing...";
+            wordPracticeStatus.style.color = "#5b6e84";
+            const formData = new FormData();
+            formData.append('audio', blob, 'word_practice.webm');
+            formData.append('word', word);
+            formData.append('accent', accentSelector.value);
+
+            try {
+                const response = await fetch('/api/word-practice', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Word practice failed');
+                }
+                const statusColor = data.status === 'correct'
+                    ? '#1f8a4c'
+                    : data.status === 'acceptable'
+                        ? '#b76b00'
+                        : '#c93434';
+                wordPracticeStatus.textContent = `${data.status.toUpperCase()} • ${data.accuracy}%`;
+                wordPracticeStatus.style.color = statusColor;
+                wordPracticeResult.innerHTML = `
+                    <div><strong>Expected:</strong> ${data.expected_phones || '-'}</div>
+                    <div><strong>Spoken:</strong> ${data.observed_phones || '-'}</div>
+                `;
+            } catch (err) {
+                wordPracticeStatus.textContent = err.message || 'Word practice failed';
+                wordPracticeStatus.style.color = '#c93434';
+                wordPracticeResult.textContent = '';
+            }
+        }
+
+        async function startWordPracticeRecording() {
+            if (!currentModalWord) {
+                return;
+            }
+            try {
+                wordPracticeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                wordPracticeRecorder = new MediaRecorder(wordPracticeStream);
+                wordPracticeChunks = [];
+                wordPracticeRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        wordPracticeChunks.push(event.data);
+                    }
+                };
+                wordPracticeRecorder.onstop = async () => {
+                    const blob = new Blob(wordPracticeChunks, { type: 'audio/webm' });
+                    stopWordPracticeStream();
+                    wordPracticeRecordBtn.disabled = false;
+                    wordPracticeStopBtn.disabled = true;
+                    await submitWordPractice(blob, currentModalWord);
+                };
+                wordPracticeStatus.textContent = "Recording... say this word clearly";
+                wordPracticeStatus.style.color = "#5b6e84";
+                wordPracticeResult.textContent = "";
+                wordPracticeRecordBtn.disabled = true;
+                wordPracticeStopBtn.disabled = false;
+                wordPracticeRecorder.start();
+            } catch (err) {
+                wordPracticeStatus.textContent = `Mic error: ${err.message}`;
+                wordPracticeStatus.style.color = '#c93434';
+            }
+        }
+
+        function stopWordPracticeRecording() {
+            if (wordPracticeRecorder && wordPracticeRecorder.state === 'recording') {
+                wordPracticeRecorder.stop();
+            }
+        }
+
+        if (wordPracticeRecordBtn) {
+            wordPracticeRecordBtn.onclick = () => startWordPracticeRecording();
+        }
+        if (wordPracticeStopBtn) {
+            wordPracticeStopBtn.onclick = () => stopWordPracticeRecording();
+        }
+
         function openWordModal(wordData) {
             modalWordText.innerText = wordData.word;
             modalTimestamp.innerText = `${wordData.start}s - ${wordData.end}s`;
+            currentModalWord = (wordData.word || '').trim();
+            if (wordPracticeStatus) {
+                wordPracticeStatus.textContent = "Fast phoneme check (no MFA)";
+                wordPracticeStatus.style.color = "#5b6e84";
+            }
+            if (wordPracticeResult) {
+                wordPracticeResult.textContent = "";
+            }
+            if (wordPracticeRecordBtn) {
+                wordPracticeRecordBtn.disabled = false;
+            }
+            if (wordPracticeStopBtn) {
+                wordPracticeStopBtn.disabled = true;
+            }
 
             // Populate Status
             modalStatus.innerText = wordData.status;
@@ -826,6 +1085,8 @@
 
         function closeModal() {
             modalOverlay.style.display = 'none';
+            stopWordPracticeRecording();
+            stopWordPracticeStream();
             if (currentWordAudio) {
                 currentWordAudio.pause();
                 currentWordAudio = null;
