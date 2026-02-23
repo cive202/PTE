@@ -31,6 +31,11 @@ def test_repeat_sentence_task_contract(client):
         assert required_key in payload
 
 
+def test_respond_to_a_situation_page(client):
+    response = client.get("/speaking/respond-to-a-situation")
+    assert response.status_code == 200
+
+
 def test_grammar_proxy_contract(client, monkeypatch):
     class DummyResponse:
         status_code = 200
@@ -218,6 +223,331 @@ def test_retell_lecture_task_contract(client):
     assert isinstance(payload, dict)
     for required_key in ("lecture_id", "audio_url", "title", "difficulty"):
         assert required_key in payload
+
+
+def test_listening_sst_categories_contract(client):
+    response = client.get("/listening/summarize-spoken-text/get-categories")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "categories" in payload
+    assert isinstance(payload["categories"], list)
+    assert payload["categories"]
+
+
+def test_listening_sst_catalog_contract(client):
+    response = client.get("/listening/summarize-spoken-text/get-catalog")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "items" in payload
+    assert isinstance(payload["items"], list)
+    assert payload["items"]
+
+
+def test_listening_sst_task_contract(client):
+    response = client.get("/listening/summarize-spoken-text/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "audio_url", "recommended_word_range"):
+        assert required_key in payload
+
+
+def test_listening_mcm_task_contract(client):
+    response = client.get("/listening/multiple-choice-multiple/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "audio_url", "question", "options"):
+        assert required_key in payload
+    assert isinstance(payload["options"], list)
+    assert payload["options"]
+
+
+def test_listening_mcs_task_contract(client):
+    response = client.get("/listening/multiple-choice-single/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "audio_url", "question", "options"):
+        assert required_key in payload
+    assert isinstance(payload["options"], list)
+    assert payload["options"]
+
+
+def test_listening_fib_task_contract(client):
+    response = client.get("/listening/fill-in-the-blanks/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "audio_url", "passage_template", "blanks"):
+        assert required_key in payload
+    assert isinstance(payload["blanks"], list)
+    assert payload["blanks"]
+
+
+def test_listening_smw_task_contract(client):
+    response = client.get("/listening/select-missing-word/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "audio_url", "question", "options"):
+        assert required_key in payload
+    assert isinstance(payload["options"], list)
+    assert payload["options"]
+
+
+def test_listening_sst_score_contract(client):
+    task_response = client.get("/listening/summarize-spoken-text/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    response_text = (
+        "The lecture explains that sustainable farming protects ecosystems by saving water, "
+        "reducing chemical use and improving biodiversity, while local food systems lower "
+        "transport emissions and strengthen communities. It also says progress requires "
+        "cooperation between policy makers, farmers and consumers to ensure long-term "
+        "food security."
+    )
+
+    score_response = client.post(
+        "/listening/summarize-spoken-text/score",
+        json={
+            "task_id": task_payload["id"],
+            "response": response_text,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "summarize_spoken_text"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_listening_mcm_score_contract(client):
+    task_response = client.get("/listening/multiple-choice-multiple/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    options = task_payload.get("options", [])
+    selected = [options[0]["id"]] if options else []
+
+    score_response = client.post(
+        "/listening/multiple-choice-multiple/score",
+        json={
+            "task_id": task_payload["id"],
+            "selected_options": selected,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "multiple_choice_multiple"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_listening_mcs_score_contract(client):
+    task_response = client.get("/listening/multiple-choice-single/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    options = task_payload.get("options", [])
+    selected = options[0]["id"] if options else ""
+
+    score_response = client.post(
+        "/listening/multiple-choice-single/score",
+        json={
+            "task_id": task_payload["id"],
+            "selected_option": selected,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "multiple_choice_single"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_listening_fib_score_contract(client):
+    task_response = client.get("/listening/fill-in-the-blanks/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    blanks = task_payload.get("blanks", [])
+    responses = {str(item.get("id")): "test" for item in blanks}
+
+    score_response = client.post(
+        "/listening/fill-in-the-blanks/score",
+        json={
+            "task_id": task_payload["id"],
+            "responses": responses,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "fill_in_the_blanks"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_listening_smw_score_contract(client):
+    task_response = client.get("/listening/select-missing-word/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    options = task_payload.get("options", [])
+    selected = options[0]["id"] if options else ""
+
+    score_response = client.post(
+        "/listening/select-missing-word/score",
+        json={
+            "task_id": task_payload["id"],
+            "selected_option": selected,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "select_missing_word"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_reading_mcm_task_contract(client):
+    response = client.get("/reading/multiple-choice-multiple/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "passage", "question", "options"):
+        assert required_key in payload
+    assert isinstance(payload["options"], list)
+    assert payload["options"]
+
+
+def test_reading_mcs_task_contract(client):
+    response = client.get("/reading/multiple-choice-single/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "passage", "question", "options"):
+        assert required_key in payload
+    assert isinstance(payload["options"], list)
+    assert payload["options"]
+
+
+def test_reading_fib_dropdown_task_contract(client):
+    response = client.get("/reading/fill-in-the-blanks-dropdown/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "passage_template", "blanks"):
+        assert required_key in payload
+    assert isinstance(payload["blanks"], list)
+    assert payload["blanks"]
+
+
+def test_reading_mcm_score_contract(client):
+    task_response = client.get("/reading/multiple-choice-multiple/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    options = task_payload.get("options", [])
+    selected = [options[0]["id"]] if options else []
+
+    score_response = client.post(
+        "/reading/multiple-choice-multiple/score",
+        json={
+            "task_id": task_payload["id"],
+            "selected_options": selected,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "multiple_choice_multiple"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_reading_mcs_score_contract(client):
+    task_response = client.get("/reading/multiple-choice-single/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    options = task_payload.get("options", [])
+    selected = options[0]["id"] if options else ""
+
+    score_response = client.post(
+        "/reading/multiple-choice-single/score",
+        json={
+            "task_id": task_payload["id"],
+            "selected_option": selected,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "multiple_choice_single"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_reading_fib_dropdown_score_contract(client):
+    task_response = client.get("/reading/fill-in-the-blanks-dropdown/get-task")
+    assert task_response.status_code == 200
+    task_payload = task_response.get_json()
+
+    blanks = task_payload.get("blanks", [])
+    responses = {}
+    for item in blanks:
+        blank_id = str(item.get("id"))
+        options = item.get("options", [])
+        responses[blank_id] = options[0] if options else ""
+
+    score_response = client.post(
+        "/reading/fill-in-the-blanks-dropdown/score",
+        json={
+            "task_id": task_payload["id"],
+            "responses": responses,
+        },
+    )
+    assert score_response.status_code == 200
+
+    data = score_response.get_json()
+    assert data["task"] == "fill_in_the_blanks_dropdown"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
 
 
 def test_swt_score_contract(client):

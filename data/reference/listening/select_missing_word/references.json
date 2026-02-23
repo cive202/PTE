@@ -1,0 +1,284 @@
+{
+  "select_missing_word": [
+    {
+      "id": "smw_651",
+      "title": "#651 Power of Music",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "transcript": "Music does not only entertain. It can calm people, support therapy, and help communities understand one another across cultural boundaries.",
+      "prompt_text": "At the end of the recording, the final word or phrase is replaced by a beep. Choose the correct option.",
+      "question": "Select the best missing word to complete the recording.",
+      "options": [
+        {
+          "id": "A",
+          "text": "boundaries"
+        },
+        {
+          "id": "B",
+          "text": "dictionaries"
+        },
+        {
+          "id": "C",
+          "text": "rainfall"
+        },
+        {
+          "id": "D",
+          "text": "headlines"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_649",
+      "title": "#649 Printing Press",
+      "topic": "History",
+      "difficulty": "easy",
+      "transcript": "By enabling rapid and affordable book production, the printing press expanded education and accelerated the spread of new ideas through society.",
+      "prompt_text": "Listen carefully to the final phrase and pick the missing word.",
+      "question": "What word best completes the speaker's final point?",
+      "options": [
+        {
+          "id": "A",
+          "text": "translation"
+        },
+        {
+          "id": "B",
+          "text": "society"
+        },
+        {
+          "id": "C",
+          "text": "weather"
+        },
+        {
+          "id": "D",
+          "text": "ceremony"
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "smw_654",
+      "title": "#654 Sustainable Farming",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "transcript": "Sustainable farming reduces chemical use, protects water, and supports biodiversity. In the long run, these practices strengthen global food security.",
+      "prompt_text": "Choose the missing ending word after listening once.",
+      "question": "Which option completes the recording correctly?",
+      "options": [
+        {
+          "id": "A",
+          "text": "delays"
+        },
+        {
+          "id": "B",
+          "text": "security"
+        },
+        {
+          "id": "C",
+          "text": "curriculum"
+        },
+        {
+          "id": "D",
+          "text": "seasons"
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "smw_648",
+      "title": "#648 Space Exploration",
+      "topic": "Science",
+      "difficulty": "medium",
+      "transcript": "From early telescopes to Mars rovers, space exploration has expanded scientific knowledge while continuously driving engineering innovation.",
+      "prompt_text": "The last word has been replaced by a beep. Select the missing word.",
+      "question": "Select the missing word at the end of the recording.",
+      "options": [
+        {
+          "id": "A",
+          "text": "innovation"
+        },
+        {
+          "id": "B",
+          "text": "agriculture"
+        },
+        {
+          "id": "C",
+          "text": "population"
+        },
+        {
+          "id": "D",
+          "text": "prediction"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_647",
+      "title": "#647 Internet",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The Internet enables instant communication and broad access to information, but societies must still address privacy, misinformation, and unequal access.",
+      "prompt_text": "Pick the word that completes the speaker's final clause.",
+      "question": "Which word is missing at the end?",
+      "options": [
+        {
+          "id": "A",
+          "text": "access"
+        },
+        {
+          "id": "B",
+          "text": "architecture"
+        },
+        {
+          "id": "C",
+          "text": "temperature"
+        },
+        {
+          "id": "D",
+          "text": "chemistry"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_660",
+      "title": "#660 Renewable Energy Storage",
+      "topic": "Energy",
+      "difficulty": "medium",
+      "transcript": "To make renewable electricity reliable, power systems need storage technologies that can shift energy from high-production periods to peak-demand periods, improving grid stability.",
+      "prompt_text": "At the end of the recording, one key word is replaced by a beep. Choose the best option.",
+      "question": "Which word completes the final phrase?",
+      "options": [
+        {
+          "id": "A",
+          "text": "stability"
+        },
+        {
+          "id": "B",
+          "text": "ceremony"
+        },
+        {
+          "id": "C",
+          "text": "altitude"
+        },
+        {
+          "id": "D",
+          "text": "vocabulary"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_661",
+      "title": "#661 Urban Green Spaces",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "transcript": "Urban green spaces can reduce heat, improve air quality, and create healthier neighborhoods, but city planners must ensure equitable access.",
+      "prompt_text": "Select the missing final word from the options.",
+      "question": "What word is missing at the end?",
+      "options": [
+        {
+          "id": "A",
+          "text": "access"
+        },
+        {
+          "id": "B",
+          "text": "forecasts"
+        },
+        {
+          "id": "C",
+          "text": "catalog"
+        },
+        {
+          "id": "D",
+          "text": "sandwich"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_662",
+      "title": "#662 Cybersecurity Hygiene",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "Routine security practices like multi-factor authentication, software patching, and phishing awareness can significantly reduce breach risk.",
+      "prompt_text": "Listen to the recording and choose the missing ending word.",
+      "question": "Which option best completes the recording?",
+      "options": [
+        {
+          "id": "A",
+          "text": "breach"
+        },
+        {
+          "id": "B",
+          "text": "harvest"
+        },
+        {
+          "id": "C",
+          "text": "festival"
+        },
+        {
+          "id": "D",
+          "text": "furniture"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_663",
+      "title": "#663 Telemedicine Access",
+      "topic": "Health",
+      "difficulty": "easy",
+      "transcript": "Telemedicine can improve follow-up access and reduce travel burden, but health systems still need in-person pathways for complex diagnosis.",
+      "prompt_text": "The final word has been replaced by a beep. Select the correct option.",
+      "question": "Choose the missing final word.",
+      "options": [
+        {
+          "id": "A",
+          "text": "diagnosis"
+        },
+        {
+          "id": "B",
+          "text": "fragrance"
+        },
+        {
+          "id": "C",
+          "text": "mountain"
+        },
+        {
+          "id": "D",
+          "text": "protocols"
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "smw_664",
+      "title": "#664 Circular Economy",
+      "topic": "Economy",
+      "difficulty": "difficult",
+      "transcript": "Circular economy policies encourage reuse and repair so that products remain valuable for longer and fewer resources are wasted.",
+      "prompt_text": "Pick the missing ending word after listening once.",
+      "question": "Which word completes the recording?",
+      "options": [
+        {
+          "id": "A",
+          "text": "wasted"
+        },
+        {
+          "id": "B",
+          "text": "repeated"
+        },
+        {
+          "id": "C",
+          "text": "painted"
+        },
+        {
+          "id": "D",
+          "text": "adapted"
+        }
+      ],
+      "correct_option": "A"
+    }
+  ]
+}

@@ -316,6 +316,72 @@ input:focus {
     text-align: center;
 }
 
+.tts-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    margin: 0.7rem 0 0.5rem;
+}
+
+.tts-pill-btn,
+.tts-pill-select {
+    border: 1px solid #c9d8ea;
+    background: #ffffff;
+    color: #1d2e43;
+    border-radius: 999px;
+    min-height: 38px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    transition: all 0.2s ease;
+}
+
+.tts-pill-btn {
+    min-width: 56px;
+    padding: 0 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.tts-pill-select {
+    width: auto;
+    padding: 0.44rem 0.8rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.tts-pill-select.speed {
+    min-width: 94px;
+}
+
+.tts-pill-select.voice {
+    min-width: 190px;
+    max-width: 250px;
+}
+
+.tts-pill-btn:hover:not(:disabled),
+.tts-pill-select:hover {
+    transform: translateY(-1px);
+    border-color: #0f6ac9;
+    box-shadow: 0 4px 10px rgba(15, 106, 201, 0.14);
+}
+
+.tts-pill-btn:focus-visible,
+.tts-pill-select:focus-visible {
+    outline: 2px solid rgba(15, 106, 201, 0.2);
+    outline-offset: 1px;
+}
+
+.tts-meta {
+    margin: 0 0 0.9rem;
+    font-size: 0.84rem;
+    color: #5f738a;
+    font-weight: 600;
+}
+
 .accent-mini {
     display: inline-flex;
     align-items: center;
@@ -540,6 +606,17 @@ input:focus {
     .controls .btn,
     .controls button {
         width: 100%;
+    }
+
+    .tts-toolbar {
+        justify-content: stretch;
+    }
+
+    .tts-pill-btn,
+    .tts-pill-select.speed,
+    .tts-pill-select.voice {
+        width: 100%;
+        max-width: none;
     }
 }
 

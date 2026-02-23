@@ -1,0 +1,274 @@
+{
+  "multiple_choice_single": [
+    {
+      "id": "mcs_651",
+      "title": "#651 Power of Music",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "transcript": "The speaker explains that music can quickly influence emotions and is widely used in therapeutic contexts to reduce stress. Music also helps people connect across cultures by sharing stories and identity.",
+      "question": "What is the speaker's main point?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Music is mainly useful as background entertainment."
+        },
+        {
+          "id": "B",
+          "text": "Music influences emotion and can connect people across cultures."
+        },
+        {
+          "id": "C",
+          "text": "Only trained musicians benefit from music therapy."
+        },
+        {
+          "id": "D",
+          "text": "Modern music has replaced all traditional forms."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "mcs_649",
+      "title": "#649 Printing Press",
+      "topic": "History",
+      "difficulty": "easy",
+      "transcript": "The recording describes how the printing press made books cheaper and easier to produce, which expanded literacy and helped new ideas spread through society.",
+      "question": "According to the recording, what changed after the printing press was introduced?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Access to written knowledge increased for ordinary people."
+        },
+        {
+          "id": "B",
+          "text": "Books became harder to produce than before."
+        },
+        {
+          "id": "C",
+          "text": "Literacy rates dropped in most regions."
+        },
+        {
+          "id": "D",
+          "text": "Only religious texts were printed."
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "mcs_654",
+      "title": "#654 Sustainable Farming",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "transcript": "The speaker says sustainable farming reduces chemical inputs, protects water and biodiversity, and supports local food systems to lower transport emissions.",
+      "question": "Which statement best matches the speaker's message?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Sustainable farming depends only on government action."
+        },
+        {
+          "id": "B",
+          "text": "Sustainable farming protects resources and supports long-term food security."
+        },
+        {
+          "id": "C",
+          "text": "Local food systems increase transport emissions."
+        },
+        {
+          "id": "D",
+          "text": "Biodiversity has no role in agriculture."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "mcs_648",
+      "title": "#648 Space Exploration",
+      "topic": "Science",
+      "difficulty": "medium",
+      "transcript": "The lecture traces space exploration from early astronomy to modern Mars rovers, highlighting both scientific discovery and technological innovation.",
+      "question": "What does the speaker emphasize about space exploration?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It stopped after the Apollo era."
+        },
+        {
+          "id": "B",
+          "text": "It is mainly symbolic and has no practical outcomes."
+        },
+        {
+          "id": "C",
+          "text": "It advances science and drives engineering innovation."
+        },
+        {
+          "id": "D",
+          "text": "Mars missions are focused on tourism."
+        }
+      ],
+      "correct_option": "C"
+    },
+    {
+      "id": "mcs_647",
+      "title": "#647 Internet",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The recording presents the Internet as a major driver of global communication and learning while noting ongoing risks, including privacy issues, misinformation, and unequal access.",
+      "question": "Which option best captures the speaker's overall view?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Internet has no meaningful impact on education."
+        },
+        {
+          "id": "B",
+          "text": "The Internet brings benefits but also serious social challenges."
+        },
+        {
+          "id": "C",
+          "text": "Digital access problems are fully solved."
+        },
+        {
+          "id": "D",
+          "text": "Business innovation has declined because of the Internet."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "mcs_660",
+      "title": "#660 Renewable Energy Storage",
+      "topic": "Energy",
+      "difficulty": "medium",
+      "transcript": "The speaker explains that because solar and wind output changes through the day, storage systems are needed to keep electricity supply stable and reliable.",
+      "question": "What is the main purpose of storage in the lecture?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To make electricity demand more unpredictable."
+        },
+        {
+          "id": "B",
+          "text": "To balance variable renewable production over time."
+        },
+        {
+          "id": "C",
+          "text": "To replace all transmission lines."
+        },
+        {
+          "id": "D",
+          "text": "To stop using all power plants immediately."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "mcs_661",
+      "title": "#661 Urban Green Spaces",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "transcript": "Urban parks and tree cover can reduce heat and improve public health, but the speaker notes that not all neighborhoods have the same access.",
+      "question": "Which statement best reflects the speaker's point?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Green spaces are only aesthetic and not functional."
+        },
+        {
+          "id": "B",
+          "text": "Green spaces can help climate comfort and health, but access is unequal."
+        },
+        {
+          "id": "C",
+          "text": "All cities have already solved park distribution."
+        },
+        {
+          "id": "D",
+          "text": "Tree cover increases flood risk in cities."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "mcs_662",
+      "title": "#662 Cybersecurity Hygiene",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The speaker argues that many breaches begin with weak passwords and phishing errors, so organizations should enforce multi-factor authentication and regular update policies.",
+      "question": "What does the speaker recommend to reduce cyber risk?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Relying only on antivirus without user training."
+        },
+        {
+          "id": "B",
+          "text": "Using simple passwords so staff can remember them."
+        },
+        {
+          "id": "C",
+          "text": "Combining authentication controls with routine security hygiene."
+        },
+        {
+          "id": "D",
+          "text": "Ignoring phishing emails unless they look urgent."
+        }
+      ],
+      "correct_option": "C"
+    },
+    {
+      "id": "mcs_663",
+      "title": "#663 Telemedicine Access",
+      "topic": "Health",
+      "difficulty": "easy",
+      "transcript": "According to the recording, telemedicine improves convenience and access, especially for follow-up care, but it cannot replace every in-person examination.",
+      "question": "Which option matches the speaker's view?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Telemedicine is useful but should be integrated with face-to-face care."
+        },
+        {
+          "id": "B",
+          "text": "Telemedicine fully replaces all clinical visits."
+        },
+        {
+          "id": "C",
+          "text": "Telemedicine is only for emergency surgery."
+        },
+        {
+          "id": "D",
+          "text": "Telemedicine reduces access for rural patients."
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "mcs_664",
+      "title": "#664 Circular Economy",
+      "topic": "Economy",
+      "difficulty": "difficult",
+      "transcript": "The lecture presents circular economy as a model focused on reuse, repair, and material recovery to reduce waste and strengthen long-term resource resilience.",
+      "question": "What is the central idea of the lecture?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Economic growth requires faster disposal of products."
+        },
+        {
+          "id": "B",
+          "text": "Circular systems aim to extend product value and recover materials."
+        },
+        {
+          "id": "C",
+          "text": "Repair activities have no role in sustainability."
+        },
+        {
+          "id": "D",
+          "text": "Recycling should be replaced by single-use manufacturing."
+        }
+      ],
+      "correct_option": "B"
+    }
+  ]
+}

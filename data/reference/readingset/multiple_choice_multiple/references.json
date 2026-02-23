@@ -1,0 +1,179 @@
+{
+  "multiple_choice_multiple": [
+    {
+      "id": "rmcm_701",
+      "title": "#701 Urban Cooling Strategies",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "passage": "Cities are usually warmer than nearby rural areas because concrete and asphalt absorb and store heat. Urban planners reduce this effect by planting trees, installing reflective roofs, and creating shaded public spaces. Studies show that these strategies can lower local temperatures and reduce peak electricity demand in summer.",
+      "question": "According to the passage, which statements are supported?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Concrete and asphalt contribute to higher urban temperatures."
+        },
+        {
+          "id": "B",
+          "text": "Reflective roofs can help lower city temperatures."
+        },
+        {
+          "id": "C",
+          "text": "Planting trees has no measurable effect on heat."
+        },
+        {
+          "id": "D",
+          "text": "Cooling strategies can reduce electricity demand."
+        },
+        {
+          "id": "E",
+          "text": "Urban areas are always cooler than rural areas."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "B",
+        "D"
+      ]
+    },
+    {
+      "id": "rmcm_702",
+      "title": "#702 Open Access Publishing",
+      "topic": "Education",
+      "difficulty": "easy",
+      "passage": "Open access journals allow researchers and the public to read scientific articles without subscription fees. This model increases visibility for authors and helps practitioners in low-resource settings apply recent findings. However, some journals charge publication fees to authors, so institutions often provide funding support.",
+      "question": "Which ideas are stated in the passage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Open access removes paywalls for readers."
+        },
+        {
+          "id": "B",
+          "text": "Open access always removes all publishing costs."
+        },
+        {
+          "id": "C",
+          "text": "Open access can increase visibility for authors."
+        },
+        {
+          "id": "D",
+          "text": "Some institutions fund publication fees for authors."
+        },
+        {
+          "id": "E",
+          "text": "Open access prevents findings from reaching practitioners."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "rmcm_703",
+      "title": "#703 Remote Team Communication",
+      "topic": "Workplace",
+      "difficulty": "medium",
+      "passage": "Remote teams rely heavily on written communication, so clarity becomes critical. Organizations that define response expectations, document decisions, and maintain shared project boards often complete work faster. At the same time, teams need periodic live meetings to resolve ambiguity and maintain social cohesion.",
+      "question": "According to the passage, which statements are correct?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Clear written communication is important for remote teams."
+        },
+        {
+          "id": "B",
+          "text": "Documenting decisions can improve team efficiency."
+        },
+        {
+          "id": "C",
+          "text": "Live meetings are never useful in remote work."
+        },
+        {
+          "id": "D",
+          "text": "Shared project boards can support faster execution."
+        },
+        {
+          "id": "E",
+          "text": "Remote teams should avoid social interaction."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "B",
+        "D"
+      ]
+    },
+    {
+      "id": "rmcm_704",
+      "title": "#704 Citizen Science Projects",
+      "topic": "Science",
+      "difficulty": "medium",
+      "passage": "Citizen science projects invite volunteers to collect or classify data for research. Because projects may involve thousands of participants, researchers typically include training modules and validation checks to preserve data quality. The resulting datasets can be large enough to identify patterns that small research teams might miss.",
+      "question": "Which points does the passage support?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Volunteer participation can expand research datasets."
+        },
+        {
+          "id": "B",
+          "text": "Validation checks are used to improve data quality."
+        },
+        {
+          "id": "C",
+          "text": "Citizen science removes the need for researcher oversight."
+        },
+        {
+          "id": "D",
+          "text": "Large datasets may reveal patterns otherwise unnoticed."
+        },
+        {
+          "id": "E",
+          "text": "Citizen science is limited to laboratory-only experiments."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "B",
+        "D"
+      ]
+    },
+    {
+      "id": "rmcm_705",
+      "title": "#705 Public Transport Planning",
+      "topic": "Policy",
+      "difficulty": "difficult",
+      "passage": "Transport planners evaluate ridership data, travel times, and neighborhood access when redesigning bus networks. Frequent service on high-demand routes improves reliability, but planners must also maintain baseline coverage for areas with lower demand. Long-term success depends on integrating routes with cycling infrastructure and pedestrian-safe streets.",
+      "question": "Which statements align with the passage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ridership and travel-time data inform route redesign."
+        },
+        {
+          "id": "B",
+          "text": "Only high-demand districts should receive any service."
+        },
+        {
+          "id": "C",
+          "text": "Frequent service can improve reliability on busy routes."
+        },
+        {
+          "id": "D",
+          "text": "Integration with cycling and walking networks matters."
+        },
+        {
+          "id": "E",
+          "text": "Planners ignore access for low-demand neighborhoods."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    }
+  ]
+}

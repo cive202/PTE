@@ -1,0 +1,199 @@
+{
+  "fill_in_the_blanks_dropdown": [
+    {
+      "id": "rfibd_721",
+      "title": "#721 Mangrove Protection",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "passage_template": "Mangrove forests act as natural {{1}} against coastal storms. Their root systems reduce erosion and provide nursery habitats for {{2}} species. Conservation programs are most effective when local communities {{3}} in long-term planning.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "barriers",
+          "options": [
+            "barriers",
+            "imports",
+            "algorithms",
+            "gateways"
+          ]
+        },
+        {
+          "id": "2",
+          "answer": "marine",
+          "options": [
+            "marine",
+            "domestic",
+            "virtual",
+            "desert"
+          ]
+        },
+        {
+          "id": "3",
+          "answer": "participate",
+          "options": [
+            "participate",
+            "evaporate",
+            "circulate",
+            "negotiate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rfibd_722",
+      "title": "#722 Clinical Trial Design",
+      "topic": "Health",
+      "difficulty": "easy",
+      "passage_template": "Randomized clinical trials reduce bias by assigning participants to groups {{1}}. Researchers then compare outcomes between treatment and control groups to estimate the {{2}} effect of an intervention. Clear reporting standards improve the {{3}} of published findings.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "randomly",
+          "options": [
+            "randomly",
+            "privately",
+            "carefully",
+            "visually"
+          ]
+        },
+        {
+          "id": "2",
+          "answer": "causal",
+          "options": [
+            "causal",
+            "seasonal",
+            "political",
+            "symbolic"
+          ]
+        },
+        {
+          "id": "3",
+          "answer": "reliability",
+          "options": [
+            "reliability",
+            "mystery",
+            "novelty",
+            "velocity"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rfibd_723",
+      "title": "#723 Workplace Learning",
+      "topic": "Workplace",
+      "difficulty": "medium",
+      "passage_template": "Organizations that support continuous learning often combine formal courses with peer mentoring and project-based practice. This blended model helps employees {{1}} new knowledge to real tasks and keeps skills {{2}} as technologies evolve. Managers also need to allocate protected time so learning is not {{3}} by routine deadlines.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "apply",
+          "options": [
+            "apply",
+            "cancel",
+            "assume",
+            "ignore"
+          ]
+        },
+        {
+          "id": "2",
+          "answer": "relevant",
+          "options": [
+            "relevant",
+            "fragile",
+            "adjacent",
+            "neutral"
+          ]
+        },
+        {
+          "id": "3",
+          "answer": "crowded out",
+          "options": [
+            "crowded out",
+            "written off",
+            "counted in",
+            "sorted out"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rfibd_724",
+      "title": "#724 Planetary Observation",
+      "topic": "Science",
+      "difficulty": "medium",
+      "passage_template": "Astronomers detect exoplanets by measuring tiny changes in starlight. In the transit method, a planet passes in front of its star and causes a small, repeated {{1}} in observed brightness. Follow-up measurements help estimate the planet's {{2}} and orbital period. These techniques have {{3}} the number of known planetary systems.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "dip",
+          "options": [
+            "dip",
+            "peak",
+            "gap",
+            "pulse"
+          ]
+        },
+        {
+          "id": "2",
+          "answer": "size",
+          "options": [
+            "size",
+            "texture",
+            "currency",
+            "policy"
+          ]
+        },
+        {
+          "id": "3",
+          "answer": "expanded",
+          "options": [
+            "expanded",
+            "restricted",
+            "concealed",
+            "balanced"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rfibd_725",
+      "title": "#725 Public Budgeting",
+      "topic": "Policy",
+      "difficulty": "difficult",
+      "passage_template": "Public budgeting requires balancing immediate service delivery with long-term investment. Governments often use multi-year forecasts to assess whether current spending is {{1}} over time. Transparent reporting allows citizens to {{2}} how priorities are set and how resources are distributed. Without this visibility, trust in institutions can {{3}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "sustainable",
+          "options": [
+            "sustainable",
+            "temporary",
+            "ambiguous",
+            "decorative"
+          ]
+        },
+        {
+          "id": "2",
+          "answer": "evaluate",
+          "options": [
+            "evaluate",
+            "delay",
+            "translate",
+            "replicate"
+          ]
+        },
+        {
+          "id": "3",
+          "answer": "decline",
+          "options": [
+            "decline",
+            "stabilize",
+            "accelerate",
+            "normalize"
+          ]
+        }
+      ]
+    }
+  ]
+}

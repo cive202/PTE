@@ -1,0 +1,354 @@
+{
+  "multiple_choice_multiple": [
+    {
+      "id": "mcm_651",
+      "title": "#651 Power of Music",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "transcript": "Music can influence how people feel and think within seconds. It is widely used in therapy to reduce stress and support emotional recovery. Music also shares cultural stories and helps people understand communities different from their own. As musical styles evolve over time, they continue to reflect social change and creativity.",
+      "question": "According to the speaker, which statements are correct?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Music can affect emotion and mental state."
+        },
+        {
+          "id": "B",
+          "text": "Music is used only for entertainment and has no therapeutic value."
+        },
+        {
+          "id": "C",
+          "text": "Music can help people connect across cultures."
+        },
+        {
+          "id": "D",
+          "text": "Music evolves with social and technological changes."
+        },
+        {
+          "id": "E",
+          "text": "Modern music has fully replaced classical music."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_649",
+      "title": "#649 Printing Press",
+      "topic": "History",
+      "difficulty": "easy",
+      "transcript": "Before printing technology, books were copied by hand and were difficult for ordinary people to access. The printing press increased the speed of production and lowered the barrier to learning. It contributed to higher literacy and supported major intellectual and social movements.",
+      "question": "Which points does the speaker make about the printing press?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It made information easier to distribute to more people."
+        },
+        {
+          "id": "B",
+          "text": "It had little impact on literacy rates."
+        },
+        {
+          "id": "C",
+          "text": "It helped major cultural and scientific movements spread."
+        },
+        {
+          "id": "D",
+          "text": "It was mostly useful for private handwritten journals."
+        },
+        {
+          "id": "E",
+          "text": "It changed who could access knowledge."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "E"
+      ]
+    },
+    {
+      "id": "mcm_654",
+      "title": "#654 Sustainable Farming",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "transcript": "Sustainable farming relies on methods that protect soil, water, and biodiversity. It also promotes local food systems to reduce transport emissions. The transition requires support from policy makers, producers, and consumers.",
+      "question": "According to the speaker, which statements are supported?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Reducing chemical use is part of sustainable farming."
+        },
+        {
+          "id": "B",
+          "text": "Local food systems can lower the carbon footprint."
+        },
+        {
+          "id": "C",
+          "text": "Governments are the only stakeholders needed for transition."
+        },
+        {
+          "id": "D",
+          "text": "Sustainable farming can improve long-term food security."
+        },
+        {
+          "id": "E",
+          "text": "Biodiversity has no relation to farm productivity."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "B",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_648",
+      "title": "#648 Space Exploration",
+      "topic": "Science",
+      "difficulty": "medium",
+      "transcript": "Space exploration moved from early telescope observations to satellite launches and moon missions. Mars rovers now collect data about the planet's geology and history. These missions also push engineering forward and inspire future research.",
+      "question": "Which ideas are mentioned by the speaker?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Mars rovers are used to study planetary conditions."
+        },
+        {
+          "id": "B",
+          "text": "Space missions have no practical value on Earth."
+        },
+        {
+          "id": "C",
+          "text": "The space race included milestones such as Sputnik and Apollo."
+        },
+        {
+          "id": "D",
+          "text": "Astronomy began only after modern computers were invented."
+        },
+        {
+          "id": "E",
+          "text": "Space exploration can stimulate technological innovation."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "E"
+      ]
+    },
+    {
+      "id": "mcm_647",
+      "title": "#647 Internet",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The Internet connects people globally and gives broad access to learning resources. It has accelerated entrepreneurship and innovation, but it also raises concerns about privacy, misinformation, and unequal digital access.",
+      "question": "Which statements match the speaker's message?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Internet can expand education opportunities."
+        },
+        {
+          "id": "B",
+          "text": "The Internet has no effect on business innovation."
+        },
+        {
+          "id": "C",
+          "text": "Privacy and misinformation are important challenges."
+        },
+        {
+          "id": "D",
+          "text": "Digital access is already equal in all communities."
+        },
+        {
+          "id": "E",
+          "text": "The Internet enables fast communication across borders."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "E"
+      ]
+    },
+    {
+      "id": "mcm_660",
+      "title": "#660 Renewable Energy Storage",
+      "topic": "Energy",
+      "difficulty": "medium",
+      "transcript": "The speaker says renewable power is variable, so storage systems such as batteries and pumped hydro are needed to balance supply and demand. Storage can reduce reliance on fossil backup and improve grid stability.",
+      "question": "Which statements are supported by the recording?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Energy storage helps balance variable renewable generation."
+        },
+        {
+          "id": "B",
+          "text": "Storage makes electricity systems less stable."
+        },
+        {
+          "id": "C",
+          "text": "Batteries are one option used for grid balancing."
+        },
+        {
+          "id": "D",
+          "text": "Storage can lower dependence on fossil backup plants."
+        },
+        {
+          "id": "E",
+          "text": "Renewable output is always constant over time."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_661",
+      "title": "#661 Urban Green Spaces",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "transcript": "Urban parks and tree cover reduce heat, improve air quality, and support mental well-being. The speaker also notes that access to green spaces is not equal across neighborhoods.",
+      "question": "According to the speaker, which points are correct?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Green spaces can reduce urban heat."
+        },
+        {
+          "id": "B",
+          "text": "Parks can support mental health."
+        },
+        {
+          "id": "C",
+          "text": "All neighborhoods have equal green-space access."
+        },
+        {
+          "id": "D",
+          "text": "Tree cover can improve local air quality."
+        },
+        {
+          "id": "E",
+          "text": "Green spaces are only decorative and have no public value."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "B",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_662",
+      "title": "#662 Cybersecurity Hygiene",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The speaker explains that many cyber incidents begin with weak passwords or phishing mistakes. Multi-factor authentication, patching software, and employee training are highlighted as practical defenses.",
+      "question": "Which statements reflect the speaker's message?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Human behavior is often a major security risk factor."
+        },
+        {
+          "id": "B",
+          "text": "Software updates are irrelevant to cybersecurity."
+        },
+        {
+          "id": "C",
+          "text": "Multi-factor authentication can reduce compromise risk."
+        },
+        {
+          "id": "D",
+          "text": "Phishing awareness training can improve security."
+        },
+        {
+          "id": "E",
+          "text": "Only large enterprises are targeted by attacks."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_663",
+      "title": "#663 Telemedicine Access",
+      "topic": "Health",
+      "difficulty": "easy",
+      "transcript": "The recording says telemedicine improves convenience and can help rural patients access follow-up care. However, not every condition is suitable for remote assessment, and digital access remains a barrier for some users.",
+      "question": "Which points are explicitly supported?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Telemedicine can improve access for remote patients."
+        },
+        {
+          "id": "B",
+          "text": "Remote care is appropriate for every medical condition."
+        },
+        {
+          "id": "C",
+          "text": "Digital inequality can limit telemedicine benefits."
+        },
+        {
+          "id": "D",
+          "text": "Virtual follow-up may reduce travel burden."
+        },
+        {
+          "id": "E",
+          "text": "Telemedicine always replaces in-person care completely."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "mcm_664",
+      "title": "#664 Circular Economy",
+      "topic": "Economy",
+      "difficulty": "difficult",
+      "transcript": "The speaker contrasts linear production with circular systems based on reuse, repair, and material recovery. The transition can reduce waste and emissions but requires redesign investment and supply-chain coordination.",
+      "question": "Which statements match the speaker's argument?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Circular models focus on product life extension and recovery."
+        },
+        {
+          "id": "B",
+          "text": "Circular economy increases dependence on virgin materials."
+        },
+        {
+          "id": "C",
+          "text": "Transitioning to circularity may require upfront redesign costs."
+        },
+        {
+          "id": "D",
+          "text": "Repair and remanufacturing are circular strategies."
+        },
+        {
+          "id": "E",
+          "text": "Circular economy has no influence on waste reduction."
+        }
+      ],
+      "correct_options": [
+        "A",
+        "C",
+        "D"
+      ]
+    }
+  ]
+}

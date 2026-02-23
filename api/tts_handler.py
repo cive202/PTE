@@ -28,6 +28,12 @@ FEATURE_DEFAULTS = {
         "speed": "x1.0",
         "locale": "en-AU",
     },
+    "listening": {
+        "provider": TTS_PROVIDER_EDGE,
+        "voice": "en-AU-NatashaNeural",
+        "speed": "x1.0",
+        "locale": "en-AU",
+    },
     "default": {
         "provider": TTS_PROVIDER_EDGE,
         "voice": DEFAULT_EDGE_VOICE,
@@ -42,6 +48,12 @@ FEATURE_VOICE_PRESETS = {
         "en-AU-NatashaNeural",
         "en-GB-SoniaNeural",
         "en-IN-PrabhatNeural",
+    ],
+    "listening": [
+        "en-US-GuyNeural",
+        "en-IN-PrabhatNeural",
+        "en-AU-NatashaNeural",
+        "en-GB-SoniaNeural",
     ],
     "default": [
         "en-AU-NatashaNeural",

@@ -93,3 +93,96 @@ def test_align_and_validate_uses_textgrid_when_available(tmp_path, monkeypatch):
     assert result["summary"]["correct"] == 2
     assert "asr_only" not in result["summary"]
     assert "TextGrid" in result.get("textgrid_content", "")
+
+
+def test_align_and_validate_reuses_cached_result(tmp_path, monkeypatch):
+    mfa_base_dir = tmp_path / "mfa"
+    mfa_runtime_dir = tmp_path / "mfa_runtime"
+    mfa_base_dir.mkdir(parents=True)
+    mfa_runtime_dir.mkdir(parents=True)
+    audio_path, text_path = _write_minimal_files(tmp_path)
+
+    tg_path = tmp_path / "input.TextGrid"
+    tg_path.write_text(
+        'File type = "ooTextFile"\nObject class = "TextGrid"\nname = "words"\n',
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(validator_module, "MFA_BASE_DIR", mfa_base_dir)
+    monkeypatch.setattr(validator_module, "MFA_RUNTIME_DIR", mfa_runtime_dir)
+    monkeypatch.setattr(validator_module, "transcribe_audio_with_details", lambda _path: _mock_asr_result())
+    monkeypatch.setattr(validator_module, "compare_text", lambda _ref, _hyp: _mock_diff())
+
+    def fake_run_single_alignment_gen(accent, _conf, _run_id, _docker_input_dir):
+        yield {"type": "result", "data": (accent, tg_path)}
+
+    def fake_analyze_word_pronunciation(item, *_args, **_kwargs):
+        analyzed = item.copy()
+        analyzed["status"] = "correct"
+        return analyzed
+
+    monkeypatch.setattr(validator_module, "run_single_alignment_gen", fake_run_single_alignment_gen)
+    monkeypatch.setattr(validator_module, "analyze_word_pronunciation", fake_analyze_word_pronunciation)
+
+    first_updates = list(validator_module.align_and_validate_gen(audio_path, text_path, accents=["US_ARPA"]))
+    first_result = [event for event in first_updates if event["type"] == "result"][-1]["data"]
+    assert first_result["summary"]["cached"] is False
+
+    def fail_if_called(_path):
+        raise AssertionError("ASR should not run when cache is hit")
+
+    monkeypatch.setattr(validator_module, "transcribe_audio_with_details", fail_if_called)
+
+    second_updates = list(validator_module.align_and_validate_gen(audio_path, text_path, accents=["US_ARPA"]))
+    second_result = [event for event in second_updates if event["type"] == "result"][-1]["data"]
+    assert second_result["summary"]["cached"] is True
+    assert second_result["meta"]["cache"]["hit"] is True
+
+
+def test_run_single_alignment_uses_configurable_num_jobs(tmp_path, monkeypatch):
+    mfa_runtime_dir = tmp_path / "mfa_runtime"
+    mfa_runtime_dir.mkdir(parents=True)
+    monkeypatch.setattr(validator_module, "MFA_RUNTIME_DIR", mfa_runtime_dir)
+    monkeypatch.setenv("PTE_MFA_NUM_JOBS", "3")
+
+    run_id = "testrun1"
+    accent = "US_ARPA"
+    tg_dir = mfa_runtime_dir / run_id / "output" / accent
+    tg_dir.mkdir(parents=True, exist_ok=True)
+    (tg_dir / "input.TextGrid").write_text(
+        'File type = "ooTextFile"\nObject class = "TextGrid"\nname = "words"\n',
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    class FakeProcess:
+        def __init__(self, cmd):
+            captured["cmd"] = cmd
+            self.returncode = 0
+
+        def communicate(self, timeout=None):
+            return b"", b""
+
+        def poll(self):
+            return self.returncode
+
+    def fake_popen(cmd, **_kwargs):
+        return FakeProcess(cmd)
+
+    monkeypatch.setattr(validator_module.subprocess, "Popen", fake_popen)
+
+    events = list(
+        validator_module.run_single_alignment_gen(
+            accent,
+            validator_module.ACCENTS_CONFIG[accent],
+            run_id,
+            f"/runtime/{run_id}/input",
+        )
+    )
+    result = [event for event in events if event["type"] == "result"][-1]["data"]
+
+    assert result[1] == tg_dir / "input.TextGrid"
+    assert "--num_jobs" in captured["cmd"]
+    num_jobs_index = captured["cmd"].index("--num_jobs")
+    assert captured["cmd"][num_jobs_index + 1] == "3"

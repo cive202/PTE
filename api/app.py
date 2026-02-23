@@ -38,6 +38,24 @@ from api.writing_evaluator import (
     evaluate_write_essay,
     evaluate_write_email,
 )
+from api.listening_evaluator import (
+    get_listening_difficulties,
+    get_listening_catalog,
+    get_listening_task,
+    evaluate_summarize_spoken_text,
+    evaluate_multiple_choice_multiple,
+    evaluate_multiple_choice_single,
+    evaluate_select_missing_word,
+    evaluate_fill_in_the_blanks,
+)
+from api.reading_evaluator import (
+    get_reading_difficulties,
+    get_reading_catalog,
+    get_reading_task,
+    evaluate_multiple_choice_multiple as evaluate_reading_multiple_choice_multiple,
+    evaluate_multiple_choice_single as evaluate_reading_multiple_choice_single,
+    evaluate_fill_in_the_blanks_dropdown,
+)
 from pte_core.asr.phoneme_recognition import call_phoneme_service
 from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from api.file_utils import (
@@ -89,6 +107,18 @@ WORD_PRACTICE_ACCENT_MAP = {
     "NonNative": "Non-Native English",
     "US_ARPA": "Non-Native English",
     "US_MFA": "Non-Native English",
+}
+LISTENING_ROUTE_TO_TASK = {
+    "summarize-spoken-text": "summarize_spoken_text",
+    "multiple-choice-multiple": "multiple_choice_multiple",
+    "multiple-choice-single": "multiple_choice_single",
+    "fill-in-the-blanks": "fill_in_the_blanks",
+    "select-missing-word": "select_missing_word",
+}
+READING_ROUTE_TO_TASK = {
+    "multiple-choice-multiple": "multiple_choice_multiple",
+    "multiple-choice-single": "multiple_choice_single",
+    "fill-in-the-blanks-dropdown": "fill_in_the_blanks_dropdown",
 }
 _WORD_PRACTICE_BUILDER = None
 _WORD_PRACTICE_SCORER = None
@@ -156,6 +186,34 @@ def _build_retell_audio_url(lecture_id: str, tts_params: dict) -> str:
         query["pitch"] = tts_params["pitch"]
     encoded = urlencode(query)
     return f"/retell-lecture/audio/{lecture_id}?{encoded}"
+
+
+def _build_listening_audio_url(task_slug: str, item_id: str, tts_params: dict) -> str:
+    query = {
+        "provider": tts_params.get("provider", "edge"),
+        "speed": tts_params.get("speed", "x1.0"),
+        "voice": tts_params.get("voice", ""),
+    }
+    if tts_params.get("rate"):
+        query["rate"] = tts_params["rate"]
+    if tts_params.get("pitch"):
+        query["pitch"] = tts_params["pitch"]
+    encoded = urlencode(query)
+    return f"/listening/{task_slug}/audio/{item_id}?{encoded}"
+
+
+def _resolve_listening_task_type(task_slug: str) -> str:
+    normalized = str(task_slug or "").strip().lower()
+    if normalized not in LISTENING_ROUTE_TO_TASK:
+        raise ValueError(f"Unsupported listening task route: {task_slug}")
+    return LISTENING_ROUTE_TO_TASK[normalized]
+
+
+def _resolve_reading_task_type(task_slug: str) -> str:
+    normalized = str(task_slug or "").strip().lower()
+    if normalized not in READING_ROUTE_TO_TASK:
+        raise ValueError(f"Unsupported reading task route: {task_slug}")
+    return READING_ROUTE_TO_TASK[normalized]
 
 
 def _maybe_cleanup(paths, force=False):
@@ -716,6 +774,61 @@ def summarize_group_discussion_page():
     """Summarize Group Discussion page (soon available)."""
     return render_template('summarize_group_discussion.html')
 
+
+@app.route('/speaking/respond-to-a-situation')
+def respond_to_a_situation_page():
+    """Respond to a Situation practice page (soon available)."""
+    return render_template('respond_to_a_situation.html')
+
+
+@app.route('/listening/summarize-spoken-text')
+def summarize_spoken_text_page():
+    """Summarize Spoken Text page."""
+    return render_template('summarize_spoken_text.html')
+
+
+@app.route('/listening/multiple-choice-multiple')
+def multiple_choice_multiple_page():
+    """Listening Multiple Choice (Multiple Answers) page."""
+    return render_template('listening_multiple_choice_multiple.html')
+
+
+@app.route('/listening/multiple-choice-single')
+def multiple_choice_single_page():
+    """Listening Multiple Choice (Single Answer) page."""
+    return render_template('listening_multiple_choice_single.html')
+
+
+@app.route('/listening/fill-in-the-blanks')
+def listening_fill_in_the_blanks_page():
+    """Listening Fill in the Blanks page."""
+    return render_template('listening_fill_in_the_blanks.html')
+
+
+@app.route('/listening/select-missing-word')
+def listening_select_missing_word_page():
+    """Listening Select Missing Word page."""
+    return render_template('listening_select_missing_word.html')
+
+
+@app.route('/reading/multiple-choice-multiple')
+def reading_multiple_choice_multiple_page():
+    """Reading Multiple Choice (Multiple Answers) page."""
+    return render_template('reading_multiple_choice_multiple.html')
+
+
+@app.route('/reading/multiple-choice-single')
+def reading_multiple_choice_single_page():
+    """Reading Multiple Choice (Single Answer) page."""
+    return render_template('reading_multiple_choice_single.html')
+
+
+@app.route('/reading/fill-in-the-blanks-dropdown')
+def reading_fill_in_the_blanks_dropdown_page():
+    """Reading and Writing Fill in the Blanks (Dropdown) page."""
+    return render_template('reading_fill_in_the_blanks_dropdown.html')
+
+
 @app.route('/writing/summarize-written-text')
 def summarize_written_text_page():
     """Summarize Written Text page."""
@@ -946,6 +1059,490 @@ def score_write_email():
         },
     )
     return jsonify(result)
+
+
+@app.route('/listening/<task_slug>/get-categories', methods=['GET'])
+def get_listening_categories(task_slug):
+    try:
+        task_type = _resolve_listening_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    categories = get_listening_difficulties(task_type)
+    if not categories:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": categories})
+
+
+@app.route('/listening/<task_slug>/get-catalog', methods=['GET'])
+def get_listening_catalog_route(task_slug):
+    try:
+        task_type = _resolve_listening_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    catalog = get_listening_catalog(task_type)
+    if not catalog:
+        return jsonify({"error": "No listening items available"}), 404
+    return jsonify({"items": catalog})
+
+
+@app.route('/listening/<task_slug>/get-task', methods=['GET'])
+def get_listening_task_route(task_slug):
+    try:
+        task_type = _resolve_listening_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    topic = request.args.get("topic", None)
+    difficulty = request.args.get("difficulty", None)
+    task_id = request.args.get("task_id", None)
+    try:
+        tts_params = _resolve_tts_request(feature="listening")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    task = get_listening_task(task_type, topic=topic, task_id=task_id, difficulty=difficulty)
+    if not task:
+        return jsonify({"error": "No listening item available"}), 404
+
+    resolved_id = str(task.get("id", "")).strip()
+    if not resolved_id:
+        return jsonify({"error": "Task id is missing"}), 500
+
+    payload = {
+        "id": resolved_id,
+        "title": str(task.get("title", "Untitled")),
+        "topic": str(task.get("topic", "General")),
+        "difficulty": str(task.get("difficulty", "medium")),
+        "audio_url": _build_listening_audio_url(task_slug, resolved_id, tts_params),
+        "tts": {
+            "provider": tts_params["provider"],
+            "voice": tts_params["voice"],
+            "speed": tts_params["speed"],
+        },
+    }
+
+    if task_type == "summarize_spoken_text":
+        payload["instructions"] = "Write a 50-70 word summary of the lecture."
+        payload["recommended_word_range"] = "50-70"
+    elif task_type == "multiple_choice_multiple":
+        payload["question"] = str(task.get("question", "According to the speaker, which options are correct?"))
+        options = task.get("options", [])
+        payload["options"] = [
+            {
+                "id": str(option.get("id", "")).strip(),
+                "text": str(option.get("text", "")).strip(),
+            }
+            for option in options
+            if isinstance(option, dict)
+        ]
+    elif task_type in {"multiple_choice_single", "select_missing_word"}:
+        default_question = "According to the speaker, which option is correct?"
+        if task_type == "select_missing_word":
+            default_question = "Select the missing word to complete the recording."
+        payload["question"] = str(task.get("question", default_question))
+        payload["prompt_text"] = str(task.get("prompt_text", "")).strip()
+        options = task.get("options", [])
+        payload["options"] = [
+            {
+                "id": str(option.get("id", "")).strip(),
+                "text": str(option.get("text", "")).strip(),
+            }
+            for option in options
+            if isinstance(option, dict)
+        ]
+    elif task_type == "fill_in_the_blanks":
+        payload["passage_template"] = str(task.get("passage_template", ""))
+        blanks = task.get("blanks", [])
+        payload_blanks = []
+        for blank in blanks:
+            if not isinstance(blank, dict):
+                continue
+            blank_id = str(blank.get("id", "")).strip()
+            if not blank_id:
+                continue
+
+            answer_value = blank.get("answer", "")
+            if isinstance(answer_value, list):
+                normalized_candidates = [str(item).strip() for item in answer_value if str(item).strip()]
+                answer_length = max((len(item) for item in normalized_candidates), default=8)
+            else:
+                answer_length = len(str(answer_value).strip()) or 8
+
+            size_hint = max(6, min(14, answer_length + 1))
+            payload_blanks.append(
+                {
+                    "id": blank_id,
+                    "size_hint": size_hint,
+                }
+            )
+
+        payload["blanks"] = payload_blanks
+        payload["blank_count"] = len(payload["blanks"])
+
+    return jsonify(payload)
+
+
+@app.route('/listening/<task_slug>/audio/<item_id>', methods=['GET'])
+def listening_audio(task_slug, item_id):
+    try:
+        task_type = _resolve_listening_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    task = get_listening_task(task_type, task_id=item_id)
+    if not task:
+        return jsonify({"error": "Listening task not found"}), 404
+
+    transcript = str(task.get("transcript", "")).strip()
+    if not transcript:
+        return jsonify({"error": "Task transcript not found"}), 404
+
+    try:
+        tts_params = _resolve_tts_request(feature="listening")
+        audio_bytes = synthesize_speech(
+            transcript,
+            speed=tts_params["speed"],
+            voice=tts_params["voice"],
+            provider=tts_params["provider"],
+            rate=tts_params["rate"],
+            pitch=tts_params["pitch"] or "+0Hz",
+            feature="listening",
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": f"TTS generation failed: {exc}"}), 500
+
+    response = Response(audio_bytes, mimetype="audio/mpeg")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+
+@app.route('/listening/<task_slug>/score', methods=['POST'])
+def score_listening_task(task_slug):
+    try:
+        task_type = _resolve_listening_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form.to_dict(flat=True)
+
+    task_id = str(payload.get("task_id", "")).strip() or str(payload.get("prompt_id", "")).strip()
+    if not task_id:
+        return jsonify({"error": "task_id is required"}), 400
+
+    task = get_listening_task(task_type, task_id=task_id)
+    if not task:
+        return jsonify({"error": "Listening item not found"}), 404
+
+    if task_type == "summarize_spoken_text":
+        response_text = str(payload.get("response", ""))
+        result = evaluate_summarize_spoken_text(
+            str(task.get("transcript", "")),
+            response_text,
+            prompt_id=task_id,
+            key_points=task.get("key_points"),
+        )
+    elif task_type == "multiple_choice_multiple":
+        selected_raw = payload.get("selected_options", [])
+        if isinstance(selected_raw, str):
+            stripped = selected_raw.strip()
+            if stripped.startswith("["):
+                try:
+                    selected_options = json.loads(stripped)
+                except Exception:
+                    selected_options = [item.strip() for item in stripped.split(",") if item.strip()]
+            else:
+                selected_options = [item.strip() for item in stripped.split(",") if item.strip()]
+        elif isinstance(selected_raw, list):
+            selected_options = selected_raw
+        else:
+            selected_options = []
+
+        result = evaluate_multiple_choice_multiple(
+            task.get("correct_options", []),
+            selected_options,
+            prompt_id=task_id,
+        )
+    elif task_type in {"multiple_choice_single", "select_missing_word"}:
+        selected_option = ""
+        selected_raw = payload.get("selected_option")
+        if isinstance(selected_raw, list):
+            selected_option = str(selected_raw[0]).strip() if selected_raw else ""
+        elif isinstance(selected_raw, str):
+            selected_option = selected_raw.strip()
+        elif selected_raw is not None:
+            selected_option = str(selected_raw).strip()
+
+        if not selected_option:
+            selected_options_raw = payload.get("selected_options")
+            if isinstance(selected_options_raw, list) and selected_options_raw:
+                selected_option = str(selected_options_raw[0]).strip()
+            elif isinstance(selected_options_raw, str):
+                stripped = selected_options_raw.strip()
+                if stripped.startswith("["):
+                    try:
+                        parsed = json.loads(stripped)
+                        if isinstance(parsed, list) and parsed:
+                            selected_option = str(parsed[0]).strip()
+                    except Exception:
+                        parts = [item.strip() for item in stripped.split(",") if item.strip()]
+                        if parts:
+                            selected_option = parts[0]
+                else:
+                    parts = [item.strip() for item in stripped.split(",") if item.strip()]
+                    if parts:
+                        selected_option = parts[0]
+
+        if task_type == "multiple_choice_single":
+            result = evaluate_multiple_choice_single(
+                task.get("correct_option", ""),
+                selected_option,
+                prompt_id=task_id,
+            )
+        else:
+            result = evaluate_select_missing_word(
+                task.get("correct_option", ""),
+                selected_option,
+                prompt_id=task_id,
+            )
+    elif task_type == "fill_in_the_blanks":
+        responses = payload.get("responses", {})
+        if isinstance(responses, str):
+            try:
+                responses = json.loads(responses)
+            except Exception:
+                responses = {}
+        if not isinstance(responses, dict):
+            responses = {}
+
+        # Backward-compatible extraction from form fields: response_<blank_id>
+        for key, value in payload.items():
+            if str(key).startswith("response_"):
+                blank_id = str(key)[9:]
+                responses[blank_id] = value
+
+        result = evaluate_fill_in_the_blanks(
+            task.get("blanks", []),
+            responses,
+            prompt_id=task_id,
+        )
+    else:
+        result = {"error": f"Unsupported listening task: {task_type}"}
+
+    if "error" in result:
+        return jsonify(result), 400
+
+    _persist_writing_result(
+        f"listening_{task_type}",
+        {
+            "request": payload,
+            "result": result,
+        },
+    )
+    return jsonify(result)
+
+
+@app.route('/reading/<task_slug>/get-categories', methods=['GET'])
+def get_reading_categories(task_slug):
+    try:
+        task_type = _resolve_reading_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    categories = get_reading_difficulties(task_type)
+    if not categories:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": categories})
+
+
+@app.route('/reading/<task_slug>/get-catalog', methods=['GET'])
+def get_reading_catalog_route(task_slug):
+    try:
+        task_type = _resolve_reading_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    catalog = get_reading_catalog(task_type)
+    if not catalog:
+        return jsonify({"error": "No reading items available"}), 404
+    return jsonify({"items": catalog})
+
+
+@app.route('/reading/<task_slug>/get-task', methods=['GET'])
+def get_reading_task_route(task_slug):
+    try:
+        task_type = _resolve_reading_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    topic = request.args.get("topic", None)
+    difficulty = request.args.get("difficulty", None)
+    task_id = request.args.get("task_id", None)
+
+    task = get_reading_task(task_type, topic=topic, task_id=task_id, difficulty=difficulty)
+    if not task:
+        return jsonify({"error": "No reading item available"}), 404
+
+    resolved_id = str(task.get("id", "")).strip()
+    if not resolved_id:
+        return jsonify({"error": "Task id is missing"}), 500
+
+    payload = {
+        "id": resolved_id,
+        "title": str(task.get("title", "Untitled")),
+        "topic": str(task.get("topic", "General")),
+        "difficulty": str(task.get("difficulty", "medium")),
+    }
+
+    if task_type in {"multiple_choice_multiple", "multiple_choice_single"}:
+        payload["passage"] = str(task.get("passage", ""))
+        payload["question"] = str(task.get("question", "Choose the best answer based on the passage."))
+        options = task.get("options", [])
+        payload["options"] = [
+            {
+                "id": str(option.get("id", "")).strip(),
+                "text": str(option.get("text", "")).strip(),
+            }
+            for option in options
+            if isinstance(option, dict)
+        ]
+    elif task_type == "fill_in_the_blanks_dropdown":
+        payload["passage_template"] = str(task.get("passage_template", ""))
+        blanks = task.get("blanks", [])
+        payload["blanks"] = []
+        for blank in blanks:
+            if not isinstance(blank, dict):
+                continue
+            blank_id = str(blank.get("id", "")).strip()
+            if not blank_id:
+                continue
+            options = blank.get("options", [])
+            payload["blanks"].append(
+                {
+                    "id": blank_id,
+                    "options": [str(item).strip() for item in options if str(item).strip()],
+                }
+            )
+        payload["blank_count"] = len(payload["blanks"])
+
+    return jsonify(payload)
+
+
+@app.route('/reading/<task_slug>/score', methods=['POST'])
+def score_reading_task(task_slug):
+    try:
+        task_type = _resolve_reading_task_type(task_slug)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form.to_dict(flat=True)
+
+    task_id = str(payload.get("task_id", "")).strip() or str(payload.get("prompt_id", "")).strip()
+    if not task_id:
+        return jsonify({"error": "task_id is required"}), 400
+
+    task = get_reading_task(task_type, task_id=task_id)
+    if not task:
+        return jsonify({"error": "Reading item not found"}), 404
+
+    if task_type == "multiple_choice_multiple":
+        selected_raw = payload.get("selected_options", [])
+        if isinstance(selected_raw, str):
+            stripped = selected_raw.strip()
+            if stripped.startswith("["):
+                try:
+                    selected_options = json.loads(stripped)
+                except Exception:
+                    selected_options = [item.strip() for item in stripped.split(",") if item.strip()]
+            else:
+                selected_options = [item.strip() for item in stripped.split(",") if item.strip()]
+        elif isinstance(selected_raw, list):
+            selected_options = selected_raw
+        else:
+            selected_options = []
+
+        result = evaluate_reading_multiple_choice_multiple(
+            task.get("correct_options", []),
+            selected_options,
+            prompt_id=task_id,
+        )
+    elif task_type == "multiple_choice_single":
+        selected_option = ""
+        selected_raw = payload.get("selected_option")
+        if isinstance(selected_raw, list):
+            selected_option = str(selected_raw[0]).strip() if selected_raw else ""
+        elif isinstance(selected_raw, str):
+            selected_option = selected_raw.strip()
+        elif selected_raw is not None:
+            selected_option = str(selected_raw).strip()
+
+        if not selected_option:
+            selected_options_raw = payload.get("selected_options")
+            if isinstance(selected_options_raw, list) and selected_options_raw:
+                selected_option = str(selected_options_raw[0]).strip()
+            elif isinstance(selected_options_raw, str):
+                stripped = selected_options_raw.strip()
+                if stripped.startswith("["):
+                    try:
+                        parsed = json.loads(stripped)
+                        if isinstance(parsed, list) and parsed:
+                            selected_option = str(parsed[0]).strip()
+                    except Exception:
+                        parts = [item.strip() for item in stripped.split(",") if item.strip()]
+                        if parts:
+                            selected_option = parts[0]
+                else:
+                    parts = [item.strip() for item in stripped.split(",") if item.strip()]
+                    if parts:
+                        selected_option = parts[0]
+
+        result = evaluate_reading_multiple_choice_single(
+            task.get("correct_option", ""),
+            selected_option,
+            prompt_id=task_id,
+        )
+    elif task_type == "fill_in_the_blanks_dropdown":
+        responses = payload.get("responses", {})
+        if isinstance(responses, str):
+            try:
+                responses = json.loads(responses)
+            except Exception:
+                responses = {}
+        if not isinstance(responses, dict):
+            responses = {}
+
+        for key, value in payload.items():
+            if str(key).startswith("response_"):
+                blank_id = str(key)[9:]
+                responses[blank_id] = value
+
+        result = evaluate_fill_in_the_blanks_dropdown(
+            task.get("blanks", []),
+            responses,
+            prompt_id=task_id,
+        )
+    else:
+        result = {"error": f"Unsupported reading task: {task_type}"}
+
+    if "error" in result:
+        return jsonify(result), 400
+
+    _persist_writing_result(
+        f"reading_{task_type}",
+        {
+            "request": payload,
+            "result": result,
+        },
+    )
+    return jsonify(result)
+
 
 @app.route('/save', methods=['POST'])
 def save():

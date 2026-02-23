@@ -8,6 +8,7 @@ import time
 import sys
 import difflib
 import concurrent.futures
+import hashlib
 from pathlib import Path
 from typing import Optional
 
@@ -49,6 +50,21 @@ HOST_PROJECT_ROOT = os.environ.get("PTE_HOST_PROJECT_ROOT")
 # - MFA_BASE_DIR (Host) -> /models (Container)
 # - MFA_RUNTIME_DIR (Host) -> /runtime (Container)
 DOCKER_IMAGE = MFA_DOCKER_IMAGE
+CACHE_SCHEMA_VERSION = "read_aloud_cache_v2"
+CACHE_PIPELINE_VERSION = "phase2_v1"
+
+
+def _safe_int_env(value: Optional[str], default: int, minimum: int = 1, maximum: Optional[int] = None) -> int:
+    """Parse integer env vars with bounds and fallback."""
+    try:
+        parsed = int(str(value).strip())
+    except Exception:
+        return default
+    if parsed < minimum:
+        parsed = minimum
+    if maximum is not None and parsed > maximum:
+        parsed = maximum
+    return parsed
 
 
 def _resolve_docker_mount_source(local_path: Path, explicit_mount_path: Optional[str]) -> str:
@@ -72,6 +88,168 @@ def _resolve_docker_mount_source(local_path: Path, explicit_mount_path: Optional
             pass
 
     return str(local_path)
+
+
+def _as_bool_env(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_docker_ready() -> tuple[bool, str]:
+    """Check whether Docker CLI + daemon are ready for MFA runs."""
+    docker_bin = shutil.which("docker")
+    if not docker_bin:
+        return False, "Docker CLI is not installed."
+    try:
+        result = subprocess.run(
+            [docker_bin, "info"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3,
+            check=False,
+        )
+        if result.returncode == 0:
+            return True, ""
+        return False, "Docker daemon is unavailable."
+    except Exception as exc:
+        return False, f"Docker check failed: {exc}"
+
+
+def _resolve_mfa_num_jobs() -> int:
+    """Resolve MFA --num_jobs from env or CPU heuristic (safe default: 2-4 on multi-core)."""
+    override = os.environ.get("PTE_MFA_NUM_JOBS")
+    if override and override.strip():
+        return _safe_int_env(override, default=1, minimum=1, maximum=16)
+
+    cpu_count = os.cpu_count() or 1
+    if cpu_count <= 2:
+        return 1
+    return min(4, max(2, cpu_count // 2))
+
+
+def _resolve_word_analysis_workers() -> int:
+    """
+    Resolve workers for word analysis.
+    Default stays single-worker for reliability; users can opt in via env.
+    """
+    raw = str(os.environ.get("PTE_WORD_ANALYSIS_WORKERS", "")).strip().lower()
+    if not raw:
+        return 1
+    if raw == "auto":
+        cpu_count = os.cpu_count() or 1
+        return min(4, max(1, cpu_count // 2))
+    return _safe_int_env(raw, default=1, minimum=1, maximum=8)
+
+
+def _resolve_mfa_runner_mode() -> tuple[str, Optional[str]]:
+    """
+    Return MFA runner mode.
+    - docker_run: fresh container per request (current default)
+    - docker_exec: execute inside persistent running container
+    """
+    container_name = str(os.environ.get("PTE_MFA_CONTAINER_NAME", "")).strip()
+    if container_name:
+        return "docker_exec", container_name
+    return "docker_run", None
+
+
+def _result_cache_enabled() -> bool:
+    return _as_bool_env(os.environ.get("PTE_READ_ALOUD_CACHE_ENABLED", "1"))
+
+
+def _result_cache_max_age_seconds() -> int:
+    # Default 7 days
+    return _safe_int_env(os.environ.get("PTE_READ_ALOUD_CACHE_MAX_AGE_SECONDS"), default=604800, minimum=0)
+
+
+def _result_cache_dir() -> Path:
+    cache_dir = MFA_RUNTIME_DIR / "result_cache" / "read_aloud"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
+def _sha256_file(path: str) -> str:
+    hasher = hashlib.sha256()
+    with open(path, "rb") as file_obj:
+        for chunk in iter(lambda: file_obj.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _path_signature(path: Path) -> str:
+    """Stable file signature used in cache keys."""
+    try:
+        st = path.stat()
+        return f"{st.st_size}:{int(st.st_mtime)}"
+    except Exception:
+        return "missing"
+
+
+def _build_result_cache_key(audio_path: str, reference_text: str, accent_keys: list[str]) -> str:
+    model_signatures = {}
+    for accent in accent_keys:
+        conf = ACCENTS_CONFIG.get(accent) or {}
+        dict_path = MFA_BASE_DIR / conf.get("dict_rel", "")
+        model_path = MFA_BASE_DIR / conf.get("model_rel", "")
+        model_signatures[accent] = {
+            "dict_rel": conf.get("dict_rel"),
+            "dict_sig": _path_signature(dict_path) if conf.get("dict_rel") else "missing",
+            "model_rel": conf.get("model_rel"),
+            "model_sig": _path_signature(model_path) if conf.get("model_rel") else "missing",
+        }
+
+    payload = {
+        "schema": CACHE_SCHEMA_VERSION,
+        "pipeline": CACHE_PIPELINE_VERSION,
+        "audio_sha256": _sha256_file(audio_path),
+        "reference_text": reference_text.strip(),
+        "accents": accent_keys,
+        "docker_image": DOCKER_IMAGE,
+        "models": model_signatures,
+    }
+    encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _load_cached_result(cache_key: str) -> Optional[dict]:
+    cache_file = _result_cache_dir() / f"{cache_key}.json"
+    if not cache_file.exists():
+        return None
+
+    max_age = _result_cache_max_age_seconds()
+    if max_age > 0:
+        age = time.time() - cache_file.stat().st_mtime
+        if age > max_age:
+            return None
+
+    try:
+        with open(cache_file, "r", encoding="utf-8") as in_file:
+            payload = json.load(in_file)
+    except Exception as exc:
+        print(f"[CACHE] Failed to read cache file {cache_file}: {exc}")
+        return None
+
+    if payload.get("schema") != CACHE_SCHEMA_VERSION:
+        return None
+    result = payload.get("result")
+    if not isinstance(result, dict):
+        return None
+    return result
+
+
+def _store_cached_result(cache_key: str, result: dict) -> None:
+    cache_dir = _result_cache_dir()
+    cache_file = cache_dir / f"{cache_key}.json"
+    temp_file = cache_dir / f"{cache_key}.tmp"
+
+    payload = {
+        "schema": CACHE_SCHEMA_VERSION,
+        "pipeline": CACHE_PIPELINE_VERSION,
+        "created_at": int(time.time()),
+        "result": result,
+    }
+    with open(temp_file, "w", encoding="utf-8") as out_file:
+        json.dump(payload, out_file, ensure_ascii=False)
+    os.replace(temp_file, cache_file)
 
 
 MFA_DOCKER_BASE_SOURCE = _resolve_docker_mount_source(MFA_BASE_DIR, MFA_DOCKER_MOUNT_BASE_DIR)
@@ -440,21 +618,62 @@ def transcribe_audio_with_details(audio_path):
         print(f"ASR failed: {e}")
         return {"text": "", "word_timestamps": []}
 
+
+def build_asr_only_result(
+    diff_analysis,
+    transcript,
+    speech_rate_scale,
+    word_timestamps,
+    run_id,
+    note,
+    mfa_runner_mode=None,
+    mfa_num_jobs=None,
+    cache_key=None,
+):
+    """Build a consistent ASR-only fallback payload."""
+    correct_count = sum(1 for w in diff_analysis if w['status'] == 'correct' and not is_punctuation(w['word']))
+    total_words = sum(1 for w in diff_analysis if not is_punctuation(w['word']))
+    return {
+        "words": diff_analysis,
+        "transcript": transcript,
+        "pauses": [],
+        "speech_rate_scale": round(speech_rate_scale, 2),
+        "raw_word_timestamps": word_timestamps,
+        "meta": {
+            "mfa_run_id": run_id,
+            "mfa_output_root": str(MFA_RUNTIME_DIR / run_id / "output"),
+            "mfa_output_dirs": {},
+            "mfa_runner_mode": mfa_runner_mode,
+            "mfa_num_jobs": mfa_num_jobs,
+            "cache": {
+                "hit": False,
+                "key": cache_key,
+                "schema": CACHE_SCHEMA_VERSION,
+                "pipeline": CACHE_PIPELINE_VERSION,
+            },
+        },
+        "summary": {
+            "total": total_words,
+            "correct": correct_count,
+            "pause_penalty": 0,
+            "pause_count": 0,
+            "asr_only": True,
+            "note": note,
+            "cached": False,
+        },
+    }
+
 def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
     """
     Generator that runs MFA alignment and yields progress updates to keep connection alive.
     Yields: {"type": "progress", ...} or {"type": "result", "data": (accent, tg_path)}
     """
     import time
-    output_dir_name = f"output_{accent}"
     docker_output_dir = f"/runtime/{run_id}/output/{accent}"
     host_output_dir = MFA_RUNTIME_DIR / run_id / "output" / accent
-    
-    cmd = [
-        "docker", "run", "--rm",
-        "-v", f"{MFA_DOCKER_BASE_SOURCE}:/models",
-        "-v", f"{MFA_DOCKER_RUNTIME_SOURCE}:/runtime",
-        DOCKER_IMAGE,
+    mfa_num_jobs = _resolve_mfa_num_jobs()
+    runner_mode, persistent_container = _resolve_mfa_runner_mode()
+    align_args = [
         "mfa", "align",
         docker_input_dir,
         f"/models/{conf['dict_rel']}",
@@ -463,8 +682,17 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
         "--clean", "--quiet",
         "--beam", "100",
         "--retry_beam", "400",
-        "--num_jobs", "1"
+        "--num_jobs", str(mfa_num_jobs),
     ]
+    if runner_mode == "docker_exec" and persistent_container:
+        cmd = ["docker", "exec", persistent_container] + align_args
+    else:
+        cmd = [
+            "docker", "run", "--rm",
+            "-v", f"{MFA_DOCKER_BASE_SOURCE}:/models",
+            "-v", f"{MFA_DOCKER_RUNTIME_SOURCE}:/runtime",
+            DOCKER_IMAGE,
+        ] + align_args
     
     process = None
     try:
@@ -478,6 +706,7 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
         
         start_time = time.time()
         print(f"[MFA] Starting alignment for accent: {accent}, run_id: {run_id}")
+        print(f"[MFA] Runner: {runner_mode}, num_jobs={mfa_num_jobs}")
         print(f"[MFA] Command: {' '.join(cmd)}")
         
         while True:
@@ -687,12 +916,36 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     else:
         # Default to US_ARPA only for performance
         target_accents = {"US_ARPA": ACCENTS_CONFIG["US_ARPA"]}
+    if not target_accents:
+        target_accents = {"US_ARPA": ACCENTS_CONFIG["US_ARPA"]}
+    accent_keys = list(target_accents.keys())
     
     # --- Step 1: ASR Transcription & Content Check ---
     yield {"type": "progress", "percent": 5, "message": "Analyzing audio..."}
     with open(text_path, 'r', encoding='utf-8') as f:
         reference_text = f.read().strip()
-        
+
+    cache_key = None
+    if _result_cache_enabled():
+        try:
+            cache_key = _build_result_cache_key(audio_path, reference_text, accent_keys)
+            cached_result = _load_cached_result(cache_key)
+            if cached_result:
+                cached_meta = cached_result.setdefault("meta", {})
+                cached_meta["cache"] = {
+                    "hit": True,
+                    "key": cache_key,
+                    "schema": CACHE_SCHEMA_VERSION,
+                    "pipeline": CACHE_PIPELINE_VERSION,
+                }
+                cached_summary = cached_result.setdefault("summary", {})
+                cached_summary["cached"] = True
+                yield {"type": "progress", "percent": 12, "message": "Loaded cached analysis."}
+                yield {"type": "result", "data": cached_result}
+                return
+        except Exception as exc:
+            print(f"[CACHE] Cache lookup failed: {exc}")
+
     yield {"type": "progress", "percent": 10, "message": "Analyzing audio..."}
     asr_result = transcribe_audio_with_details(audio_path)
     transcript = asr_result.get("text", "")
@@ -701,31 +954,38 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
     yield {"type": "progress", "percent": 15, "message": "Evaluating content..."}
     speech_rate_scale = calculate_speech_rate_scale(word_timestamps)
     
-    # Identify pauses at punctuation marks
-    pause_evaluations = []
-    
-    # Find word-to-word gaps first
-    word_only_timestamps = [w for w in word_timestamps if w.get('value')]
-    
-    # Map reference punctuation to timestamps
-    # This is a bit complex: we need to find which punctuation in diff_analysis
-    # falls between which words in word_timestamps.
-    
-    # For now, let's use the simple gaps between transcribed words 
-    # and map them back to punctuation in the reference.
-    
     yield {"type": "progress", "percent": 20, "message": "Evaluating content..."}
-    diff_analysis, transcript_clean = compare_text(reference_text, transcript)
-    
-    # Identify which words (indices) in the reference are "correct" content-wise.
-    # We will only run pronunciation checks on these.
-    valid_ref_indices = {item['ref_index'] for item in diff_analysis if item['status'] == 'correct'}
+    diff_analysis, _ = compare_text(reference_text, transcript)
     
     # --- Step 2: MFA Alignment ---
     
     # Unique ID for this run
     run_id = str(uuid.uuid4())[:8]
-    temp_dir_name = f"run_{run_id}"
+    mfa_num_jobs = _resolve_mfa_num_jobs()
+    mfa_runner_mode, _ = _resolve_mfa_runner_mode()
+    mfa_disabled = _as_bool_env(os.environ.get("PTE_SKIP_MFA"))
+    docker_ready, docker_reason = _is_docker_ready()
+    using_builtin_mfa_runner = getattr(run_single_alignment_gen, "__module__", "") == __name__
+    if mfa_disabled or (using_builtin_mfa_runner and not docker_ready):
+        reason = "MFA disabled by PTE_SKIP_MFA." if mfa_disabled else docker_reason
+        print(f"[DEBUG] Skipping MFA: {reason}")
+        yield {"type": "progress", "percent": 30, "message": "MFA unavailable; using ASR fallback."}
+        yield {
+            "type": "result",
+            "data": build_asr_only_result(
+                diff_analysis,
+                transcript,
+                speech_rate_scale,
+                word_timestamps,
+                run_id,
+                f"Phoneme-level analysis unavailable: {reason}",
+                mfa_runner_mode=mfa_runner_mode,
+                mfa_num_jobs=mfa_num_jobs,
+                cache_key=cache_key,
+            ),
+        }
+        return
+
     temp_host_dir = MFA_RUNTIME_DIR / run_id / "input"
     os.makedirs(temp_host_dir, exist_ok=True)
     
@@ -742,7 +1002,10 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         accent_tgs = {} # accent -> path to TG
         
         # Run MFA alignment (60-90 seconds)
-        print(f"[DEBUG] Running MFA for {list(target_accents.keys())}...")
+        print(
+            f"[DEBUG] Running MFA for {list(target_accents.keys())} "
+            f"(runner={mfa_runner_mode}, num_jobs={mfa_num_jobs})..."
+        )
         
         try:
              yield {"type": "progress", "percent": 30, "message": "Running MFA alignment (may take 60-90s)..."}
@@ -803,32 +1066,21 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             base_tg = list(accent_tgs.values())[0]
         else:
             print(f"[DEBUG] MFA failed for all accents. Falling back to ASR results.")
-            # If alignment fails completely (e.g. empty audio), fall back to just ASR results
-            # Still provide useful word-level feedback based on ASR comparison
-            correct_count = sum(1 for w in diff_analysis if w['status'] == 'correct' and not is_punctuation(w['word']))
-            total_words = sum(1 for w in diff_analysis if not is_punctuation(w['word']))
-            
             try:
-                yield {"type": "result", "data": {
-                    "words": diff_analysis,
-                    "transcript": transcript,
-                    "pauses": [],
-                    "speech_rate_scale": round(speech_rate_scale, 2),
-                    "raw_word_timestamps": word_timestamps,
-                    "meta": {
-                        "mfa_run_id": run_id,
-                        "mfa_output_root": str(MFA_RUNTIME_DIR / run_id / "output"),
-                        "mfa_output_dirs": {},
-                    },
-                    "summary": {
-                        "total": total_words,
-                        "correct": correct_count,
-                        "pause_penalty": 0,
-                        "pause_count": 0,
-                        "asr_only": True,
-                        "note": "Phoneme-level analysis unavailable. Showing ASR-based results."
-                    }
-                }}
+                yield {
+                    "type": "result",
+                    "data": build_asr_only_result(
+                        diff_analysis,
+                        transcript,
+                        speech_rate_scale,
+                        word_timestamps,
+                        run_id,
+                        "Phoneme-level analysis unavailable. Showing ASR-based results.",
+                        mfa_runner_mode=mfa_runner_mode,
+                        mfa_num_jobs=mfa_num_jobs,
+                        cache_key=cache_key,
+                    ),
+                }
             except BaseException as e:
                 print(f"[DEBUG] Failed to yield ASR fallback result: {e}")
             return
@@ -871,8 +1123,18 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         final_results_map = [None] * len(diff_analysis) # Preserve order
         pause_evals = []
         
-        print(f"[DEBUG] Starting parallel word analysis for {len(diff_analysis)} items")
-        # 3A. Parallel Word Analysis
+        analysis_workers = _resolve_word_analysis_workers()
+        word_timeout_seconds = _safe_int_env(
+            os.environ.get("PTE_WORD_ANALYSIS_TIMEOUT_SECONDS"),
+            default=45,
+            minimum=5,
+            maximum=120,
+        )
+        print(
+            f"[DEBUG] Starting word analysis for {len(diff_analysis)} items "
+            f"(workers={analysis_workers}, timeout={word_timeout_seconds}s)"
+        )
+        # 3A. Word Analysis
         # Filter items that need analysis (correct or inserted)
         items_to_process = []
         for i, item in enumerate(diff_analysis):
@@ -885,15 +1147,49 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                  # Omitted or others without trans_index, just copy
                  final_results_map[i] = item.copy()
 
-        # Execute detailed analysis sequentially to avoid C++ input stream errors
+        def _word_fallback(idx, item):
+            fallback = diff_analysis[idx].copy()
+            if 'start' in item and 'end' in item:
+                fallback['start'] = item['start']
+                fallback['end'] = item['end']
+            return fallback
+
         completed_count = 0
         total_items = len(items_to_process)
-        
-        # Use ThreadPoolExecutor with timeout for each word
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+
+        if analysis_workers <= 1 or total_items <= 1:
+            # Default path: explicit sequential execution for thread-unsafe analyzers.
             for idx, item in items_to_process:
                 try:
-                    # Submit the task with a timeout
+                    final_results_map[idx] = analyze_word_pronunciation(
+                        item,
+                        word_timestamps,
+                        audio_path,
+                        ref_to_mfa_map.get(idx),
+                        all_mfa_phones,
+                        builder,
+                        scorer,
+                        scoring_accent,
+                    )
+                except Exception as exc:
+                    print(f"Word analysis exception at index {idx}: {exc}")
+                    final_results_map[idx] = _word_fallback(idx, item)
+
+                completed_count += 1
+                if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
+                    prog = 60 + int(30 * (completed_count / total_items))
+                    try:
+                        yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
+                    except Exception:
+                        pass
+        else:
+            # Optional opt-in: threaded execution for faster analysis on stable environments.
+            effective_workers = min(analysis_workers, total_items)
+            executor = concurrent.futures.ThreadPoolExecutor(max_workers=effective_workers)
+            futures = []
+            had_timeout = False
+            try:
+                for idx, item in items_to_process:
                     future = executor.submit(
                         analyze_word_pronunciation,
                         item,
@@ -905,33 +1201,33 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                         scorer,
                         scoring_accent,
                     )
-                    # Wait up to 45 seconds for this word
-                    res = future.result(timeout=45)
-                    final_results_map[idx] = res
-                except concurrent.futures.TimeoutError:
-                    print(f"[WARNING] Word analysis timeout at index {idx} (word: {item.get('word')})")
-                    # Keep the item with timestamps but skip detailed analysis
-                    fallback = diff_analysis[idx].copy()
-                    if 'start' in item and 'end' in item:
-                        fallback['start'] = item['start']
-                        fallback['end'] = item['end']
-                    final_results_map[idx] = fallback
-                except Exception as exc:
-                    print(f"Word analysis exception at index {idx}: {exc}")
-                    final_results_map[idx] = diff_analysis[idx].copy() # Fallback
-                
-                completed_count += 1
-                # Update progress periodically
-                if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
-                     prog = 60 + int(30 * (completed_count / total_items))
-                     try:
-                         yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
-                     except Exception:
-                         pass
+                    futures.append((idx, item, future))
+
+                for idx, item, future in futures:
+                    try:
+                        final_results_map[idx] = future.result(timeout=word_timeout_seconds)
+                    except concurrent.futures.TimeoutError:
+                        had_timeout = True
+                        future.cancel()
+                        print(f"[WARNING] Word analysis timeout at index {idx} (word: {item.get('word')})")
+                        final_results_map[idx] = _word_fallback(idx, item)
+                    except Exception as exc:
+                        print(f"Word analysis exception at index {idx}: {exc}")
+                        final_results_map[idx] = _word_fallback(idx, item)
+
+                    completed_count += 1
+                    if total_items > 0 and completed_count % max(1, total_items // 5) == 0:
+                        prog = 60 + int(30 * (completed_count / total_items))
+                        try:
+                            yield {"type": "progress", "percent": prog, "message": f"Analyzed {completed_count}/{total_items} words..."}
+                        except Exception:
+                            pass
+            finally:
+                executor.shutdown(wait=not had_timeout, cancel_futures=had_timeout)
 
         # Send one update after completion
         yield {"type": "progress", "percent": 90, "message": "Analysis complete."}
-        print(f"[DEBUG] Parallel word analysis complete. Completed: {completed_count}")
+        print(f"[DEBUG] Word analysis complete. Completed: {completed_count}")
         # 3B. Pause Evaluation (Sequential, fast)
         yield {"type": "progress", "percent": 95, "message": "Evaluating pauses..."}
         
@@ -1018,7 +1314,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         except Exception as e:
             print(f"Failed to read TextGrid for debug: {e}")
 
-        yield {"type": "result", "data": {
+        result_payload = {
             "textgrid_content": textgrid_content,
             "words": final_results,
             "transcript": transcript,
@@ -1031,14 +1327,31 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 "mfa_output_dirs": {
                     accent: str(path.parent) for accent, path in accent_tgs.items()
                 },
+                "mfa_runner_mode": mfa_runner_mode,
+                "mfa_num_jobs": mfa_num_jobs,
+                "cache": {
+                    "hit": False,
+                    "key": cache_key,
+                    "schema": CACHE_SCHEMA_VERSION,
+                    "pipeline": CACHE_PIPELINE_VERSION,
+                },
             },
             "summary": {
                 "total": len(final_results),
                 "correct": sum(1 for w in final_results if w['status'] == 'correct'),
                 "pause_penalty": round(total_pause_penalty, 3),
-                "pause_count": len([p for p in pause_evals if p['status'] != 'correct_pause'])
+                "pause_count": len([p for p in pause_evals if p['status'] != 'correct_pause']),
+                "cached": False,
             }
-        }}
+        }
+
+        if cache_key and _result_cache_enabled():
+            try:
+                _store_cached_result(cache_key, result_payload)
+            except Exception as exc:
+                print(f"[CACHE] Failed to store result cache: {exc}")
+
+        yield {"type": "result", "data": result_payload}
 
     except Exception as gen_err:
         import traceback
@@ -1052,11 +1365,11 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         try:
             # shutil.rmtree(temp_host_dir)
             # Also cleanup output dirs
-            for accent in target_accents:
-                 output_dir_name = f"output_{accent}"
-                 host_output_dir = MFA_RUNTIME_DIR / run_id / "output" / accent
-                 # if host_output_dir.exists():
-                 #     shutil.rmtree(host_output_dir)
+            for _accent in target_accents:
+                # host_output_dir = MFA_RUNTIME_DIR / run_id / "output" / _accent
+                # if host_output_dir.exists():
+                #     shutil.rmtree(host_output_dir)
+                pass
         except Exception as e:
             print(f"Cleanup error: {e}")
 

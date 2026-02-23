@@ -64,6 +64,18 @@ CANONICAL_WRITING_JSON = CANONICAL_WRITING_ROOT / "references.json"
 CANONICAL_SWT_WRITING_JSON = CANONICAL_WRITING_ROOT / "summarize_written_text" / "references.json"
 CANONICAL_ESSAY_WRITING_JSON = CANONICAL_WRITING_ROOT / "write_essay" / "references.json"
 CANONICAL_EMAIL_WRITING_JSON = CANONICAL_WRITING_ROOT / "write_email" / "references.json"
+CANONICAL_LISTENING_ROOT = CANONICAL_REFERENCE_ROOT / "listening"
+CANONICAL_SST_LISTENING_JSON = CANONICAL_LISTENING_ROOT / "summarize_spoken_text" / "references.json"
+CANONICAL_MCM_LISTENING_JSON = CANONICAL_LISTENING_ROOT / "multiple_choice_multiple" / "references.json"
+CANONICAL_MCS_LISTENING_JSON = CANONICAL_LISTENING_ROOT / "multiple_choice_single" / "references.json"
+CANONICAL_FIB_LISTENING_JSON = CANONICAL_LISTENING_ROOT / "fill_in_the_blanks" / "references.json"
+CANONICAL_SMW_LISTENING_JSON = CANONICAL_LISTENING_ROOT / "select_missing_word" / "references.json"
+CANONICAL_READING_ROOT = CANONICAL_REFERENCE_ROOT / "readingset"
+CANONICAL_MCM_READING_JSON = CANONICAL_READING_ROOT / "multiple_choice_multiple" / "references.json"
+CANONICAL_MCS_READING_JSON = CANONICAL_READING_ROOT / "multiple_choice_multiple" / "references_single.json"
+CANONICAL_FIB_DROPDOWN_READING_JSON = (
+    CANONICAL_READING_ROOT / "multiple_choice_multiple" / "references_fib_dropdown.json"
+)
 CANONICAL_IMAGES_DIR = CANONICAL_REFERENCE_ROOT / "describe_image" / "images"
 CANONICAL_LECTURES_DIR = CANONICAL_REFERENCE_ROOT / "retell_lecture" / "lectures"
 CANONICAL_REPEAT_SENTENCE_AUDIO_DIR = CANONICAL_REFERENCE_ROOT / "repeat_sentence" / "audio"
@@ -79,6 +91,18 @@ LEGACY_WRITING_JSON = LEGACY_DATA_ROOT / "writing_references.json"
 LEGACY_SWT_WRITING_JSON = LEGACY_WRITING_ROOT / "summarize_written_text_references.json"
 LEGACY_ESSAY_WRITING_JSON = LEGACY_WRITING_ROOT / "write_essay_references.json"
 LEGACY_EMAIL_WRITING_JSON = LEGACY_WRITING_ROOT / "write_email_references.json"
+LEGACY_LISTENING_ROOT = LEGACY_DATA_ROOT / "listening"
+LEGACY_SST_LISTENING_JSON = LEGACY_LISTENING_ROOT / "summarize_spoken_text" / "references.json"
+LEGACY_MCM_LISTENING_JSON = LEGACY_LISTENING_ROOT / "multiple_choice_multiple" / "references.json"
+LEGACY_MCS_LISTENING_JSON = LEGACY_LISTENING_ROOT / "multiple_choice_single" / "references.json"
+LEGACY_FIB_LISTENING_JSON = LEGACY_LISTENING_ROOT / "fill_in_the_blanks" / "references.json"
+LEGACY_SMW_LISTENING_JSON = LEGACY_LISTENING_ROOT / "select_missing_word" / "references.json"
+LEGACY_READING_ROOT = LEGACY_DATA_ROOT / "readingset"
+LEGACY_MCM_READING_JSON = LEGACY_READING_ROOT / "multiple_choice_multiple" / "references.json"
+LEGACY_MCS_READING_JSON = LEGACY_READING_ROOT / "multiple_choice_multiple" / "references_single.json"
+LEGACY_FIB_DROPDOWN_READING_JSON = (
+    LEGACY_READING_ROOT / "multiple_choice_multiple" / "references_fib_dropdown.json"
+)
 LEGACY_IMAGES_DIR = LEGACY_DATA_ROOT / "images"
 LEGACY_LECTURES_DIR = LEGACY_DATA_ROOT / "lectures"
 LEGACY_REPEAT_SENTENCE_AUDIO_DIR = LEGACY_DATA_ROOT / "repeat-sentence-audio"
@@ -132,6 +156,38 @@ EMAIL_WRITING_REFERENCE_FILE = _first_existing(
     ),
     CANONICAL_EMAIL_WRITING_JSON,
 )
+SST_LISTENING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_SST_LISTENING_JSON, LEGACY_SST_LISTENING_JSON),
+    CANONICAL_SST_LISTENING_JSON,
+)
+MCM_LISTENING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_MCM_LISTENING_JSON, LEGACY_MCM_LISTENING_JSON),
+    CANONICAL_MCM_LISTENING_JSON,
+)
+MCS_LISTENING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_MCS_LISTENING_JSON, LEGACY_MCS_LISTENING_JSON),
+    CANONICAL_MCS_LISTENING_JSON,
+)
+FIB_LISTENING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_FIB_LISTENING_JSON, LEGACY_FIB_LISTENING_JSON),
+    CANONICAL_FIB_LISTENING_JSON,
+)
+SMW_LISTENING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_SMW_LISTENING_JSON, LEGACY_SMW_LISTENING_JSON),
+    CANONICAL_SMW_LISTENING_JSON,
+)
+MCM_READING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_MCM_READING_JSON, LEGACY_MCM_READING_JSON),
+    CANONICAL_MCM_READING_JSON,
+)
+MCS_READING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_MCS_READING_JSON, LEGACY_MCS_READING_JSON),
+    CANONICAL_MCS_READING_JSON,
+)
+FIB_DROPDOWN_READING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_FIB_DROPDOWN_READING_JSON, LEGACY_FIB_DROPDOWN_READING_JSON),
+    CANONICAL_FIB_DROPDOWN_READING_JSON,
+)
 REFERENCE_DATA_DIR = _first_existing((CANONICAL_REFERENCE_ROOT, LEGACY_DATA_ROOT), LEGACY_DATA_ROOT)
 IMAGES_DIR = _first_existing((CANONICAL_IMAGES_DIR, LEGACY_IMAGES_DIR), LEGACY_IMAGES_DIR)
 LECTURES_DIR = _first_existing((CANONICAL_LECTURES_DIR, LEGACY_LECTURES_DIR), LEGACY_LECTURES_DIR)
@@ -152,6 +208,16 @@ def ensure_runtime_dirs() -> None:
     (CANONICAL_WRITING_ROOT / "summarize_written_text").mkdir(parents=True, exist_ok=True)
     (CANONICAL_WRITING_ROOT / "write_essay").mkdir(parents=True, exist_ok=True)
     (CANONICAL_WRITING_ROOT / "write_email").mkdir(parents=True, exist_ok=True)
+    CANONICAL_LISTENING_ROOT.mkdir(parents=True, exist_ok=True)
+    (CANONICAL_LISTENING_ROOT / "summarize_spoken_text").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_LISTENING_ROOT / "multiple_choice_multiple").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_LISTENING_ROOT / "multiple_choice_single").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_LISTENING_ROOT / "fill_in_the_blanks").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_LISTENING_ROOT / "select_missing_word").mkdir(parents=True, exist_ok=True)
+    CANONICAL_READING_ROOT.mkdir(parents=True, exist_ok=True)
+    (CANONICAL_READING_ROOT / "multiple_choice_multiple").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_READING_ROOT / "multiple_choice_single").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_READING_ROOT / "fill_in_the_blanks_dropdown").mkdir(parents=True, exist_ok=True)
     CANONICAL_PROCESSED_ROOT.mkdir(parents=True, exist_ok=True)
     USER_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     MFA_BASE_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,256 @@
+{
+  "fill_in_the_blanks": [
+    {
+      "id": "lfib_651",
+      "title": "#651 Power of Music",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "transcript": "Music can evoke deep emotions and can support mental well-being. It is often used therapeutically to reduce stress, and it also helps people understand different cultures through shared experiences.",
+      "passage_template": "Music can {{1}} deep emotions and can support mental {{2}}. It is often used {{3}} to reduce stress, and it also helps people understand different {{4}} through shared {{5}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "evoke"
+        },
+        {
+          "id": "2",
+          "answer": "well-being"
+        },
+        {
+          "id": "3",
+          "answer": "therapeutically"
+        },
+        {
+          "id": "4",
+          "answer": "cultures"
+        },
+        {
+          "id": "5",
+          "answer": "experiences"
+        }
+      ]
+    },
+    {
+      "id": "lfib_649",
+      "title": "#649 Printing Press",
+      "topic": "History",
+      "difficulty": "easy",
+      "transcript": "The printing press made books widely available, increased literacy, and helped spread new ideas quickly. It changed education by giving more people access to reliable knowledge.",
+      "passage_template": "The printing press made books widely {{1}}, increased {{2}}, and helped spread new ideas {{3}}. It changed education by giving more people access to reliable {{4}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "available"
+        },
+        {
+          "id": "2",
+          "answer": "literacy"
+        },
+        {
+          "id": "3",
+          "answer": "quickly"
+        },
+        {
+          "id": "4",
+          "answer": "knowledge"
+        }
+      ]
+    },
+    {
+      "id": "lfib_654",
+      "title": "#654 Sustainable Farming",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "transcript": "Sustainable farming protects ecosystems by reducing chemical use, conserving water, and supporting biodiversity. Local production can lower emissions and strengthen community food systems.",
+      "passage_template": "Sustainable farming protects {{1}} by reducing chemical use, conserving {{2}}, and supporting {{3}}. Local production can lower {{4}} and strengthen community food {{5}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "ecosystems"
+        },
+        {
+          "id": "2",
+          "answer": "water"
+        },
+        {
+          "id": "3",
+          "answer": "biodiversity"
+        },
+        {
+          "id": "4",
+          "answer": "emissions"
+        },
+        {
+          "id": "5",
+          "answer": "systems"
+        }
+      ]
+    },
+    {
+      "id": "lfib_648",
+      "title": "#648 Space Exploration",
+      "topic": "Science",
+      "difficulty": "medium",
+      "transcript": "Modern space exploration includes robotic missions that study Mars, search for evidence of past conditions, and prepare for future human travel.",
+      "passage_template": "Modern space exploration includes {{1}} missions that study Mars, search for evidence of past {{2}}, and prepare for future human {{3}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "robotic"
+        },
+        {
+          "id": "2",
+          "answer": "conditions"
+        },
+        {
+          "id": "3",
+          "answer": "travel"
+        }
+      ]
+    },
+    {
+      "id": "lfib_647",
+      "title": "#647 Internet",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The Internet enables global communication and rapid knowledge sharing, but societies must also address misinformation, privacy risks, and unequal access.",
+      "passage_template": "The Internet enables global {{1}} and rapid knowledge sharing, but societies must also address {{2}}, privacy risks, and unequal {{3}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "communication"
+        },
+        {
+          "id": "2",
+          "answer": "misinformation"
+        },
+        {
+          "id": "3",
+          "answer": "access"
+        }
+      ]
+    },
+    {
+      "id": "lfib_660",
+      "title": "#660 Renewable Energy Storage",
+      "topic": "Energy",
+      "difficulty": "medium",
+      "transcript": "Energy storage helps balance renewable electricity by saving excess power and releasing it when demand rises. This improves grid reliability and reduces fossil backup use.",
+      "passage_template": "Energy storage helps {{1}} renewable electricity by saving excess power and releasing it when {{2}} rises. This improves grid {{3}} and reduces fossil backup {{4}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "balance"
+        },
+        {
+          "id": "2",
+          "answer": "demand"
+        },
+        {
+          "id": "3",
+          "answer": "reliability"
+        },
+        {
+          "id": "4",
+          "answer": "use"
+        }
+      ]
+    },
+    {
+      "id": "lfib_661",
+      "title": "#661 Urban Green Spaces",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "transcript": "Urban green spaces can lower city temperatures, improve air quality, and support mental health. Equal access to parks remains an important planning challenge.",
+      "passage_template": "Urban green spaces can lower city {{1}}, improve air {{2}}, and support mental {{3}}. Equal access to parks remains an important planning {{4}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "temperatures"
+        },
+        {
+          "id": "2",
+          "answer": "quality"
+        },
+        {
+          "id": "3",
+          "answer": "health"
+        },
+        {
+          "id": "4",
+          "answer": "challenge"
+        }
+      ]
+    },
+    {
+      "id": "lfib_662",
+      "title": "#662 Cybersecurity Hygiene",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "Strong cybersecurity hygiene includes unique passwords, multi-factor authentication, and timely software updates. Staff training also helps prevent phishing-related breaches.",
+      "passage_template": "Strong cybersecurity hygiene includes unique {{1}}, multi-factor authentication, and timely software {{2}}. Staff training also helps prevent {{3}}-related breaches.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "passwords"
+        },
+        {
+          "id": "2",
+          "answer": "updates"
+        },
+        {
+          "id": "3",
+          "answer": "phishing"
+        }
+      ]
+    },
+    {
+      "id": "lfib_663",
+      "title": "#663 Telemedicine Access",
+      "topic": "Health",
+      "difficulty": "easy",
+      "transcript": "Telemedicine improves convenience for follow-up care and can reduce travel time for rural patients. However, not all conditions can be evaluated remotely.",
+      "passage_template": "Telemedicine improves {{1}} for follow-up care and can reduce {{2}} time for rural patients. However, not all conditions can be evaluated {{3}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "convenience"
+        },
+        {
+          "id": "2",
+          "answer": "travel"
+        },
+        {
+          "id": "3",
+          "answer": "remotely"
+        }
+      ]
+    },
+    {
+      "id": "lfib_664",
+      "title": "#664 Circular Economy",
+      "topic": "Economy",
+      "difficulty": "difficult",
+      "transcript": "Circular economy strategies include reuse, repair, and material recovery. These approaches can reduce waste and improve long-term resource resilience.",
+      "passage_template": "Circular economy strategies include {{1}}, repair, and material {{2}}. These approaches can reduce {{3}} and improve long-term resource {{4}}.",
+      "blanks": [
+        {
+          "id": "1",
+          "answer": "reuse"
+        },
+        {
+          "id": "2",
+          "answer": "recovery"
+        },
+        {
+          "id": "3",
+          "answer": "waste"
+        },
+        {
+          "id": "4",
+          "answer": "resilience"
+        }
+      ]
+    }
+  ]
+}

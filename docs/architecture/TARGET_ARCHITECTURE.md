@@ -25,14 +25,20 @@ pte/
 │   │   ├── read_aloud/
 │   │   ├── repeat_sentence/
 │   │   ├── describe_image/
-│   │   └── retell_lecture/
+│   │   ├── retell_lecture/
+│   │   ├── listening/
+│   │   ├── writing/
+│   │   └── reading/
 │   └── shared/                    # Common utils, config, schemas
 ├── data/
 │   ├── reference/                 # Static content used by tasks
 │   │   ├── read_aloud/
 │   │   ├── repeat_sentence/
 │   │   ├── describe_image/
-│   │   └── retell_lecture/
+│   │   ├── retell_lecture/
+│   │   ├── listening/
+│   │   ├── writing/
+│   │   └── reading/
 │   ├── user_uploads/              # User audio + paired user text
 │   ├── processed/
 │   │   ├── mfa_runs/
@@ -145,3 +151,60 @@ pte/
 
 - **Risk**: dependency runtime mismatch (example: `panphon` behavior).
 - **Mitigation**: pin supported Python version in docs/CI and keep tests with stubs for optional heavy dependencies.
+
+---
+
+## 6) Reading Tasks Architecture (Official Alignment)
+
+### 6.1 Covered Reading item types
+
+1. `Multiple Choice, Multiple Answers`
+2. `Multiple Choice, Single Answer`
+3. `Reading & Writing: Fill in the Blanks (Dropdown)`
+
+### 6.2 Official scoring alignment (source-backed)
+
+Reference sources:
+
+1. https://www.pearsonpte.com/content/dam/brand-folder/global/pearson-dot-com/files/pte/PTE_Academic_Test_Taker_Score_Guide_2025_03.pdf
+2. https://www.pearsonpte.com/pteservice/newarticlecontent/content/resources/PTE_Academic_Test_Tips_Booklet.pdf
+3. https://www.pearsonpte.com/content/dam/brand-folder/global/pearson-dot-com/files/pte/research/Ref-65-Concordance-Report-PTE-Academic-Can-Do-Statements-and-English-Language-Test-Scores.pdf
+
+Implemented rule mapping:
+
+- Reading MCM: `+1` each correct selected, `-1` each incorrect selected, minimum `0`.
+- Reading MCS: `1` for correct, `0` for incorrect.
+- Reading FIB Dropdown: `1` per correct blank, no negative marking.
+
+### 6.3 Runtime module layout in current codebase
+
+- Evaluator module: `api/reading_evaluator.py`
+- API routing: `api/app.py`
+- UI templates:
+  - `api/templates/reading_multiple_choice_multiple.html`
+  - `api/templates/reading_multiple_choice_single.html`
+  - `api/templates/reading_fill_in_the_blanks_dropdown.html`
+- Reference data:
+  - `data/reference/readingset/multiple_choice_multiple/references.json`
+  - `data/reference/readingset/multiple_choice_multiple/references_single.json`
+  - `data/reference/readingset/multiple_choice_multiple/references_fib_dropdown.json`
+- Shared path constants: `src/shared/paths.py`
+
+### 6.4 API contracts
+
+- `/reading/<task_slug>/get-categories`
+- `/reading/<task_slug>/get-catalog`
+- `/reading/<task_slug>/get-task`
+- `/reading/<task_slug>/score`
+
+Task slugs:
+
+- `multiple-choice-multiple`
+- `multiple-choice-single`
+- `fill-in-the-blanks-dropdown`
+
+### 6.5 Validation and quality gates
+
+- Unit coverage: `tests/test_reading_evaluator.py`
+- Contract coverage: `tests/test_api_contracts.py`
+- Score functions are deterministic and stateless.

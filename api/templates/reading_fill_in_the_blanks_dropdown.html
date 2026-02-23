@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Fill in the Blanks (Dropdown) - PTE Practice</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .filter-shell {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            margin: 0.85rem 0;
+            padding: 0.85rem;
+            border: 1px solid #d6e1ed;
+            border-radius: 14px;
+            background: #f7fbff;
+            align-items: end;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #4f637c;
+            margin-bottom: 0.35rem;
+        }
+
+        .filter-select {
+            width: 100%;
+            border: 1px solid #c9d8ea;
+            background: #ffffff;
+            color: #23364f;
+            border-radius: 10px;
+            padding: 0.48rem 0.65rem;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .topic-count {
+            color: #5d728a;
+            font-size: 0.9rem;
+            margin: 0.3rem 0 0.65rem;
+            font-weight: 600;
+        }
+
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 0.8rem;
+        }
+
+        .topic-card {
+            background: #ffffff;
+            border: 1px solid #d5e2f0;
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-2px);
+            border-color: #0f6ac9;
+            box-shadow: 0 8px 16px rgba(15, 106, 201, 0.13);
+        }
+
+        .topic-card.active {
+            border-color: #0f6ac9;
+            box-shadow: 0 0 0 2px rgba(15, 106, 201, 0.15);
+            background: #f2f8ff;
+        }
+
+        .topic-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1d2f45;
+            margin-bottom: 0.45rem;
+            line-height: 1.35;
+        }
+
+        .topic-card-meta {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .topic-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            border: 1px solid #d2ddea;
+            background: #f6f9fe;
+            color: #3a516d;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 0.16rem 0.52rem;
+        }
+
+        .topic-empty {
+            grid-column: 1 / -1;
+            border: 1px dashed #c6d7ec;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            color: #526983;
+            background: #f9fcff;
+            font-weight: 600;
+        }
+
+        .fib-box {
+            margin-top: 0.9rem;
+            padding: 1rem;
+            border: 1px solid #d6e1ed;
+            border-radius: 14px;
+            background: #ffffff;
+            line-height: 1.95;
+            color: #1f3248;
+            font-size: 1rem;
+        }
+
+        .fib-select {
+            min-width: 10ch;
+            max-width: 24ch;
+            margin: 0 0.18rem;
+            padding: 0.26rem 0.38rem;
+            border: 1px solid #bfd0e5;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            color: #1f3248;
+            background: #fbfdff;
+            vertical-align: baseline;
+        }
+
+        .fib-select.correct {
+            border-color: #1f8a4c;
+            background: #e8f7ee;
+        }
+
+        .fib-select.incorrect {
+            border-color: #c93434;
+            background: #fdeaea;
+        }
+
+        @media (max-width: 900px) {
+            .filter-shell {
+                grid-template-columns: 1fr;
+            }
+
+            #newTaskBtn {
+                width: 100%;
+            }
+
+            .fib-select {
+                max-width: 16ch;
+                margin: 0.16rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <a href="/" class="back-link">← Back to Dashboard</a>
+            <h1 class="page-title">Reading Fill in the Blanks (Dropdown)</h1>
+            <p class="page-subtitle">Read the passage and choose the best option for each blank.</p>
+            <div class="hero-meta">
+                <span class="hero-pill">Reading + Writing</span>
+                <span class="hero-pill">Dropdown Blanks</span>
+                <span class="hero-pill">1 Point per Blank</span>
+            </div>
+        </div>
+
+        <div class="task-container">
+            <h2 class="section-title">Task Setup</h2>
+            <div class="filter-shell">
+                <div>
+                    <div class="filter-label">Category</div>
+                    <select id="difficultySelect" class="filter-select">
+                        <option value="all">All Categories</option>
+                    </select>
+                </div>
+                <button class="btn secondary" id="newTaskBtn">Load Random</button>
+            </div>
+            <div class="topic-count" id="topicCount">Loading topics...</div>
+            <div class="topic-grid" id="topicGrid"></div>
+            <div id="status" style="display:none; margin-top: 0.9rem; padding: 0.7rem;"></div>
+        </div>
+
+        <div class="task-container" id="readingSection" style="display:none;">
+            <h2 class="section-title">Passage</h2>
+            <div style="font-weight:700; color:#39506b; margin-bottom:0.55rem;" id="taskTitle">Loading...</div>
+            <div class="fib-box" id="fibBox"></div>
+            <div class="controls" style="margin-top:0.9rem;">
+                <button class="btn primary" id="scoreBtn">Check Answers</button>
+                <button class="btn secondary" id="clearBtn">Clear</button>
+            </div>
+        </div>
+
+        <div class="task-container" id="resultSection" style="display:none;">
+            <h2 class="section-title">Score Report</h2>
+            <div id="scoreHeadline" style="font-weight:700; color:#142031;"></div>
+            <div id="analysisMeta" style="margin-top:0.75rem; color:#60748d;"></div>
+            <div style="margin-top:0.9rem;">
+                <strong>Feedback</strong>
+                <ul id="feedbackList" style="margin-top:0.4rem;"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TASK_SLUG = 'fill-in-the-blanks-dropdown';
+
+        const difficultySelect = document.getElementById('difficultySelect');
+        const topicCount = document.getElementById('topicCount');
+        const topicGrid = document.getElementById('topicGrid');
+        const statusBox = document.getElementById('status');
+
+        const readingSection = document.getElementById('readingSection');
+        const resultSection = document.getElementById('resultSection');
+        const taskTitle = document.getElementById('taskTitle');
+        const fibBox = document.getElementById('fibBox');
+
+        const scoreHeadline = document.getElementById('scoreHeadline');
+        const analysisMeta = document.getElementById('analysisMeta');
+        const feedbackList = document.getElementById('feedbackList');
+
+        const newTaskBtn = document.getElementById('newTaskBtn');
+        const scoreBtn = document.getElementById('scoreBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        let currentTaskId = null;
+        let currentBlanks = [];
+        let currentTemplate = '';
+        let allTopics = [];
+        let filteredTopics = [];
+
+        function titleCase(value) {
+            const text = String(value || '').trim().toLowerCase();
+            if (!text) return '';
+            return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+
+        function setStatus(message, isError = false) {
+            statusBox.style.display = 'block';
+            statusBox.className = isError ? 'error show' : 'success show';
+            statusBox.textContent = message;
+        }
+
+        function clearStatus() {
+            statusBox.style.display = 'none';
+            statusBox.className = '';
+            statusBox.textContent = '';
+        }
+
+        function renderCategoryOptions(categories) {
+            difficultySelect.innerHTML = '';
+            ['all', ...(categories || [])].forEach((value) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value === 'all' ? 'All Categories' : titleCase(value);
+                difficultySelect.appendChild(option);
+            });
+            difficultySelect.value = 'all';
+        }
+
+        function renderTopicCards() {
+            topicGrid.innerHTML = '';
+            if (!filteredTopics.length) {
+                const empty = document.createElement('div');
+                empty.className = 'topic-empty';
+                empty.textContent = 'No topics match this category filter.';
+                topicGrid.appendChild(empty);
+                return;
+            }
+
+            filteredTopics.forEach((topicItem) => {
+                const card = document.createElement('div');
+                card.className = `topic-card${currentTaskId === topicItem.id ? ' active' : ''}`;
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.innerHTML = `
+                    <div class="topic-card-title">${topicItem.title}</div>
+                    <div class="topic-card-meta">
+                        <span class="topic-meta-pill">${topicItem.topic}</span>
+                        <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
+                    </div>
+                `;
+                card.onclick = () => loadTask(topicItem.id);
+                card.onkeydown = (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        loadTask(topicItem.id);
+                    }
+                };
+                topicGrid.appendChild(card);
+            });
+        }
+
+        function applyTopicFilter() {
+            const selectedCategory = difficultySelect.value || 'all';
+            filteredTopics = allTopics.filter((item) => selectedCategory === 'all' || item.difficulty === selectedCategory);
+            topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
+            renderTopicCards();
+        }
+
+        function renderTemplate(template, blanks, existingValues = {}) {
+            currentTemplate = String(template || '');
+            currentBlanks = Array.isArray(blanks) ? blanks : [];
+
+            fibBox.innerHTML = '';
+            const paragraph = document.createElement('p');
+            paragraph.style.margin = '0';
+
+            const blankMap = new Map(currentBlanks.map((item) => [String(item.id), item]));
+            const regex = /\{\{([^}]+)\}\}/g;
+            let cursor = 0;
+            let match;
+            while ((match = regex.exec(currentTemplate)) !== null) {
+                const before = currentTemplate.slice(cursor, match.index);
+                if (before) {
+                    paragraph.appendChild(document.createTextNode(before));
+                }
+
+                const blankId = String(match[1]).trim();
+                const select = document.createElement('select');
+                select.className = 'fib-select';
+                select.setAttribute('data-blank-id', blankId);
+
+                const firstOption = document.createElement('option');
+                firstOption.value = '';
+                firstOption.textContent = 'Select';
+                select.appendChild(firstOption);
+
+                const blankMeta = blankMap.get(blankId) || {};
+                const options = Array.isArray(blankMeta.options) ? blankMeta.options : [];
+                options.forEach((value) => {
+                    const option = document.createElement('option');
+                    option.value = String(value);
+                    option.textContent = String(value);
+                    select.appendChild(option);
+                });
+
+                const existing = String(existingValues[blankId] || '');
+                if (existing) {
+                    select.value = existing;
+                }
+
+                paragraph.appendChild(select);
+                cursor = regex.lastIndex;
+            }
+
+            const tail = currentTemplate.slice(cursor);
+            if (tail) {
+                paragraph.appendChild(document.createTextNode(tail));
+            }
+
+            fibBox.appendChild(paragraph);
+        }
+
+        function currentResponses() {
+            const payload = {};
+            fibBox.querySelectorAll('select[data-blank-id]').forEach((node) => {
+                const blankId = String(node.getAttribute('data-blank-id') || '').trim();
+                payload[blankId] = node.value || '';
+            });
+            return payload;
+        }
+
+        function clearInputHighlights() {
+            fibBox.querySelectorAll('select[data-blank-id]').forEach((node) => {
+                node.classList.remove('correct');
+                node.classList.remove('incorrect');
+            });
+        }
+
+        function applyResultHighlights(items) {
+            const rows = Array.isArray(items) ? items : [];
+            const rowMap = new Map(rows.map((row) => [String(row.id), row]));
+            fibBox.querySelectorAll('select[data-blank-id]').forEach((node) => {
+                const blankId = String(node.getAttribute('data-blank-id') || '').trim();
+                const row = rowMap.get(blankId);
+                node.classList.remove('correct');
+                node.classList.remove('incorrect');
+                if (!row) {
+                    return;
+                }
+                node.classList.add(row.is_correct ? 'correct' : 'incorrect');
+            });
+        }
+
+        function renderResult(payload) {
+            const total = payload.scores.total;
+            scoreHeadline.textContent = `Total Score: ${total.score}/${total.max} (${total.percent}%)`;
+
+            const analysis = payload.analysis || {};
+            analysisMeta.textContent = `Missed blanks: ${analysis.missed_count || 0} | Rule: ${analysis.scoring_rule || '-'}`;
+
+            feedbackList.innerHTML = '';
+            (payload.feedback || []).forEach((item) => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                feedbackList.appendChild(li);
+            });
+
+            applyResultHighlights(analysis.items || []);
+            resultSection.style.display = 'block';
+        }
+
+        async function loadCatalog() {
+            const response = await fetch(`/reading/${TASK_SLUG}/get-catalog`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to load topic catalog.');
+            }
+            allTopics = Array.isArray(data.items) ? data.items : [];
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch(`/reading/${TASK_SLUG}/get-categories`);
+                const data = await response.json();
+                if (response.ok && Array.isArray(data.categories)) {
+                    renderCategoryOptions(data.categories);
+                    return;
+                }
+            } catch (_error) {
+                // Fallback to catalog categories.
+            }
+
+            const fallbackCategories = Array.from(new Set(allTopics.map((item) => String(item.difficulty || 'medium').toLowerCase())));
+            renderCategoryOptions(fallbackCategories);
+        }
+
+        async function loadTask(taskId = null) {
+            clearStatus();
+            resultSection.style.display = 'none';
+
+            const query = new URLSearchParams();
+            if (taskId) {
+                query.set('task_id', taskId);
+            } else {
+                const selectedCategory = difficultySelect.value || 'all';
+                if (selectedCategory !== 'all') {
+                    query.set('difficulty', selectedCategory);
+                }
+            }
+
+            const url = query.toString()
+                ? `/reading/${TASK_SLUG}/get-task?${query.toString()}`
+                : `/reading/${TASK_SLUG}/get-task`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!response.ok) {
+                setStatus(data.error || 'Failed to load task.', true);
+                return;
+            }
+
+            currentTaskId = data.id;
+            taskTitle.textContent = data.title;
+            renderTemplate(data.passage_template || '', data.blanks || []);
+            readingSection.style.display = 'block';
+            renderTopicCards();
+            setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+        }
+
+        async function scoreResponse() {
+            clearStatus();
+            if (!currentTaskId) {
+                setStatus('Load a task first.', true);
+                return;
+            }
+
+            const responses = currentResponses();
+            const hasAnySelection = Object.values(responses).some((value) => String(value || '').trim().length > 0);
+            if (!hasAnySelection) {
+                setStatus('Select at least one blank before scoring.', true);
+                return;
+            }
+
+            scoreBtn.disabled = true;
+            try {
+                const response = await fetch(`/reading/${TASK_SLUG}/score`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        task_id: currentTaskId,
+                        responses,
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    setStatus(data.error || 'Scoring failed.', true);
+                    return;
+                }
+
+                renderResult(data);
+                setStatus('Scoring completed.');
+            } finally {
+                scoreBtn.disabled = false;
+            }
+        }
+
+        newTaskBtn.addEventListener('click', async () => {
+            if (!filteredTopics.length) {
+                setStatus('No topic available for current filter.', true);
+                return;
+            }
+            const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
+            await loadTask(pick.id);
+        });
+
+        difficultySelect.addEventListener('change', async () => {
+            applyTopicFilter();
+            if (filteredTopics.length) {
+                await loadTask(filteredTopics[0].id);
+            } else {
+                currentTaskId = null;
+                readingSection.style.display = 'none';
+                setStatus('No topic available for selected category.', true);
+            }
+        });
+
+        scoreBtn.addEventListener('click', scoreResponse);
+        clearBtn.addEventListener('click', () => {
+            clearStatus();
+            clearInputHighlights();
+            renderTemplate(currentTemplate, currentBlanks, {});
+            resultSection.style.display = 'none';
+        });
+
+        (async function initPage() {
+            try {
+                await loadCatalog();
+                await loadCategories();
+                applyTopicFilter();
+                if (filteredTopics.length) {
+                    await loadTask(filteredTopics[0].id);
+                }
+            } catch (error) {
+                setStatus(error.message || 'Failed to initialize page.', true);
+            }
+        })();
+    </script>
+</body>
+
+</html>

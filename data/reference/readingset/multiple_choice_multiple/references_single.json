@@ -1,0 +1,139 @@
+{
+  "multiple_choice_single": [
+    {
+      "id": "rmcs_711",
+      "title": "#711 Library Study Spaces",
+      "topic": "Education",
+      "difficulty": "easy",
+      "passage": "University libraries now design study areas with different noise expectations. Quiet zones support deep concentration, while collaborative zones allow group discussion. This zoning model helps students choose spaces that match their task rather than forcing all activities into one environment.",
+      "question": "What is the main idea of the passage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Libraries should remove all collaborative areas."
+        },
+        {
+          "id": "B",
+          "text": "Different study tasks benefit from differently designed spaces."
+        },
+        {
+          "id": "C",
+          "text": "Students prefer noisy spaces for all academic work."
+        },
+        {
+          "id": "D",
+          "text": "Libraries are no longer useful for university students."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "rmcs_712",
+      "title": "#712 Battery Recycling",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "passage": "Rechargeable batteries contain valuable materials that can be recovered through recycling. If batteries are discarded with household waste, hazardous chemicals may leak into soil and water. Collection programs reduce this risk while supporting circular supply chains for manufacturing.",
+      "question": "Which option best summarizes the passage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Battery recycling can reduce pollution and recover useful materials."
+        },
+        {
+          "id": "B",
+          "text": "Used batteries are harmless and need no special handling."
+        },
+        {
+          "id": "C",
+          "text": "Recycling batteries increases environmental risk."
+        },
+        {
+          "id": "D",
+          "text": "Battery manufacturing does not depend on material supply."
+        }
+      ],
+      "correct_option": "A"
+    },
+    {
+      "id": "rmcs_713",
+      "title": "#713 Museum Curation",
+      "topic": "Culture",
+      "difficulty": "medium",
+      "passage": "Modern museum curation increasingly emphasizes context rather than isolated display. Curators combine artifacts with multimedia, community narratives, and thematic sequencing to help visitors connect objects with historical processes. This approach can improve engagement and interpretation across diverse audiences.",
+      "question": "What does the passage emphasize about curation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Artifacts should be displayed without explanatory context."
+        },
+        {
+          "id": "B",
+          "text": "Context-rich presentation can improve visitor understanding."
+        },
+        {
+          "id": "C",
+          "text": "Multimedia elements reduce visitor engagement."
+        },
+        {
+          "id": "D",
+          "text": "Audience diversity is not relevant to curation design."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "rmcs_714",
+      "title": "#714 Agricultural Sensors",
+      "topic": "Technology",
+      "difficulty": "medium",
+      "passage": "Precision agriculture uses field sensors to monitor soil moisture, temperature, and nutrient levels in near real time. Farmers use this information to adjust irrigation and fertilizer application, which can improve yields while reducing unnecessary resource use.",
+      "question": "Which statement captures the central point?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Field sensors are unrelated to irrigation decisions."
+        },
+        {
+          "id": "B",
+          "text": "Precision agriculture can support efficiency and productivity."
+        },
+        {
+          "id": "C",
+          "text": "Real-time data makes fertilizer use impossible."
+        },
+        {
+          "id": "D",
+          "text": "Sensor data is useful only after harvest."
+        }
+      ],
+      "correct_option": "B"
+    },
+    {
+      "id": "rmcs_715",
+      "title": "#715 Urban Freight Logistics",
+      "topic": "Policy",
+      "difficulty": "difficult",
+      "passage": "As online retail expands, cities face higher demand for last-mile freight delivery. Some municipalities respond by establishing micro-distribution hubs and coordinated delivery windows. These policies can lower congestion and emissions, but only when private operators share data and align schedules.",
+      "question": "What is the author's main argument?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Last-mile delivery demand is shrinking in major cities."
+        },
+        {
+          "id": "B",
+          "text": "Coordinated urban freight policies can improve outcomes if stakeholders cooperate."
+        },
+        {
+          "id": "C",
+          "text": "Private operators should avoid sharing logistics data."
+        },
+        {
+          "id": "D",
+          "text": "Micro-distribution hubs always increase emissions."
+        }
+      ],
+      "correct_option": "B"
+    }
+  ]
+}

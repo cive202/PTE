@@ -1,0 +1,144 @@
+{
+  "summarize_spoken_text": [
+    {
+      "id": "sst_651",
+      "title": "#651 Power of Music",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "transcript": "Music is often called a universal language because people connect with it across cultures. Beyond entertainment, it strongly affects emotion and mental state. A song can calm anxiety, increase motivation, or help people process grief. That emotional effect explains why music therapy is used in hospitals and counseling programs. Music also acts as a cultural bridge. Through songs, listeners learn how different communities remember history, celebrate identity, and respond to social change. At the same time, music keeps evolving with technology and society, from classical traditions to digital production and global collaboration. Overall, music supports well-being, builds empathy, and brings people together while reflecting human creativity.",
+      "key_points": [
+        "music affects emotion and mental state",
+        "music is used therapeutically for stress relief and support",
+        "music connects cultures and builds empathy",
+        "music evolves with society and technology"
+      ],
+      "reference_summary": "Music influences mood, supports therapy, bridges cultures, and continues to evolve as an important expression of human creativity and connection."
+    },
+    {
+      "id": "sst_649",
+      "title": "#649 Printing Press",
+      "topic": "History",
+      "difficulty": "easy",
+      "transcript": "The printing press transformed history by making information easier to produce and distribute. Before its invention, books were copied by hand, expensive, and limited to elites. Gutenberg's press allowed texts to be printed faster and in larger numbers, which expanded public access to knowledge. As books and pamphlets spread, literacy increased and new ideas circulated across Europe. This helped drive major movements such as the Renaissance, the Reformation, and scientific progress. Printing also helped standardize languages and preserve scholarly work, making education more consistent over time. In short, the printing press was more than a machine. It changed who could learn, how ideas moved, and how societies developed.",
+      "key_points": [
+        "printing press enabled mass production of texts",
+        "knowledge became accessible beyond elites",
+        "literacy and idea exchange increased",
+        "it supported major social and scientific movements"
+      ],
+      "reference_summary": "By enabling mass communication, the printing press expanded literacy, spread ideas widely, and accelerated social, religious, and scientific change."
+    },
+    {
+      "id": "sst_654",
+      "title": "#654 Sustainable Farming",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "transcript": "Sustainable farming is essential for feeding a growing population without damaging natural systems. It focuses on practical methods such as reducing chemical inputs, conserving water, and protecting biodiversity. These choices strengthen ecosystems and improve long-term farm productivity. Sustainable agriculture also emphasizes local production and distribution. When communities buy local food, transportation emissions are reduced and farmers retain more value in regional economies. However, changing farming systems requires coordination. Governments must create supportive policy, farmers need access to training and technology, and consumers must support responsible purchasing habits. The long-term benefit is clear: sustainable farming protects soil, water, and climate while improving food security for future generations.",
+      "key_points": [
+        "sustainable methods protect ecosystems and productivity",
+        "local food systems reduce transport emissions",
+        "transition needs policy, education, and technology",
+        "sustainable farming improves long-term food security"
+      ],
+      "reference_summary": "Sustainable farming combines environmental protection, local resilience, and coordinated policy action to secure long-term food production and planetary health."
+    },
+    {
+      "id": "sst_648",
+      "title": "#648 Space Exploration",
+      "topic": "Science",
+      "difficulty": "medium",
+      "transcript": "Space exploration reflects human curiosity and technological progress. It began with early telescopic observations that changed our understanding of the sky. In the twentieth century, milestones such as Sputnik and the Apollo moon landing demonstrated rapid advances in engineering and international ambition. Today, exploration has shifted toward long-term planetary science, especially on Mars. Robotic missions like Curiosity and Perseverance investigate geology, climate history, and signs of past habitability. Their findings guide future plans for human missions. Space research also produces wider benefits through innovation in materials, communication systems, and data science. Most importantly, each mission expands scientific knowledge and encourages people to think about humanity's place in the universe.",
+      "key_points": [
+        "space exploration progressed from telescopes to modern missions",
+        "major milestones include Sputnik and Apollo",
+        "Mars rovers study habitability and future mission planning",
+        "space programs drive innovation and scientific discovery"
+      ],
+      "reference_summary": "From early astronomy to Mars exploration, space programs continue to deliver scientific insight, technological innovation, and a broader perspective on humanity."
+    },
+    {
+      "id": "sst_647",
+      "title": "#647 Internet",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "The Internet has reshaped communication, education, and business at a global scale. It enables instant interaction across borders and provides broad access to information, learning tools, and digital services. Students can join online courses, professionals can collaborate remotely, and entrepreneurs can launch products to worldwide audiences. This connectivity has accelerated innovation and created entirely new industries. At the same time, the Internet introduces major challenges. Concerns about privacy, misinformation, and unequal access remain unresolved in many regions. Digital systems can empower people, but they can also deepen inequality when infrastructure or literacy is limited. The key task for modern societies is to use the Internet responsibly: expanding opportunity while improving trust, safety, and inclusion.",
+      "key_points": [
+        "internet enables global communication and information access",
+        "it supports education, innovation, and entrepreneurship",
+        "privacy and misinformation are ongoing risks",
+        "equitable and responsible use is essential"
+      ],
+      "reference_summary": "The Internet drives global connection and innovation, but societies must address privacy, misinformation, and access gaps to ensure inclusive benefits."
+    },
+    {
+      "id": "sst_660",
+      "title": "#660 Renewable Energy Storage",
+      "topic": "Energy",
+      "difficulty": "medium",
+      "transcript": "Renewable energy sources such as solar and wind are expanding quickly, but they do not produce electricity at a constant rate. This is why energy storage has become a central issue for modern power systems. Batteries can store excess electricity when production is high and release it when demand rises or weather changes. Grid operators also use pumped hydro and emerging long-duration storage technologies to improve reliability. Better storage reduces dependence on fossil-fuel backup plants and helps stabilize prices during peak periods. However, scaling storage requires investment, material innovation, and updated regulation. In summary, storage is not a side issue of clean energy transition; it is the system component that makes high renewable penetration practical and dependable.",
+      "key_points": [
+        "renewables are variable and need balancing",
+        "storage technologies shift electricity across time",
+        "storage improves reliability and reduces fossil backup use",
+        "scaling storage needs investment and policy support"
+      ],
+      "reference_summary": "Energy storage enables reliable renewable power by balancing variability, reducing fossil backup dependence, and supporting long-term grid stability."
+    },
+    {
+      "id": "sst_661",
+      "title": "#661 Urban Green Spaces",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "transcript": "Cities are becoming denser, and many communities are reconsidering how public spaces are designed. Urban green spaces, such as parks, tree corridors, and community gardens, provide environmental and social benefits beyond appearance. Trees reduce heat by creating shade and lowering surface temperatures, which helps during summer heat waves. Green areas also improve air quality and can absorb rainwater, reducing flooding pressure on drainage systems. From a social perspective, nearby parks encourage physical activity, support mental well-being, and create places where residents interact. Yet, unequal distribution remains a challenge: wealthier neighborhoods often have better access to quality green space. Therefore, city planning should treat green infrastructure as essential public health and climate adaptation policy, not as a luxury project.",
+      "key_points": [
+        "green spaces reduce heat and improve air quality",
+        "they help manage stormwater and reduce flood risk",
+        "parks support physical and mental well-being",
+        "equitable access should be a planning priority"
+      ],
+      "reference_summary": "Urban green spaces deliver climate, health, and social benefits, but cities must plan equitable access to maximize these public gains."
+    },
+    {
+      "id": "sst_662",
+      "title": "#662 Cybersecurity Hygiene",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "transcript": "Most cyberattacks do not begin with advanced code-breaking; they begin with routine human mistakes. Weak passwords, reused credentials, and careless handling of suspicious links create easy entry points for attackers. Cybersecurity hygiene refers to everyday practices that lower these risks. Organizations now require multi-factor authentication, regular software updates, and role-based access controls to limit damage if an account is compromised. Employee training is equally important because phishing messages increasingly mimic trusted brands and internal communications. Small businesses often underestimate this threat, assuming attackers target only large enterprises, but automated attacks scan broadly across sectors. Effective security therefore combines technology, policy, and behavior. Good hygiene will not eliminate all incidents, yet it significantly reduces both breach frequency and recovery costs.",
+      "key_points": [
+        "many breaches start with simple human errors",
+        "multi-factor authentication and updates reduce risk",
+        "phishing awareness training is essential",
+        "security needs a combined technology and behavior approach"
+      ],
+      "reference_summary": "Cybersecurity hygiene emphasizes routine preventive behavior and controls that substantially reduce breach risk, even without eliminating all threats."
+    },
+    {
+      "id": "sst_663",
+      "title": "#663 Telemedicine Access",
+      "topic": "Health",
+      "difficulty": "easy",
+      "transcript": "Telemedicine has moved from a niche service to a mainstream healthcare channel. Video and phone consultations allow patients to receive follow-up care without long travel times, which is particularly useful in rural regions and for people with mobility limitations. For clinicians, virtual triage can reduce congestion in physical clinics and reserve in-person appointments for urgent cases. Patients often report higher convenience and lower indirect costs, such as missed work hours. Still, telemedicine has limits. Not every condition can be assessed remotely, and digital inequality remains a barrier for patients with poor internet access or low digital literacy. To improve outcomes, health systems should combine telemedicine with in-person pathways, invest in digital support, and define clear clinical criteria for remote care use.",
+      "key_points": [
+        "telemedicine improves convenience and access",
+        "virtual care can reduce clinic congestion",
+        "remote care has clinical and digital-access limitations",
+        "hybrid models and digital support improve effectiveness"
+      ],
+      "reference_summary": "Telemedicine expands healthcare access and efficiency, but works best as part of a hybrid care model with attention to digital equity."
+    },
+    {
+      "id": "sst_664",
+      "title": "#664 Circular Economy",
+      "topic": "Economy",
+      "difficulty": "difficult",
+      "transcript": "Traditional economic models are largely linear: extract materials, manufacture products, and discard waste. A circular economy aims to redesign this process by extending product life, recovering materials, and reducing resource loss. Companies can apply circular principles through modular design, repair services, remanufacturing, and high-quality recycling systems. Governments contribute by setting standards for product durability and by improving waste collection infrastructure. Consumers also influence outcomes when they choose repairable products and participate in return programs. Circular models can lower emissions, reduce landfill pressure, and improve supply resilience by decreasing dependence on virgin raw materials. However, transition challenges include higher upfront redesign costs and coordination across supply chains. Even so, circularity is increasingly seen as a competitiveness strategy, not just an environmental initiative.",
+      "key_points": [
+        "circular economy replaces linear take-make-dispose model",
+        "design, repair, and material recovery are key levers",
+        "circular systems reduce emissions and raw-material dependence",
+        "transition requires investment and supply-chain coordination"
+      ],
+      "reference_summary": "The circular economy improves resource efficiency and resilience by redesigning products and systems for reuse, repair, and material recovery."
+    }
+  ]
+}
