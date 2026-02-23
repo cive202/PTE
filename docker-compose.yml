@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   asr-grammar:
     image: cive202/pte-asr-grammar:latest
-    build: 
+    build:
       context: ./docker/asr-grammar
     ports:
       - "8000:8000"
@@ -14,12 +12,43 @@ services:
 
   wav2vec2-service:
     image: cive202/wav2vec2-phoneme-cpu:latest
-    build: 
+    build:
       context: ./docker/phoneme-service
     ports:
       - "8001:8001"
     container_name: wav2vec2-phoneme-cpu
     restart: unless-stopped
+    networks:
+      - pte-network
+
+  api:
+    image: pte-api:latest
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    ports:
+      - "5000:5000"
+    container_name: pte-api
+    restart: unless-stopped
+    environment:
+      PTE_ASR_GRAMMAR_BASE_URL: http://asr-grammar:8000
+      PTE_PHONEME_BASE_URL: http://wav2vec2-service:8001
+      PTE_DATA_ROOT: /app/data
+      PTE_USER_UPLOADS_DIR: /app/data/user_uploads
+      PTE_MFA_BASE_DIR: /app/data/models/mfa
+      PTE_MFA_RUNTIME_DIR: /app/data/processed/mfa_runs
+      # Required for MFA docker-run bind mounts when API runs in container.
+      # Set in .env using an absolute host path, e.g. /home/user/PTE
+      PTE_HOST_PROJECT_ROOT: ${PTE_HOST_PROJECT_ROOT:-}
+      # Optional explicit overrides (take precedence over PTE_HOST_PROJECT_ROOT mapping)
+      PTE_MFA_DOCKER_MOUNT_BASE_DIR: ${PTE_MFA_DOCKER_MOUNT_BASE_DIR:-}
+      PTE_MFA_DOCKER_MOUNT_RUNTIME_DIR: ${PTE_MFA_DOCKER_MOUNT_RUNTIME_DIR:-}
+    volumes:
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - asr-grammar
+      - wav2vec2-service
     networks:
       - pte-network
 

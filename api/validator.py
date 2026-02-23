@@ -26,6 +26,7 @@ from pte_core.scoring.pronunciation import per, label_from_per, analyze_phoneme_
 from pte_core.scoring.stress import get_syllable_stress_score, get_syllable_stress_details
 from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from src.shared.paths import (
+    PROJECT_ROOT as SHARED_PROJECT_ROOT,
     MFA_BASE_DIR as SHARED_MFA_BASE_DIR,
     MFA_RUNTIME_DIR as SHARED_MFA_RUNTIME_DIR,
     ensure_runtime_dirs,
@@ -35,12 +36,46 @@ from src.shared.services import MFA_DOCKER_IMAGE
 # --- Configuration ---
 MFA_BASE_DIR = SHARED_MFA_BASE_DIR
 MFA_RUNTIME_DIR = SHARED_MFA_RUNTIME_DIR
+PROJECT_ROOT = SHARED_PROJECT_ROOT
 ensure_runtime_dirs()
+
+# Optional mount-source overrides for the Docker daemon host.
+# Needed when this API runs inside a container and shells out to `docker run`.
+MFA_DOCKER_MOUNT_BASE_DIR = os.environ.get("PTE_MFA_DOCKER_MOUNT_BASE_DIR")
+MFA_DOCKER_MOUNT_RUNTIME_DIR = os.environ.get("PTE_MFA_DOCKER_MOUNT_RUNTIME_DIR")
+HOST_PROJECT_ROOT = os.environ.get("PTE_HOST_PROJECT_ROOT")
 
 # Docker Mount:
 # - MFA_BASE_DIR (Host) -> /models (Container)
 # - MFA_RUNTIME_DIR (Host) -> /runtime (Container)
 DOCKER_IMAGE = MFA_DOCKER_IMAGE
+
+
+def _resolve_docker_mount_source(local_path: Path, explicit_mount_path: str | None) -> str:
+    """
+    Resolve bind-mount source path for docker daemon.
+
+    Priority:
+    1) explicit env override (PTE_MFA_DOCKER_MOUNT_*), if provided
+    2) map local project-relative path onto PTE_HOST_PROJECT_ROOT, if provided
+    3) local path as-is (works when API runs on host directly)
+    """
+    if explicit_mount_path:
+        return explicit_mount_path
+
+    if HOST_PROJECT_ROOT:
+        try:
+            relative = local_path.resolve().relative_to(PROJECT_ROOT.resolve())
+            mapped = Path(HOST_PROJECT_ROOT) / relative
+            return str(mapped)
+        except Exception:
+            pass
+
+    return str(local_path)
+
+
+MFA_DOCKER_BASE_SOURCE = _resolve_docker_mount_source(MFA_BASE_DIR, MFA_DOCKER_MOUNT_BASE_DIR)
+MFA_DOCKER_RUNTIME_SOURCE = _resolve_docker_mount_source(MFA_RUNTIME_DIR, MFA_DOCKER_MOUNT_RUNTIME_DIR)
 
 # Accent Configuration
 # Paths are relative to MFA_BASE_DIR (Host) which is /data (Container)
@@ -364,8 +399,8 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
     
     cmd = [
         "docker", "run", "--rm",
-        "-v", f"{MFA_BASE_DIR}:/models",
-        "-v", f"{MFA_RUNTIME_DIR}:/runtime",
+        "-v", f"{MFA_DOCKER_BASE_SOURCE}:/models",
+        "-v", f"{MFA_DOCKER_RUNTIME_SOURCE}:/runtime",
         DOCKER_IMAGE,
         "mfa", "align",
         docker_input_dir,

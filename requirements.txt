@@ -20,6 +20,7 @@ Levenshtein>=0.20.0
 cmudict>=1.0.0
 g2p_en>=2.1.0
 praat-textgrids>=1.0.0
+panphon>=0.20.0
 
 # Web framework
 flask>=2.0.0
