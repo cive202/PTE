@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Summarize Written Text - PTE Practice</title>
+    <title>Write Email - PTE Practice</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .filter-shell {
@@ -117,7 +117,7 @@
                 grid-template-columns: 1fr;
             }
 
-            #newPassageBtn {
+            #newPromptBtn {
                 width: 100%;
             }
         }
@@ -128,12 +128,12 @@
     <div class="page-container">
         <div class="page-header">
             <a href="/" class="back-link">← Back to Dashboard</a>
-            <h1 class="page-title">Summarize Written Text (AI Score)</h1>
-            <p class="page-subtitle">Write one clear sentence that summarizes the passage and receive rubric-style feedback.</p>
+            <h1 class="page-title">Write Email (AI Score)</h1>
+            <p class="page-subtitle">Write a clear email response and receive simple trait-based feedback.</p>
             <div class="hero-meta">
-                <span class="hero-pill">One-Sentence Summary</span>
-                <span class="hero-pill">Content + Form + Grammar</span>
-                <span class="hero-pill">Instant AI Feedback</span>
+                <span class="hero-pill">Content + Form</span>
+                <span class="hero-pill">Email Conventions</span>
+                <span class="hero-pill">Grammar + Vocabulary</span>
             </div>
         </div>
 
@@ -146,27 +146,31 @@
                         <option value="all">All Categories</option>
                     </select>
                 </div>
-                <button class="btn secondary" id="newPassageBtn">Load Random</button>
+                <div style="display:flex; gap:0.6rem; align-items:center;">
+                    <button class="btn secondary" id="newPromptBtn">Load Random</button>
+                    <span class="card-badge badge-progress" id="timerBadge">09:00</span>
+                </div>
             </div>
             <div class="topic-count" id="topicCount">Loading topics...</div>
             <div class="topic-grid" id="topicGrid"></div>
             <div id="status" style="display:none; margin-top: 0.9rem; padding: 0.7rem;"></div>
         </div>
 
-        <div class="task-container" id="sourceSection" style="display:none;">
-            <h2 class="section-title">Source Passage</h2>
-            <textarea id="sourcePassage" rows="7" readonly placeholder="Loading passage..."></textarea>
+        <div class="task-container" id="promptSection" style="display:none;">
+            <h2 class="section-title">Email Prompt</h2>
+            <textarea id="emailPrompt" rows="4" readonly placeholder="Loading prompt..."></textarea>
+            <div id="promptMeta" style="margin-top: 0.35rem; color: #60748d; font-size: 0.9rem;"></div>
         </div>
 
-        <div class="task-container" id="summarySection" style="display:none;">
-            <h2 class="section-title">Your Summary</h2>
-            <textarea id="summaryText" rows="5" placeholder="Write exactly one sentence summarizing the passage."></textarea>
+        <div class="task-container" id="emailSection" style="display:none;">
+            <h2 class="section-title">Your Email</h2>
+            <textarea id="emailText" rows="10" placeholder="Write your email here. Include salutation, purpose, and closing."></textarea>
             <div style="display: flex; justify-content: space-between; margin-top: 0.45rem; color: #60748d; font-size: 0.9rem;">
-                <span>Rule: exactly one sentence, 5-75 words.</span>
-                <span id="summaryWordCount">0 words</span>
+                <span id="rangeHint">Recommended range: 50-120 words.</span>
+                <span id="emailWordCount">0 words</span>
             </div>
             <div class="controls" style="margin-top: 0.9rem;">
-                <button class="btn primary" id="scoreBtn">Generate AI Score</button>
+                <button class="btn primary" id="scoreBtn">Score Email</button>
                 <button class="btn secondary" id="clearBtn">Clear</button>
             </div>
         </div>
@@ -187,20 +191,26 @@
         const difficultySelect = document.getElementById('difficultySelect');
         const topicCount = document.getElementById('topicCount');
         const topicGrid = document.getElementById('topicGrid');
-        const sourceSection = document.getElementById('sourceSection');
-        const summarySection = document.getElementById('summarySection');
-        const sourcePassage = document.getElementById('sourcePassage');
-        const summaryText = document.getElementById('summaryText');
-        const summaryWordCount = document.getElementById('summaryWordCount');
+        const promptSection = document.getElementById('promptSection');
+        const emailSection = document.getElementById('emailSection');
+        const emailPrompt = document.getElementById('emailPrompt');
+        const promptMeta = document.getElementById('promptMeta');
+        const emailText = document.getElementById('emailText');
+        const emailWordCount = document.getElementById('emailWordCount');
+        const rangeHint = document.getElementById('rangeHint');
         const statusBox = document.getElementById('status');
+        const timerBadge = document.getElementById('timerBadge');
         const resultSection = document.getElementById('resultSection');
-        const newPassageBtn = document.getElementById('newPassageBtn');
+        const newPromptBtn = document.getElementById('newPromptBtn');
         const scoreHeadline = document.getElementById('scoreHeadline');
         const traitScores = document.getElementById('traitScores');
         const analysisMeta = document.getElementById('analysisMeta');
         const feedbackList = document.getElementById('feedbackList');
 
         let currentPromptId = null;
+        let timerSeconds = 9 * 60;
+        let timerRef = null;
+        let currentRange = '50-120';
         let allTopics = [];
         let filteredTopics = [];
 
@@ -213,6 +223,36 @@
         function countWords(text) {
             const tokens = (text || '').trim().match(/[A-Za-z]+(?:'[A-Za-z]+)?/g);
             return tokens ? tokens.length : 0;
+        }
+
+        function formatTime(totalSeconds) {
+            const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const secs = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function resetTimer(startCountdown = false) {
+            timerSeconds = 9 * 60;
+            timerBadge.textContent = formatTime(timerSeconds);
+            timerBadge.className = 'card-badge badge-progress';
+            if (timerRef) {
+                clearInterval(timerRef);
+                timerRef = null;
+            }
+            if (!startCountdown) {
+                return;
+            }
+            timerRef = setInterval(() => {
+                timerSeconds = Math.max(0, timerSeconds - 1);
+                timerBadge.textContent = formatTime(timerSeconds);
+                if (timerSeconds <= 60) {
+                    timerBadge.className = 'card-badge badge-available';
+                }
+                if (timerSeconds === 0) {
+                    clearInterval(timerRef);
+                    timerRef = null;
+                }
+            }, 1000);
         }
 
         function setStatus(message, isError = false) {
@@ -233,12 +273,14 @@
 
             traitScores.innerHTML = `
                 <div><strong>Content:</strong> ${payload.scores.content.score}/${payload.scores.content.max}</div>
-                <div><strong>Form:</strong> ${payload.scores.form.score}/${payload.scores.form.max}</div>
+                <div><strong>Formal Requirements:</strong> ${payload.scores.formal_requirements.score}/${payload.scores.formal_requirements.max}</div>
+                <div><strong>Email Conventions:</strong> ${payload.scores.email_conventions.score}/${payload.scores.email_conventions.max}</div>
                 <div><strong>Grammar:</strong> ${payload.scores.grammar.score}/${payload.scores.grammar.max}</div>
                 <div><strong>Vocabulary:</strong> ${payload.scores.vocabulary.score}/${payload.scores.vocabulary.max}</div>
+                <div><strong>Spelling:</strong> ${payload.scores.spelling.score}/${payload.scores.spelling.max}</div>
             `;
 
-            analysisMeta.textContent = `Words: ${payload.analysis.word_count} | Sentences: ${payload.analysis.sentence_count} | Keyword coverage: ${payload.analysis.keyword_coverage_percent}%`;
+            analysisMeta.textContent = `Words: ${payload.analysis.word_count} | Prompt coverage: ${payload.analysis.prompt_keyword_coverage_percent}% | Structure elements: ${payload.analysis.structure_element_count}/3`;
 
             feedbackList.innerHTML = '';
             (payload.feedback || []).forEach((item) => {
@@ -283,11 +325,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadPassage(topicItem.id);
+                card.onclick = () => loadPrompt(topicItem.id);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadPassage(topicItem.id);
+                        loadPrompt(topicItem.id);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -304,7 +346,7 @@
         }
 
         async function loadCatalog() {
-            const response = await fetch('/writing/summarize-written-text/get-catalog');
+            const response = await fetch('/writing/write-email/get-catalog');
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to load topic catalog.');
@@ -314,7 +356,7 @@
 
         async function loadCategories() {
             try {
-                const response = await fetch('/writing/summarize-written-text/get-categories');
+                const response = await fetch('/writing/write-email/get-categories');
                 const data = await response.json();
                 if (response.ok && Array.isArray(data.categories)) {
                     renderCategoryOptions(data.categories);
@@ -328,7 +370,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadPassage(promptId = null) {
+        async function loadPrompt(promptId = null) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -343,45 +385,49 @@
             }
 
             const url = query.toString()
-                ? `/writing/summarize-written-text/get-task?${query.toString()}`
-                : '/writing/summarize-written-text/get-task';
+                ? `/writing/write-email/get-task?${query.toString()}`
+                : '/writing/write-email/get-task';
 
             const response = await fetch(url);
             const data = await response.json();
             if (!response.ok) {
-                setStatus(data.error || 'Failed to load passage.', true);
+                setStatus(data.error || 'Failed to load prompt.', true);
                 return;
             }
 
             currentPromptId = data.id;
-            sourcePassage.value = data.passage || '';
-            summaryText.value = '';
-            summaryWordCount.textContent = '0 words';
-            sourceSection.style.display = 'block';
-            summarySection.style.display = 'block';
+            currentRange = data.recommended_word_range || '50-120';
+            emailPrompt.value = data.prompt || '';
+            promptMeta.textContent = `Recipient: ${data.recipient || 'General'} | Tone: ${titleCase(data.tone || 'formal')}`;
+            emailText.value = '';
+            emailWordCount.textContent = '0 words';
+            rangeHint.textContent = `Recommended range: ${currentRange} words.`;
+            promptSection.style.display = 'block';
+            emailSection.style.display = 'block';
+            resetTimer(true);
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
             renderTopicCards();
         }
 
-        async function scoreSummary() {
+        async function scoreEmail() {
             clearStatus();
-            const passage = sourcePassage.value.trim();
-            const responseText = summaryText.value.trim();
-            if (!passage) {
-                setStatus('Load a passage first.', true);
+            const prompt = emailPrompt.value.trim();
+            const responseText = emailText.value.trim();
+            if (!prompt) {
+                setStatus('Load an email prompt first.', true);
                 return;
             }
             if (!responseText) {
-                setStatus('Write your summary before scoring.', true);
+                setStatus('Write your email before scoring.', true);
                 return;
             }
 
-            const response = await fetch('/writing/summarize-written-text/score', {
+            const response = await fetch('/writing/write-email/score', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     prompt_id: currentPromptId,
-                    passage,
+                    prompt,
                     response: responseText
                 })
             });
@@ -396,35 +442,36 @@
             setStatus('Scoring completed.');
         }
 
-        summaryText.addEventListener('input', () => {
-            summaryWordCount.textContent = `${countWords(summaryText.value)} words`;
+        emailText.addEventListener('input', () => {
+            emailWordCount.textContent = `${countWords(emailText.value)} words`;
         });
 
-        newPassageBtn.addEventListener('click', async () => {
+        newPromptBtn.addEventListener('click', async () => {
             if (!filteredTopics.length) {
                 setStatus('No topic available for current filter.', true);
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadPassage(pick.id);
+            await loadPrompt(pick.id);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadPassage(filteredTopics[0].id);
+                await loadPrompt(filteredTopics[0].id);
             } else {
                 currentPromptId = null;
-                sourceSection.style.display = 'none';
-                summarySection.style.display = 'none';
+                promptSection.style.display = 'none';
+                emailSection.style.display = 'none';
+                resetTimer(false);
                 setStatus('No topic available for selected category.', true);
             }
         });
 
-        document.getElementById('scoreBtn').addEventListener('click', scoreSummary);
+        document.getElementById('scoreBtn').addEventListener('click', scoreEmail);
         document.getElementById('clearBtn').addEventListener('click', () => {
-            summaryText.value = '';
-            summaryWordCount.textContent = '0 words';
+            emailText.value = '';
+            emailWordCount.textContent = '0 words';
             clearStatus();
             resultSection.style.display = 'none';
         });
@@ -435,7 +482,7 @@
                 await loadCategories();
                 applyTopicFilter();
                 if (filteredTopics.length) {
-                    await loadPassage(filteredTopics[0].id);
+                    await loadPrompt(filteredTopics[0].id);
                 }
             } catch (error) {
                 setStatus(error.message || 'Failed to initialize page.', true);

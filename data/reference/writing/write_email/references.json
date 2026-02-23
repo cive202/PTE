@@ -1,0 +1,44 @@
+{
+  "write_email": [
+    {
+      "id": "email_001",
+      "title": "Library Membership Extension",
+      "topic": "Education",
+      "difficulty": "easy",
+      "recipient": "City Library Membership Office",
+      "tone": "formal",
+      "prompt": "You borrowed several books from your local library but need one extra week to return them because of exam preparation. Write an email to the library office requesting an extension and include your membership ID and expected return date.",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_002",
+      "title": "Meeting Reschedule Request",
+      "topic": "Workplace",
+      "difficulty": "medium",
+      "recipient": "Project Manager",
+      "tone": "formal",
+      "prompt": "You are scheduled to present project updates tomorrow, but a client workshop now overlaps with the meeting time. Write an email to your project manager to request a reschedule and propose two alternative time slots.",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_003",
+      "title": "Internet Service Complaint",
+      "topic": "Services",
+      "difficulty": "medium",
+      "recipient": "Internet Service Provider Support Team",
+      "tone": "formal",
+      "prompt": "Your home internet has been unstable for ten days, affecting your online classes and work calls. Write an email to customer support describing the issue, previous complaint reference, and the resolution you expect.",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_004",
+      "title": "Campus Event Volunteer Application",
+      "topic": "Community",
+      "difficulty": "difficult",
+      "recipient": "University Event Coordinator",
+      "tone": "semi-formal",
+      "prompt": "A university sustainability event is seeking volunteers for logistics and guest support. Write an email to apply, mention your relevant experience, availability for preparation meetings, and one contribution idea for the event.",
+      "recommended_word_range": "50-120"
+    }
+  ]
+}

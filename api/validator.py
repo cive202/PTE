@@ -9,6 +9,7 @@ import sys
 import difflib
 import concurrent.futures
 from pathlib import Path
+from typing import Optional
 
 # Add project root to path to import pte_core
 PROJECT_ROOT = Path(__file__).resolve().parent.parent  # /home/sushil/developer/pte/PTE
@@ -20,7 +21,6 @@ from pte_core.pause.pause_evaluator import evaluate_pause
 from pte_core.pause.hesitation import apply_hesitation_clustering, aggregate_pause_penalty
 from pte_core.pause.speech_rate import calculate_speech_rate_scale
 from read_aloud.alignment.normalizer import PAUSE_PUNCTUATION, is_punctuation
-from pte_core.phoneme.g2p import PhonemeReferenceBuilder
 from pte_core.asr.phoneme_recognition import call_phoneme_service
 from pte_core.scoring.pronunciation import per, label_from_per, analyze_phoneme_errors
 from pte_core.scoring.stress import get_syllable_stress_score, get_syllable_stress_details
@@ -51,7 +51,7 @@ HOST_PROJECT_ROOT = os.environ.get("PTE_HOST_PROJECT_ROOT")
 DOCKER_IMAGE = MFA_DOCKER_IMAGE
 
 
-def _resolve_docker_mount_source(local_path: Path, explicit_mount_path: str | None) -> str:
+def _resolve_docker_mount_source(local_path: Path, explicit_mount_path: Optional[str]) -> str:
     """
     Resolve bind-mount source path for docker daemon.
 
@@ -257,6 +257,59 @@ def get_phones_for_word(word_info, all_phones):
         if p['start'] >= w_start - 0.01 and p['end'] <= w_end + 0.01:
             word_phones.append(p['label'])
     return word_phones
+
+
+def get_phone_intervals_for_word(word_info, all_phones, tolerance=0.01):
+    """Return phone intervals that fall inside a word's MFA time range."""
+    if not word_info:
+        return []
+    w_start = word_info.get('start')
+    w_end = word_info.get('end')
+    if w_start is None or w_end is None:
+        return []
+    intervals = []
+    for p in all_phones:
+        p_start = p.get('start')
+        p_end = p.get('end')
+        if p_start is None or p_end is None:
+            continue
+        if p_start >= w_start - tolerance and p_end <= w_end + tolerance:
+            intervals.append(p)
+    return intervals
+
+
+def _normalize_word_key(word):
+    return re.sub(r"[^a-z0-9']+", "", str(word or "").lower())
+
+
+def build_ref_word_to_mfa_map(diff_analysis, base_words):
+    """
+    Map each reference-token occurrence in diff_analysis to the corresponding MFA word.
+
+    This avoids "first lexical match wins" bugs for repeated words.
+    """
+    occurrences = {}
+    for bw in base_words:
+        key = _normalize_word_key(bw.get('word'))
+        if key:
+            occurrences.setdefault(key, []).append(bw)
+
+    seen_counts = {}
+    mapped = {}
+    for idx, item in enumerate(diff_analysis):
+        if is_punctuation(item.get('word', '')):
+            continue
+        if item.get('ref_index') is None:
+            continue
+        key = _normalize_word_key(item.get('word'))
+        if not key:
+            continue
+        words = occurrences.get(key, [])
+        used = seen_counts.get(key, 0)
+        if used < len(words):
+            mapped[idx] = words[used]
+            seen_counts[key] = used + 1
+    return mapped
 
 # --- ASR Logic ---
 
@@ -485,72 +538,47 @@ def run_single_alignment(accent, conf, run_id, docker_input_dir):
     return accent, None
 
 
-def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, base_tg, builder, scorer, accent):
+def analyze_word_pronunciation(
+    item,
+    word_timestamps,
+    audio_path,
+    matched_word,
+    all_mfa_phones,
+    builder,
+    scorer,
+    accent,
+):
     """
-    Helper function to analyze a single word's pronunciation (phonemes + stress).
-    Designed to be run in parallel.
-    Uses AccentTolerantScorer for nuanced scoring.
+    Analyze a single word pronunciation using cached MFA structures when available.
     """
     res_entry = item.copy()
-    
-    # PRIORITY 1: Use MFA phoneme-level timestamps (MAXIMUM PRECISION)
-    # Get exact start of first phoneme and exact end of last phoneme
+
+    # PRIORITY 1: Use occurrence-aware MFA word match
     s, e = None, None
-    target_word = item['word'].lower()
-    
-    if base_words and base_tg:
-        # Find the word in MFA alignment
-        matched_word = None
-        for bw in base_words:
-            if bw['word'].lower() == target_word:
-                matched_word = bw
-                break
-        
-        if matched_word:
-            # Get all phonemes from the TextGrid
-            all_phones = read_textgrid_phones(base_tg)
-            
-            # Extract phonemes for this specific word
-            word_phones = get_phones_for_word(matched_word, all_phones)
-            
-            # If we have phonemes, use FIRST phoneme start and LAST phoneme end
-            if word_phones:
-                # Find actual phoneme intervals within word boundaries
-                w_start = matched_word['start']
-                w_end = matched_word['end']
-                
-                phoneme_intervals = []
-                for p in all_phones:
-                    # Phoneme must be within word boundaries
-                    if p['start'] >= w_start - 0.01 and p['end'] <= w_end + 0.01:
-                        phoneme_intervals.append(p)
-                
-                if phoneme_intervals:
-                    # PRECISE: First phoneme start, last phoneme end
-                    s = phoneme_intervals[0]['start']
-                    e = phoneme_intervals[-1]['end']
-                else:
-                    # Fallback to word boundaries if no phonemes found
-                    s, e = w_start, w_end
-            else:
-                # No phonemes, use word boundaries
-                s, e = matched_word['start'], matched_word['end']
-    
-    # PRIORITY 2: Fall back to ASR timestamps if MFA doesn't have this word
+    word_phone_intervals = []
+
+    if matched_word:
+        word_phone_intervals = get_phone_intervals_for_word(matched_word, all_mfa_phones)
+        if word_phone_intervals:
+            s = word_phone_intervals[0]['start']
+            e = word_phone_intervals[-1]['end']
+        else:
+            s = matched_word.get('start')
+            e = matched_word.get('end')
+
+    # PRIORITY 2: Fall back to ASR timestamps
     if s is None:
         t_idx = item.get('trans_index')
         if t_idx is not None and t_idx < len(word_timestamps):
-            s = word_timestamps[t_idx]['start']
-            e = word_timestamps[t_idx]['end']
-    
-    # Assign timestamps if found
+            s = word_timestamps[t_idx].get('start')
+            e = word_timestamps[t_idx].get('end')
+
     if s is not None and e is not None:
         res_entry['start'] = round(s, 3)
         res_entry['end'] = round(e, 3)
-        
-        # 3. Inserted Words (e.g. fillers)
+
+        # Inserted word: only collect observed phones
         if item['status'] == 'inserted':
-            # Get observed phones only
             try:
                 obs_ph = call_phoneme_service(audio_path, s, e)
                 res_entry['observed_phones'] = " ".join(obs_ph)
@@ -558,126 +586,91 @@ def analyze_word_pronunciation(item, word_timestamps, audio_path, base_words, ba
                 res_entry['observed_phones'] = ""
             return res_entry
 
-        # 4. Correct Words (Full Analysis)
+        # Correct word: full analysis
         if item['status'] == 'correct':
             ref_word = item['word']
-            
-            # --- A. Phoneme Analysis (Accent Tolerant) ---
-            word_score_obj = None
+            fallback_accuracy = 60.0  # Neutral fallback: not perfect, not auto-fail
+
+            # --- A. Phoneme Analysis ---
             try:
-                # Get expected phonemes from CMUDict
                 ref_ph = builder.word_to_phonemes(ref_word)
-                
-                # Get observed phonemes from MFA TextGrid (instead of wav2vec2)
-                # If MFA succeeded, use MFA phones. If not, try wav2vec2 (fallback)
-                obs_ph = []
-                using_mfa_phones = False
-                
-                if base_tg:
-                    all_mfa_phones = read_textgrid_phones(base_tg)
-                    # Extract phonemes within this word's time boundaries
-                    for p in all_mfa_phones:
-                        # Phoneme must be within word boundaries (with small tolerance)
-                        if p['start'] >= s - 0.01 and p['end'] <= e + 0.01:
-                            # MFA uses ARPA symbols
-                            obs_ph.append(p['label'])
-                    
-                    if obs_ph:
-                        using_mfa_phones = True
-                
-                # Fallback to Wav2Vec2 if MFA didn't give phonemes for this word
+                obs_ph = [p.get('label', '') for p in word_phone_intervals if p.get('label')]
+
                 if not obs_ph:
-                     obs_ph = call_phoneme_service(audio_path, s, e)
-                
+                    obs_ph = call_phoneme_service(audio_path, s, e)
+
+                res_entry['expected_phones'] = " ".join(ref_ph)
+
                 if obs_ph:
-                    # Score using AccentTolerantScorer
                     word_score_obj = scorer.score_word(ref_ph, obs_ph, accent)
-                    
-                    # Map to old structure for compatibility
-                    # 'per' was 0.0 (good) to 1.0 (bad)
-                    # new accuracy is 0-100 (good)
-                    # so per = 1.0 - (accuracy / 100)
-                    accuracy = word_score_obj['accuracy']
+                    accuracy = float(word_score_obj.get('accuracy', fallback_accuracy))
                     per_equivalent = 1.0 - (accuracy / 100.0)
-                    
+
                     res_entry['per'] = round(per_equivalent, 3)
-                    res_entry['phoneme_analysis'] = word_score_obj['alignment'] # List of (exp, spk, score)
+                    res_entry['phoneme_analysis'] = word_score_obj.get('alignment', [])
                     res_entry['observed_phones'] = " ".join(obs_ph)
-                    res_entry['expected_phones'] = " ".join(ref_ph)
-                    
-                    # Store new detailed score
                     res_entry['accuracy_score'] = accuracy
                 else:
-                    # No phonemes found - default to perfect score? Or fail?
-                    # If word matched in ASR but no phones, assume OK
-                    res_entry['per'] = 0.0
-                    res_entry['accuracy_score'] = 100.0
-                    
+                    res_entry['per'] = round(1.0 - (fallback_accuracy / 100.0), 3)
+                    res_entry['accuracy_score'] = fallback_accuracy
+                    res_entry['analysis_confidence'] = "low"
+                    res_entry['analysis_note'] = "No phonemes detected for this segment."
+
             except Exception as e:
                 print(f"Phoneme analysis failed for {ref_word}: {e}")
-                res_entry['per'] = 0.0  # Default to perfect on error
-                res_entry['accuracy_score'] = 100.0
+                res_entry['per'] = round(1.0 - (fallback_accuracy / 100.0), 3)
+                res_entry['accuracy_score'] = fallback_accuracy
+                res_entry['analysis_confidence'] = "low"
+                res_entry['analysis_note'] = "Phoneme analysis unavailable due to processing error."
 
-            # --- B. Stress Analysis (MFA + CMUDict) ---
-            stress_score = 1.0
+            # --- B. Stress Analysis ---
+            stress_score = 0.5  # Neutral default instead of perfect
             try:
-                # Find corresponding MFA word alignment for timings
-                mfa_word_info = None
-                for w in base_words:
-                    overlap_start = max(s, w['start'])
-                    overlap_end = min(e, w['end'])
-                    overlap = max(0, overlap_end - overlap_start)
-                    # 50% overlap rule
-                    if overlap > 0.5 * (e - s):
-                        mfa_word_info = w
-                        break
-                
-                if mfa_word_info:
-                    # Get MFA phone timings
-                    all_mfa_phones = read_textgrid_phones(base_tg)
-                    word_phones_with_times = []
-                    for p in all_mfa_phones:
-                        # Match phones within the word's time boundaries
-                        if p['start'] >= mfa_word_info['start'] - 0.01 and p['end'] <= mfa_word_info['end'] + 0.01:
-                            word_phones_with_times.append((p['label'], p['start'], p['end']))
-                    
-                    # Get Reference Stress Pattern & Calculate Score
-                    stress_pattern = builder.get_stress_pattern(ref_word) if hasattr(builder, 'get_stress_pattern') else None
-                    stress_details = get_syllable_stress_details(audio_path, s, e, word_phones_with_times, stress_pattern)
-                    
-                    stress_score = stress_details.get('score', 1.0)
-                    res_entry['stress_details'] = stress_details
-                    
-                    # Store MFA timings for UI visualization
-                    res_entry['mfa_timings'] = [
-                            {'phone': p, 'start': round(ps, 3), 'end': round(pe, 3)} 
-                            for p, ps, pe in word_phones_with_times
+                if word_phone_intervals:
+                    word_phones_with_times = [
+                        (p.get('label', ''), p.get('start'), p.get('end'))
+                        for p in word_phone_intervals
+                        if p.get('start') is not None and p.get('end') is not None
                     ]
+                    stress_pattern = (
+                        builder.get_stress_pattern(ref_word)
+                        if hasattr(builder, 'get_stress_pattern')
+                        else None
+                    )
+                    stress_details = get_syllable_stress_details(
+                        audio_path,
+                        s,
+                        e,
+                        word_phones_with_times,
+                        stress_pattern,
+                    )
+                    stress_score = float(stress_details.get('score', stress_score))
+                    res_entry['stress_details'] = stress_details
+                    res_entry['mfa_timings'] = [
+                        {'phone': p, 'start': round(ps, 3), 'end': round(pe, 3)}
+                        for p, ps, pe in word_phones_with_times
+                    ]
+                else:
+                    res_entry['stress_details'] = {
+                        "score": stress_score,
+                        "syllables": [],
+                        "ref_pattern": builder.get_stress_pattern(ref_word) if hasattr(builder, 'get_stress_pattern') else None,
+                        "match_info": "Insufficient phone evidence for stress analysis.",
+                    }
             except Exception as e:
                 print(f"Stress analysis failed for {ref_word}: {e}")
-                
+
             res_entry['stress_score'] = round(stress_score, 3)
 
-
             # --- C. Combined Score ---
-            # New scoring: use accuracy_score (0-100) directly if available
-            accuracy_score = res_entry.get('accuracy_score', 100.0)
-            
-            # Weighted combination: 70% Phoneme Accuracy + 30% Stress
-            # stress_score is 0.0-1.0, so multiply by 100
+            accuracy_score = float(res_entry.get('accuracy_score', fallback_accuracy))
             combined_score_val = (0.7 * accuracy_score) + (0.3 * stress_score * 100)
-            
-            # Normalize to 0.0-1.0 for compatibility with rest of system (though UI might expect %)
-            # The system seems to use 0.0-1.0 elsewhere for 'combined_score'
-            # Let's keep combined_score as 0.0-1.0
             combined_score = combined_score_val / 100.0
-            
             res_entry['combined_score'] = round(combined_score, 3)
-            
-            # Decision threshold (Relaxed from 0.65)
+
             if combined_score < 0.55:
                 res_entry['status'] = 'mispronounced'
-            
+
             return res_entry
 
     return res_entry
@@ -745,12 +738,6 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         # Docker paths
         docker_input_dir = f"/runtime/{run_id}/input"
         
-        # Load Dictionaries (Local)
-        dictionaries = {}
-        for accent, conf in target_accents.items():
-            dict_path = MFA_BASE_DIR / conf['dict_rel']
-            dictionaries[accent] = load_dictionary(dict_path)
-            
         # Run Alignment (Sequential implementation for reliability)
         accent_tgs = {} # accent -> path to TG
         
@@ -848,8 +835,13 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             
         print(f"[DEBUG] Using base_tg: {base_tg}")
         base_words = read_textgrid_words(base_tg)
+        all_mfa_phones = read_textgrid_phones(base_tg)
+        ref_to_mfa_map = build_ref_word_to_mfa_map(diff_analysis, base_words)
 
         print(f"[DEBUG] base_words count: {len(base_words)}")
+        print(f"[DEBUG] base phones count: {len(all_mfa_phones)}")
+        # Lazy import to keep API startup fast (G2P can trigger NLTK downloads).
+        from pte_core.phoneme.g2p import PhonemeReferenceBuilder
         builder = PhonemeReferenceBuilder()
         
         # Initialize Scorer
@@ -904,7 +896,14 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     # Submit the task with a timeout
                     future = executor.submit(
                         analyze_word_pronunciation,
-                        item, word_timestamps, audio_path, base_words, base_tg, builder, scorer, scoring_accent
+                        item,
+                        word_timestamps,
+                        audio_path,
+                        ref_to_mfa_map.get(idx),
+                        all_mfa_phones,
+                        builder,
+                        scorer,
+                        scoring_accent,
                     )
                     # Wait up to 45 seconds for this word
                     res = future.result(timeout=45)
@@ -946,31 +945,42 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             # If punctuation, evaluate pause
             if is_punctuation(item['word']):
                 # Find valid previous and next words
-                prev_word_idx = -1
-                next_word_idx = -1
+                prev_word_idx = None
+                next_word_idx = None
                 prev_word_text = "START"
                 
                 # Check previous words in final_results_map
                 for k in range(i-1, -1, -1):
                     prev_item = final_results_map[k]
-                    if prev_item and prev_item.get('status') == 'correct' and not is_punctuation(prev_item['word']):
+                    if prev_item and not is_punctuation(prev_item['word']):
                         prev_word_idx = prev_item.get('trans_index')
-                        if prev_word_idx is not None and prev_word_idx < len(word_timestamps):
-                            prev_word_text = word_timestamps[prev_word_idx].get('word', '')
-                        break
+                        if prev_word_idx is not None and 0 <= prev_word_idx < len(word_timestamps):
+                            prev_word_text = (
+                                word_timestamps[prev_word_idx].get('value')
+                                or word_timestamps[prev_word_idx].get('word')
+                                or ""
+                            )
+                            break
                 
                 # Check next words
                 for k in range(i+1, len(diff_analysis)):
-                    next_item = diff_analysis[k] # Use original analysis for lookahead mapping
-                    if next_item['status'] == 'correct' and not is_punctuation(next_item['word']):
-                        next_word_idx = next_item.get('trans_index', -1)
-                        break
+                    next_item = final_results_map[k]
+                    if next_item and not is_punctuation(next_item['word']):
+                        candidate_idx = next_item.get('trans_index')
+                        if candidate_idx is not None and 0 <= candidate_idx < len(word_timestamps):
+                            next_word_idx = candidate_idx
+                            break
                 
                 pause_duration = None
                 p_start = None
                 p_end = None
                 
-                if prev_word_idx != -1 and next_word_idx != -1 and prev_word_idx < len(word_timestamps) and next_word_idx < len(word_timestamps):
+                if (
+                    prev_word_idx is not None
+                    and next_word_idx is not None
+                    and prev_word_idx < len(word_timestamps)
+                    and next_word_idx < len(word_timestamps)
+                ):
                     p_start = word_timestamps[prev_word_idx]['end']
                     p_end = word_timestamps[next_word_idx]['start']
                     pause_duration = p_end - p_start

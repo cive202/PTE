@@ -21,6 +21,20 @@ except ImportError:
     print("Warning: sklearn not available, using simple keyword matching")
 
 REFERENCES_FILE = LECTURE_REFERENCE_FILE
+DIFFICULTY_ORDER = {"easy": 0, "medium": 1, "difficult": 2}
+
+
+def _normalize_difficulty(value: Optional[str], fallback: str = "medium") -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in DIFFICULTY_ORDER:
+        return normalized
+    if normalized in {"normal", "moderate"}:
+        return "medium"
+    if normalized in {"hard", "advanced", "high"}:
+        return "difficult"
+    if normalized in {"basic", "low"}:
+        return "easy"
+    return fallback
 
 
 def load_lecture_data() -> Dict:
@@ -32,15 +46,66 @@ def load_lecture_data() -> Dict:
         return json.load(f)
 
 
-def get_random_lecture() -> Optional[Dict]:
+def get_lecture_categories() -> List[str]:
+    data = load_lecture_data()
+    lectures = data.get("lectures", [])
+    values = {
+        _normalize_difficulty(item.get("difficulty"))
+        for item in lectures
+        if isinstance(item, dict)
+    }
+    return sorted(values, key=lambda value: (DIFFICULTY_ORDER.get(value, 99), value))
+
+
+def get_lecture_catalog() -> List[Dict]:
+    data = load_lecture_data()
+    lectures = data.get("lectures", [])
+    catalog = []
+    for item in lectures:
+        if not isinstance(item, dict):
+            continue
+        lecture_id = str(item.get("id", "")).strip()
+        if not lecture_id:
+            continue
+        catalog.append(
+            {
+                "id": lecture_id,
+                "title": str(item.get("title", "Untitled")),
+                "difficulty": _normalize_difficulty(item.get("difficulty")),
+            }
+        )
+
+    return sorted(
+        catalog,
+        key=lambda entry: (
+            DIFFICULTY_ORDER.get(str(entry.get("difficulty", "")).lower(), 99),
+            str(entry.get("title", "")).lower(),
+        ),
+    )
+
+
+def get_random_lecture(difficulty: Optional[str] = None) -> Optional[Dict]:
     """Get a random lecture from the available set."""
     data = load_lecture_data()
     lectures = data.get("lectures", [])
     
     if not lectures:
         return None
-    
-    return random.choice(lectures)
+
+    filtered = [item for item in lectures if isinstance(item, dict)]
+    if difficulty:
+        wanted = _normalize_difficulty(difficulty, fallback="")
+        if not wanted:
+            return None
+        filtered = [
+            item
+            for item in filtered
+            if _normalize_difficulty(item.get("difficulty"), fallback="medium") == wanted
+        ]
+        if not filtered:
+            return None
+
+    return random.choice(filtered or lectures)
 
 
 def get_lecture_by_id(lecture_id: str) -> Optional[Dict]:

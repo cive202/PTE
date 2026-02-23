@@ -1,11 +1,58 @@
 import numpy as np
 import librosa
+import re
+import unicodedata
+
+
+ARPA_VOWELS = {
+    'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'
+}
+
+IPA_VOWEL_CHARS = set("aeiouəɚɝɪʊɛæɑɒɔʌɜɐɨʉɵøyɯɤ")
+IPA_VOWEL_TOKENS = {
+    "a", "e", "i", "o", "u", "ə", "ɚ", "ɝ", "ɪ", "ʊ", "ɛ", "æ", "ɑ", "ɒ", "ɔ", "ʌ", "ɜ", "ɐ",
+    "ɨ", "ʉ", "ɵ", "ø", "y", "ɯ", "ɤ", "aɪ", "aʊ", "eɪ", "oʊ", "ɔɪ", "aj", "aw", "ej", "ow", "oj",
+}
 
 def calculate_energy(y):
     """Calculate RMS energy of an audio segment."""
     if len(y) == 0:
         return 0
     return np.sqrt(np.mean(y**2))
+
+
+def _strip_combining_marks(token):
+    normalized = unicodedata.normalize("NFD", token)
+    return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+
+
+def _normalize_phone_token(token):
+    t = str(token or "").strip()
+    if not t:
+        return ""
+    t = _strip_combining_marks(t)
+    # Remove common suprasegmentals/diacritics that are irrelevant for vowel detection.
+    for mark in ("ː", "ˑ", "˞", "ʰ", "ʲ", "ʷ", "ˠ", "ˤ"):
+        t = t.replace(mark, "")
+    return t
+
+
+def _is_arpa_vowel(phone):
+    base = re.sub(r'\d+', '', str(phone or "").upper())
+    return base in ARPA_VOWELS
+
+
+def _is_ipa_vowel(phone):
+    p = _normalize_phone_token(phone).lower()
+    if not p:
+        return False
+    if p in IPA_VOWEL_TOKENS:
+        return True
+    return any(ch in IPA_VOWEL_CHARS for ch in p)
+
+
+def _is_vowel_phone(phone):
+    return _is_arpa_vowel(phone) or _is_ipa_vowel(phone)
 
 def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_times, reference_stress_pattern):
     """
@@ -39,9 +86,7 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
                 "match_info": "Audio load error"
             }
         
-        # 2. Group Phones into Syllables (Heuristic: Vowel is nucleus)
-        vowels = {'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH', 'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'}
-        
+        # 2. Group Phones into Syllables (Heuristic: vowel nucleus in ARPA or IPA)
         # Adjust phoneme times to be relative to word start for audio slicing
         rel_phones = []
         for p, s, e in phonemes_with_times:
@@ -49,9 +94,7 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
             
         observed_vowels = []
         for p, rel_s, rel_e, abs_s, abs_e in rel_phones:
-            # Strip numbers if present (MFA might return AH0)
-            p_clean = ''.join([c for c in p if not c.isdigit()])
-            if p_clean in vowels:
+            if _is_vowel_phone(p):
                 # Extract energy and duration
                 s_idx = int(rel_s * sr)
                 e_idx = int(rel_e * sr)

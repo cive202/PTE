@@ -1,0 +1,36 @@
+{
+  "write_essay": [
+    {
+      "id": "essay_001",
+      "title": "Remote Work Policy",
+      "topic": "Workplace",
+      "difficulty": "easy",
+      "prompt": "Some organizations believe remote work should remain the default model, while others argue employees should return to office-based work for collaboration and productivity. Discuss both views and give your opinion.",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_002",
+      "title": "University Assessment",
+      "topic": "Education",
+      "difficulty": "medium",
+      "prompt": "Many universities are replacing final exams with continuous assessment through projects, presentations, and coursework. Do you think this change improves learning quality? Explain your position with reasons and examples.",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_003",
+      "title": "AI in Public Services",
+      "topic": "Technology",
+      "difficulty": "difficult",
+      "prompt": "Governments are increasingly adopting artificial intelligence in public services such as transport, healthcare, and administration. What are the benefits and risks of this trend, and how should policy makers respond?",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_004",
+      "title": "Climate Responsibility",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "prompt": "Some people argue that individuals should change their lifestyle to address climate change, while others believe only large industries and governments can make a meaningful difference. Discuss both perspectives and present your view.",
+      "recommended_word_range": "200-300"
+    }
+  ]
+}

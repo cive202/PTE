@@ -1,0 +1,121 @@
+{
+  "summarize_written_text": [
+    {
+      "id": "swt_001",
+      "title": "Urban Heat Islands",
+      "topic": "Environment",
+      "passage": "Urban areas are often several degrees warmer than nearby rural locations due to the urban heat island effect. Dark roofs and roads absorb solar radiation, while reduced vegetation limits evaporative cooling. Researchers report that increasing tree canopy, using reflective roofing materials, and redesigning street layouts can reduce peak city temperatures and lower electricity demand during summer heat waves.",
+      "key_points": [
+        "urban heat island makes cities warmer",
+        "dark surfaces absorb solar heat",
+        "less vegetation reduces cooling",
+        "tree canopy and reflective roofs reduce heat",
+        "lower heat can reduce electricity demand"
+      ]
+    },
+    {
+      "id": "swt_002",
+      "title": "Sleep and Memory Consolidation",
+      "topic": "Health",
+      "passage": "Neuroscientists have found that sleep supports memory consolidation by strengthening neural pathways formed during learning. Deep sleep appears to stabilize factual knowledge, while rapid eye movement sleep may support procedural and creative learning. Students who maintain consistent sleep schedules generally show better recall and problem-solving performance than peers with irregular sleep patterns.",
+      "key_points": [
+        "sleep strengthens learning pathways",
+        "deep sleep supports factual memory",
+        "REM sleep supports procedural and creative learning",
+        "consistent sleep improves recall and problem solving"
+      ]
+    },
+    {
+      "id": "swt_003",
+      "title": "Electric Bus Transition",
+      "topic": "Transport",
+      "passage": "Many cities are transitioning public bus fleets from diesel to electric systems to reduce urban emissions and noise pollution. Although electric buses require higher initial investment, lifecycle analyses often show lower operating costs due to reduced fuel and maintenance expenses. Transit agencies that coordinate charging infrastructure and route planning report smoother adoption and improved service reliability.",
+      "key_points": [
+        "cities are shifting from diesel to electric buses",
+        "electric buses reduce emissions and noise",
+        "initial cost is high but operating cost can be lower",
+        "charging and route planning improve adoption"
+      ]
+    },
+    {
+      "id": "swt_004",
+      "title": "Digital Literacy in Schools",
+      "topic": "Education",
+      "passage": "Digital literacy now extends beyond basic computer use to include evaluating online information, understanding algorithmic bias, and practicing responsible digital communication. Schools that embed digital literacy across subjects, rather than teaching it in isolated modules, see stronger student performance in research tasks and critical thinking assessments.",
+      "key_points": [
+        "digital literacy includes information evaluation and bias awareness",
+        "responsible digital communication is essential",
+        "cross-curricular integration is more effective than isolated modules",
+        "integrated programs improve research and critical thinking"
+      ]
+    }
+  ],
+  "write_essay": [
+    {
+      "id": "essay_001",
+      "title": "Remote Work Policy",
+      "topic": "Workplace",
+      "prompt": "Some organizations believe remote work should remain the default model, while others argue employees should return to office-based work for collaboration and productivity. Discuss both views and give your opinion.",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_002",
+      "title": "University Assessment",
+      "topic": "Education",
+      "prompt": "Many universities are replacing final exams with continuous assessment through projects, presentations, and coursework. Do you think this change improves learning quality? Explain your position with reasons and examples.",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_003",
+      "title": "AI in Public Services",
+      "topic": "Technology",
+      "prompt": "Governments are increasingly adopting artificial intelligence in public services such as transport, healthcare, and administration. What are the benefits and risks of this trend, and how should policy makers respond?",
+      "recommended_word_range": "200-300"
+    },
+    {
+      "id": "essay_004",
+      "title": "Climate Responsibility",
+      "topic": "Environment",
+      "prompt": "Some people argue that individuals should change their lifestyle to address climate change, while others believe only large industries and governments can make a meaningful difference. Discuss both perspectives and present your view.",
+      "recommended_word_range": "200-300"
+    }
+  ],
+  "write_email": [
+    {
+      "id": "email_001",
+      "title": "Library Membership Extension",
+      "topic": "Education",
+      "prompt": "You borrowed several books from your local library but need one extra week to return them because of exam preparation. Write an email to the library office requesting an extension and include your membership ID and expected return date.",
+      "recipient": "City Library Membership Office",
+      "tone": "formal",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_002",
+      "title": "Meeting Reschedule Request",
+      "topic": "Workplace",
+      "prompt": "You are scheduled to present project updates tomorrow, but a client workshop now overlaps with the meeting time. Write an email to your project manager to request a reschedule and propose two alternative time slots.",
+      "recipient": "Project Manager",
+      "tone": "formal",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_003",
+      "title": "Internet Service Complaint",
+      "topic": "Services",
+      "prompt": "Your home internet has been unstable for ten days, affecting your online classes and work calls. Write an email to customer support describing the issue, previous complaint reference, and the resolution you expect.",
+      "recipient": "Internet Service Provider Support Team",
+      "tone": "formal",
+      "recommended_word_range": "50-120"
+    },
+    {
+      "id": "email_004",
+      "title": "Campus Event Volunteer Application",
+      "topic": "Community",
+      "prompt": "A university sustainability event is seeking volunteers for logistics and guest support. Write an email to apply, mention your relevant experience, availability for preparation meetings, and one contribution idea for the event.",
+      "recipient": "University Event Coordinator",
+      "tone": "semi-formal",
+      "recommended_word_range": "50-120"
+    }
+  ]
+}

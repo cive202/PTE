@@ -145,4 +145,3 @@ pte/
 
 - **Risk**: dependency runtime mismatch (example: `panphon` behavior).
 - **Mitigation**: pin supported Python version in docs/CI and keep tests with stubs for optional heavy dependencies.
-

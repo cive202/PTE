@@ -8,6 +8,7 @@ import json
 import random
 import re
 import os
+import threading
 from typing import Dict, List, Tuple, Optional
 
 # Try to import sentence_transformers for semantic matching
@@ -20,12 +21,12 @@ except ImportError:
 
 from src.shared.paths import IMAGE_REFERENCE_FILE
 
-# Global model cache — loaded eagerly at import so background threads can use it
+# Global model cache
 SEMANTIC_MODEL = None
 MODEL_NAME = 'all-MiniLM-L6-v2'
 
 def _eager_load_model():
-    """Pre-load the model at import time so background threads don't race."""
+    """Pre-load model into process memory."""
     global SEMANTIC_MODEL
     if TRANSFORMER_AVAILABLE and SEMANTIC_MODEL is None:
         try:
@@ -34,8 +35,10 @@ def _eager_load_model():
             print(f"[image_evaluator] Model ready.")
         except Exception as e:
             print(f"[image_evaluator] Failed to pre-load model: {e}")
-
-_eager_load_model()
+            
+# Optional warmup. Keep disabled by default so Flask startup is not blocked.
+if os.getenv("IMAGE_EVALUATOR_PRELOAD", "0").lower() in {"1", "true", "yes"}:
+    threading.Thread(target=_eager_load_model, daemon=True).start()
 
 REFERENCES_FILE = IMAGE_REFERENCE_FILE
 

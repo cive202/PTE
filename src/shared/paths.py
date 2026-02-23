@@ -59,6 +59,11 @@ CANONICAL_READ_ALOUD_JSON = CANONICAL_REFERENCE_ROOT / "read_aloud" / "reference
 CANONICAL_REPEAT_SENTENCE_JSON = CANONICAL_REFERENCE_ROOT / "repeat_sentence" / "references.json"
 CANONICAL_IMAGE_JSON = CANONICAL_REFERENCE_ROOT / "describe_image" / "references.json"
 CANONICAL_LECTURE_JSON = CANONICAL_REFERENCE_ROOT / "retell_lecture" / "references.json"
+CANONICAL_WRITING_ROOT = CANONICAL_REFERENCE_ROOT / "writing"
+CANONICAL_WRITING_JSON = CANONICAL_WRITING_ROOT / "references.json"
+CANONICAL_SWT_WRITING_JSON = CANONICAL_WRITING_ROOT / "summarize_written_text" / "references.json"
+CANONICAL_ESSAY_WRITING_JSON = CANONICAL_WRITING_ROOT / "write_essay" / "references.json"
+CANONICAL_EMAIL_WRITING_JSON = CANONICAL_WRITING_ROOT / "write_email" / "references.json"
 CANONICAL_IMAGES_DIR = CANONICAL_REFERENCE_ROOT / "describe_image" / "images"
 CANONICAL_LECTURES_DIR = CANONICAL_REFERENCE_ROOT / "retell_lecture" / "lectures"
 CANONICAL_REPEAT_SENTENCE_AUDIO_DIR = CANONICAL_REFERENCE_ROOT / "repeat_sentence" / "audio"
@@ -69,6 +74,11 @@ LEGACY_READ_ALOUD_JSON = LEGACY_DATA_ROOT / "read_aloud_references.json"
 LEGACY_REPEAT_SENTENCE_JSON = LEGACY_DATA_ROOT / "repeat_sentence_references.json"
 LEGACY_IMAGE_JSON = LEGACY_DATA_ROOT / "image_references.json"
 LEGACY_LECTURE_JSON = LEGACY_DATA_ROOT / "lecture_references.json"
+LEGACY_WRITING_ROOT = LEGACY_DATA_ROOT / "writing"
+LEGACY_WRITING_JSON = LEGACY_DATA_ROOT / "writing_references.json"
+LEGACY_SWT_WRITING_JSON = LEGACY_WRITING_ROOT / "summarize_written_text_references.json"
+LEGACY_ESSAY_WRITING_JSON = LEGACY_WRITING_ROOT / "write_essay_references.json"
+LEGACY_EMAIL_WRITING_JSON = LEGACY_WRITING_ROOT / "write_email_references.json"
 LEGACY_IMAGES_DIR = LEGACY_DATA_ROOT / "images"
 LEGACY_LECTURES_DIR = LEGACY_DATA_ROOT / "lectures"
 LEGACY_REPEAT_SENTENCE_AUDIO_DIR = LEGACY_DATA_ROOT / "repeat-sentence-audio"
@@ -91,6 +101,37 @@ LECTURE_REFERENCE_FILE = _first_existing(
     (CANONICAL_LECTURE_JSON, LEGACY_LECTURE_JSON),
     LEGACY_LECTURE_JSON,
 )
+WRITING_REFERENCE_FILE = _first_existing(
+    (CANONICAL_WRITING_JSON, LEGACY_WRITING_JSON),
+    CANONICAL_WRITING_JSON,
+)
+SWT_WRITING_REFERENCE_FILE = _first_existing(
+    (
+        CANONICAL_SWT_WRITING_JSON,
+        LEGACY_SWT_WRITING_JSON,
+        CANONICAL_WRITING_JSON,
+        LEGACY_WRITING_JSON,
+    ),
+    CANONICAL_SWT_WRITING_JSON,
+)
+ESSAY_WRITING_REFERENCE_FILE = _first_existing(
+    (
+        CANONICAL_ESSAY_WRITING_JSON,
+        LEGACY_ESSAY_WRITING_JSON,
+        CANONICAL_WRITING_JSON,
+        LEGACY_WRITING_JSON,
+    ),
+    CANONICAL_ESSAY_WRITING_JSON,
+)
+EMAIL_WRITING_REFERENCE_FILE = _first_existing(
+    (
+        CANONICAL_EMAIL_WRITING_JSON,
+        LEGACY_EMAIL_WRITING_JSON,
+        CANONICAL_WRITING_JSON,
+        LEGACY_WRITING_JSON,
+    ),
+    CANONICAL_EMAIL_WRITING_JSON,
+)
 REFERENCE_DATA_DIR = _first_existing((CANONICAL_REFERENCE_ROOT, LEGACY_DATA_ROOT), LEGACY_DATA_ROOT)
 IMAGES_DIR = _first_existing((CANONICAL_IMAGES_DIR, LEGACY_IMAGES_DIR), LEGACY_IMAGES_DIR)
 LECTURES_DIR = _first_existing((CANONICAL_LECTURES_DIR, LEGACY_LECTURES_DIR), LEGACY_LECTURES_DIR)
@@ -107,6 +148,10 @@ READ_ALOUD_TEXTGRIDS_DIR = _first_existing(
 def ensure_runtime_dirs() -> None:
     CANONICAL_DATA_ROOT.mkdir(parents=True, exist_ok=True)
     CANONICAL_REFERENCE_ROOT.mkdir(parents=True, exist_ok=True)
+    CANONICAL_WRITING_ROOT.mkdir(parents=True, exist_ok=True)
+    (CANONICAL_WRITING_ROOT / "summarize_written_text").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_WRITING_ROOT / "write_essay").mkdir(parents=True, exist_ok=True)
+    (CANONICAL_WRITING_ROOT / "write_email").mkdir(parents=True, exist_ok=True)
     CANONICAL_PROCESSED_ROOT.mkdir(parents=True, exist_ok=True)
     USER_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     MFA_BASE_DIR.mkdir(parents=True, exist_ok=True)

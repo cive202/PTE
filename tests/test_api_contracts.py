@@ -81,3 +81,220 @@ def test_check_stream_ndjson_contract(client, monkeypatch):
     assert events[0]["type"] == "progress"
     assert events[-1]["type"] == "result"
     assert "summary" in events[-1]["data"]
+
+
+def test_swt_task_contract(client):
+    response = client.get("/writing/summarize-written-text/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "passage", "recommended_word_range"):
+        assert required_key in payload
+
+
+def test_swt_categories_contract(client):
+    response = client.get("/writing/summarize-written-text/get-categories")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "categories" in payload
+    assert isinstance(payload["categories"], list)
+    assert payload["categories"]
+
+
+def test_swt_catalog_contract(client):
+    response = client.get("/writing/summarize-written-text/get-catalog")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "items" in payload
+    assert isinstance(payload["items"], list)
+    assert payload["items"]
+
+
+def test_write_essay_task_contract(client):
+    response = client.get("/writing/write-essay/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("id", "title", "topic", "difficulty", "prompt", "recommended_word_range"):
+        assert required_key in payload
+
+
+def test_write_essay_categories_contract(client):
+    response = client.get("/writing/write-essay/get-categories")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "categories" in payload
+    assert isinstance(payload["categories"], list)
+    assert payload["categories"]
+
+
+def test_write_email_task_contract(client):
+    response = client.get("/writing/write-email/get-task")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in (
+        "id",
+        "title",
+        "topic",
+        "difficulty",
+        "prompt",
+        "recipient",
+        "tone",
+        "recommended_word_range",
+    ):
+        assert required_key in payload
+
+
+def test_write_email_categories_contract(client):
+    response = client.get("/writing/write-email/get-categories")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "categories" in payload
+    assert isinstance(payload["categories"], list)
+    assert payload["categories"]
+
+
+def test_write_essay_catalog_contract(client):
+    response = client.get("/writing/write-essay/get-catalog")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "items" in payload
+    assert isinstance(payload["items"], list)
+    assert payload["items"]
+
+
+def test_write_email_catalog_contract(client):
+    response = client.get("/writing/write-email/get-catalog")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "items" in payload
+    assert isinstance(payload["items"], list)
+    assert payload["items"]
+
+
+def test_retell_lecture_categories_contract(client):
+    response = client.get("/retell-lecture/get-categories")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "categories" in payload
+    assert isinstance(payload["categories"], list)
+    assert payload["categories"]
+
+
+def test_retell_lecture_catalog_contract(client):
+    response = client.get("/retell-lecture/get-catalog")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "items" in payload
+    assert isinstance(payload["items"], list)
+    assert payload["items"]
+
+
+def test_retell_lecture_task_contract(client):
+    response = client.get("/retell-lecture/get-lecture?difficulty=easy")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("lecture_id", "audio_url", "title", "difficulty"):
+        assert required_key in payload
+
+
+def test_swt_score_contract(client):
+    payload = {
+        "prompt_id": "swt_001",
+        "passage": (
+            "Urban areas are warmer due to heat-absorbing surfaces and low tree cover, "
+            "while reflective roofs and more trees help reduce peak temperatures and electricity demand."
+        ),
+        "response": (
+            "Urban heat islands make cities hotter because dark surfaces absorb radiation, "
+            "but adding trees and reflective materials can reduce heat and energy use."
+        ),
+    }
+    response = client.post("/writing/summarize-written-text/score", json=payload)
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["task"] == "summarize_written_text"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_write_essay_score_contract(client):
+    essay_text = (
+        "Remote work can increase flexibility and lower commuting stress for employees. "
+        "However, full remote settings may reduce spontaneous collaboration and weaken team culture. "
+        "A balanced hybrid model often captures benefits from both approaches. "
+        "For example, focused tasks can be completed from home while strategic meetings happen in person. "
+        "Therefore, organizations should choose role-specific policies instead of one rigid rule for all teams."
+    )
+    payload = {
+        "prompt_id": "essay_001",
+        "prompt": (
+            "Some organizations believe remote work should remain the default model, while others "
+            "argue employees should return to office-based work for collaboration and productivity."
+        ),
+        "response": essay_text,
+    }
+
+    response = client.post("/writing/write-essay/score", json=payload)
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["task"] == "write_essay"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)
+
+
+def test_write_email_score_contract(client):
+    email_text = (
+        "Dear Support Team,\n"
+        "I am writing to request a replacement student ID card because mine was lost yesterday on campus. "
+        "Could you please guide me on the required documents and fee? "
+        "Thank you for your assistance.\n"
+        "Kind regards,\n"
+        "Sam"
+    )
+    payload = {
+        "prompt_id": "email_001",
+        "prompt": (
+            "You lost your student ID card and need a replacement urgently. "
+            "Write an email to support requesting the process and required documents."
+        ),
+        "response": email_text,
+    }
+
+    response = client.post("/writing/write-email/score", json=payload)
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["task"] == "write_email"
+    assert "scores" in data
+    assert "analysis" in data
+    assert "feedback" in data
+    assert isinstance(data["feedback"], list)

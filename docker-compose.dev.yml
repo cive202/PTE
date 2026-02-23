@@ -1,0 +1,14 @@
+services:
+  api:
+    environment:
+      FLASK_ENV: development
+      IMAGE_EVALUATOR_PRELOAD: "0"
+    volumes:
+      - ./api:/app/api
+      - ./pte_core:/app/pte_core
+      - ./read_aloud:/app/read_aloud
+      - ./repeat_sentence:/app/repeat_sentence
+      - ./src:/app/src
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["python", "api/app.py", "--port", "5000"]

@@ -1,37 +1,27 @@
-# PTE Practice Platform -  Setup Guide
+# PTE Practice Platform - Simple Setup (New System)
 
-This guide will help you set up the PTE Practice Platform on your Arch Linux system. The platform consists of a Flask application and two AI microservices running in Docker.
+This guide explains how to bring the full platform up on a clean machine in simple, technical steps. It assumes you will run everything with Docker Compose (recommended).
 
-## System Architecture Overview
+## What runs where (simple)
 
 Based on the screenshots provided:
 
-- **Main Application**: Flask backend (Port 5000)
-- **ASR/Grammar Service**: Docker container `sushil346/pte-asr-grammar` (Port 8000)
-- **Phoneme Analysis Service**: Docker container `sushil346/wav2vec2-phoneme-cpu` (Port 8001)
+- **API (Flask)**: `sushil346/pte-api` (Port 5000)
+- **ASR/Grammar**: `sushil346/pte-asr-grammar` (Port 8000)
+- **Phoneme**: `sushil346/wav2vec2-phoneme-cpu` (Port 8001)
 
-## Prerequisites Installation
+## 1) Install prerequisites
 
-### 1. Update System
+### Update system
 
 ```bash
 sudo pacman -Syu
 ```
 
-### 2. Install Required Packages
+### Install required packages
 
 ```bash
-# Install Python 3.10+ and pip
-sudo pacman -S python python-pip python-virtualenv
-
-# Install Git
-sudo pacman -S git
-
-# Install FFmpeg (required for audio processing)
-sudo pacman -S ffmpeg
-
-# Install Docker and Docker Compose
-sudo pacman -S docker docker-compose
+sudo pacman -S python python-pip python-virtualenv git ffmpeg docker docker-compose
 
 # Enable and start Docker service
 sudo systemctl enable docker
@@ -44,7 +34,7 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### 3. Verify Installations
+### Verify installs
 
 ```bash
 # Check Python version (should be 3.10+)
@@ -61,166 +51,61 @@ ffmpeg -version
 git --version
 ```
 
-## Project Setup
-
-### 1. Navigate to Project Directory
+## 2) Get the code
 
 ```bash
-cd ~/PTE
-# Or wherever your project is located
+git clone https://github.com/cive202/PTE.git
+cd PTE
 ```
 
-### 2. Create and Activate Virtual Environment
+## 3) Create `.env`
 
 ```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate
-
-# Your prompt should now show (venv)
+cp .env.example .env
 ```
 
-### 3. Install Python Dependencies
+Edit `.env` and set your absolute project path:
 
 ```bash
-# Upgrade pip first
-pip install --upgrade pip
-
-# Install project dependencies
-pip install -r requirements.txt
-
-# Download NLTK data for pronunciation scoring
-python -c "import nltk; nltk.download('cmudict')"
+PTE_HOST_PROJECT_ROOT=/absolute/path/to/PTE
 ```
 
-## Docker Services Setup
-
-### 1. Pull Docker Images
-
-The screenshots show you already have these images on Docker Hub. Pull them:
+Example:
 
 ```bash
-# Pull ASR/Grammar service
-docker pull sushil346/pte-asr-grammar
-
-# Pull Phoneme analysis service
-docker pull sushil346/wav2vec2-phoneme-cpu
+PTE_HOST_PROJECT_ROOT=/home/youruser/PTE
 ```
 
-### 2. Create Docker Compose File
-
-If you don't already have a `docker-compose.yml`, create one:
+## 4) Start everything with Docker
 
 ```bash
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
-
-services:
-  asr-grammar:
-    image: sushil346/pte-asr-grammar
-    container_name: pte-asr-grammar
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  phoneme-cpu:
-    image: sushil346/wav2vec2-phoneme-cpu
-    container_name: pte-phoneme-cpu
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-networks:
-  default:
-    name: pte-network
-EOF
+docker compose up -d --build
 ```
 
-### 3. Start Docker Services
+## 5) Verify services
 
 ```bash
-# Build and start services in detached mode
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Check service status
-docker-compose ps
-```
-
-### 4. Verify Services are Running
-
-```bash
-# Check ASR/Grammar service (Port 8000)
 curl http://localhost:8000/health
-# or visit http://localhost:8000/docs in browser
-
-# Check Phoneme service (Port 8001)
 curl http://localhost:8001/health
-
-# Check Docker container status
-docker ps
+curl http://localhost:5000/
 ```
 
-Expected output should show both containers running.
+If all three return OK/200, the system is up.
 
-## Launch Main Application
+## Troubleshooting (quick)
 
-### 1. Ensure Virtual Environment is Active
+If API cannot reach ASR/Phoneme:
 
 ```bash
-# If not already activated:
-source venv/bin/activate
+docker compose ps
+docker compose logs --tail=200 api
 ```
 
-### 2. Start Flask Application
+If MFA paths fail, re-check `PTE_HOST_PROJECT_ROOT` in `.env`.
 
-```bash
-# Navigate to api directory if needed
-cd api
+## Full detailed guide
 
-# Start the Flask application
-python app.py
-```
-
-The application should start on `http://localhost:5000`
-
-### 3. Alternative: Run with Gunicorn (Production)
-
-For better performance:
-
-```bash
-# Install gunicorn if not in requirements.txt
-pip install gunicorn
-
-# Run with gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-## Validation & Testing
-
-### 1. Access the Application
-
-Open your browser and navigate to:
-
-```
-http://localhost:5000
-```
+See `docs/operations/NEW_SYSTEM_SETUP.md` for a longer, step-by-step version.
 
 ### 2. End-to-End Test
 

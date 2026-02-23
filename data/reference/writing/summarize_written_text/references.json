@@ -1,0 +1,169 @@
+{
+  "summarize_written_text": [
+    {
+      "id": "swt_001",
+      "title": "Urban Heat Islands",
+      "topic": "Environment",
+      "difficulty": "easy",
+      "passage": "Urban areas are often several degrees warmer than nearby rural locations due to the urban heat island effect. Dark roofs and roads absorb solar radiation, while reduced vegetation limits evaporative cooling. Researchers report that increasing tree canopy, using reflective roofing materials, and redesigning street layouts can reduce peak city temperatures and lower electricity demand during summer heat waves.",
+      "key_points": [
+        "urban heat island makes cities warmer",
+        "dark surfaces absorb solar heat",
+        "less vegetation reduces cooling",
+        "tree canopy and reflective roofs reduce heat",
+        "lower heat can reduce electricity demand"
+      ]
+    },
+    {
+      "id": "swt_002",
+      "title": "Sleep and Memory Consolidation",
+      "topic": "Health",
+      "difficulty": "medium",
+      "passage": "Neuroscientists have found that sleep supports memory consolidation by strengthening neural pathways formed during learning. Deep sleep appears to stabilize factual knowledge, while rapid eye movement sleep may support procedural and creative learning. Students who maintain consistent sleep schedules generally show better recall and problem-solving performance than peers with irregular sleep patterns.",
+      "key_points": [
+        "sleep strengthens learning pathways",
+        "deep sleep supports factual memory",
+        "REM sleep supports procedural and creative learning",
+        "consistent sleep improves recall and problem solving"
+      ]
+    },
+    {
+      "id": "swt_003",
+      "title": "Electric Bus Transition",
+      "topic": "Transport",
+      "difficulty": "medium",
+      "passage": "Many cities are transitioning public bus fleets from diesel to electric systems to reduce urban emissions and noise pollution. Although electric buses require higher initial investment, lifecycle analyses often show lower operating costs due to reduced fuel and maintenance expenses. Transit agencies that coordinate charging infrastructure and route planning report smoother adoption and improved service reliability.",
+      "key_points": [
+        "cities are shifting from diesel to electric buses",
+        "electric buses reduce emissions and noise",
+        "initial cost is high but operating cost can be lower",
+        "charging and route planning improve adoption"
+      ]
+    },
+    {
+      "id": "swt_004",
+      "title": "Digital Literacy in Schools",
+      "topic": "Education",
+      "difficulty": "medium",
+      "passage": "Digital literacy now extends beyond basic computer use to include evaluating online information, understanding algorithmic bias, and practicing responsible digital communication. Schools that embed digital literacy across subjects, rather than teaching it in isolated modules, see stronger student performance in research tasks and critical thinking assessments.",
+      "key_points": [
+        "digital literacy includes information evaluation and bias awareness",
+        "responsible digital communication is essential",
+        "cross-curricular integration is more effective than isolated modules",
+        "integrated programs improve research and critical thinking"
+      ]
+    },
+    {
+      "id": "swt_005",
+      "title": "Urbanization Trends and Challenges",
+      "topic": "Urban Development",
+      "difficulty": "medium",
+      "passage": "Urbanization has been a defining trend of the modern era, with more than half of the world's population now living in cities. Cities offer numerous advantages, including access to better job opportunities, healthcare, education, and cultural amenities. The concentration of people and resources in urban areas drives economic growth and innovation, making cities engines of development. Additionally, cities often serve as melting pots of diverse cultures, fostering social integration and the exchange of ideas. However, living in cities also presents several challenges. Urban areas are frequently plagued by issues such as traffic congestion, pollution, and high living costs. The dense population can strain infrastructure and public services, leading to problems like inadequate housing and healthcare facilities. Furthermore, cities are often characterized by stark inequalities, with significant disparities in wealth and access to resources between different neighborhoods. The rapid pace of urbanization can exacerbate these issues, as cities struggle to accommodate the growing population. Sustainability is another critical concern for urban living. High energy consumption and waste generation contribute to environmental degradation and climate change. To address these challenges, urban planners and policymakers are increasingly focusing on creating sustainable, livable cities. This involves promoting public transportation, green spaces, renewable energy sources, and efficient waste management systems. By adopting such measures, cities can enhance the quality of life for their residents while minimizing their environmental impact. Ultimately, while cities offer numerous benefits, they also require careful planning and management to ensure that they remain vibrant, inclusive, and sustainable places to live.",
+      "key_points": [
+        "cities support jobs and services while driving growth",
+        "urbanization also increases congestion, pollution, and housing pressure",
+        "inequality and strained public infrastructure are major risks",
+        "sustainable planning is needed through transport, green spaces, and energy reform"
+      ],
+      "reference_summary": "Cities offer major economic and social benefits but also create congestion, inequality, and environmental pressure, so sustainable planning is essential for livable and inclusive urban futures."
+    },
+    {
+      "id": "swt_006",
+      "title": "C. P. Snow's The Two Cultures",
+      "topic": "Education",
+      "difficulty": "difficult",
+      "passage": "C. P. Snow's essay \"The Two Cultures\" addressed the division between literary intellectuals and scientists in society. He argued that this divide hindered intellectual engagement with important issues and called for a balanced education that valued both humanities and sciences. Snow emphasized the importance of scientific literacy for intellectuals, as it allows for a deeper understanding of complex challenges such as population growth, climate change, and technological advancements. Without this knowledge, intellectuals may struggle to effectively address these issues. Despite his focus on scientific literacy, Snow recognized the value of the humanities. He believed that a harmonious integration of both cultures was necessary for societal progress. By combining the humanities and sciences in education, individuals would be equipped with the skills needed to tackle global problems. Beyond academics, Snow also acknowledged the wider social and economic implications of the cultural divide. He argued that an overemphasis on literary education contributed to a social class divide, limiting opportunities for those without a scientific background. To address this inequality, Snow advocated for a more equal distribution of educational resources. Today, Snow's perspectives remain relevant as specialization in various fields further widens the gap between scientists and literary intellectuals. Collaboration across disciplines is crucial for addressing complex global challenges. A balanced education that incorporates both the humanities and sciences is essential for developing individuals who can effectively navigate these challenges. In conclusion, C. P. Snow's essay shed light on the division between two cultures, literary and scientific and the challenges it poses. His emphasis on scientific literacy, while recognizing the value of the humanities, is still applicable today. By bridging this gap and promoting interdisciplinary collaboration, we can gain a comprehensive understanding of the world and effectively address complex societal issues.",
+      "key_points": [
+        "snow described a divide between literary and scientific cultures",
+        "he argued for balanced education combining humanities and sciences",
+        "scientific literacy is needed to handle modern global problems",
+        "reducing educational inequality and interdisciplinary collaboration are central"
+      ],
+      "reference_summary": "\"The Two Cultures\" argues that society must bridge the split between scientific and literary thinking through balanced education, scientific literacy, and interdisciplinary collaboration."
+    },
+    {
+      "id": "swt_007",
+      "title": "Bridges in Digital Age",
+      "topic": "Society",
+      "difficulty": "difficult",
+      "passage": "In an era dominated by technology and screens, the significance of genuine human connections cannot be overstated. As our lives become increasingly intertwined with digital platforms, it's essential to recognize and nurture the human relationships that form the foundation of our society. Despite the convenience and connectivity provided by social media and digital communication tools, there's a growing concern that these virtual interactions often lack depth and authenticity. A simple \"like\" or \"comment\" on a social media post cannot replace the warmth of a smile, the comfort of a hug, or the understanding in a friend's eyes during a face-to-face conversation. Human connections are not just about the exchange of information; they are about empathy, shared experiences, and emotional support. They are about listening, understanding, and offering a helping hand when needed. These connections create a sense of belonging and contribute to our overall well-being. Building and nurturing meaningful human relationships require time, effort, and intentionality. It involves being present with others, actively listening, and showing genuine interest in their lives. It involves reaching out to friends and family, strengthening bonds, and creating a support network that can weather life's challenges. In a world that often values virtual connections and digital distractions, let us not forget the profound impact of human relationships. As we navigate the digital age, let us make a conscious effort to prioritize genuine human connections, for they are the threads that weave the fabric of our lives, providing comfort, joy, and a sense of belonging in an increasingly complex world.",
+      "key_points": [
+        "digital interaction often lacks depth compared with face-to-face connection",
+        "real relationships provide empathy, support, and belonging",
+        "meaningful bonds require active effort, listening, and presence",
+        "society should prioritize genuine connection despite digital convenience"
+      ],
+      "reference_summary": "Although digital platforms increase convenience, genuine human relationships remain essential for empathy, support, and well-being and must be intentionally prioritized."
+    },
+    {
+      "id": "swt_008",
+      "title": "Art and Science (Advertising)",
+      "topic": "Business",
+      "difficulty": "medium",
+      "passage": "Advertising is both an art and a science, combining creativity and strategy to convey messages and influence consumer behavior. In a world inundated with advertisements, the challenge lies in creating impactful and memorable campaigns that resonate with the target audience. Creativity is at the heart of successful advertising. Eye-catching visuals, compelling storytelling, and memorable slogans can make an advertisement stand out from the crowd. Creative advertisements not only capture attention but also leave a lasting impression, making consumers more likely to remember the brand or product. However, creativity alone is not enough. Effective advertising also relies on a deep understanding of consumer behavior and market dynamics. Market research, data analysis, and consumer insights are crucial components of the advertising process. By identifying the needs, preferences, and motivations of their target audience, advertisers can tailor their messages to elicit desired responses. In the digital age, advertising has evolved with the advent of online platforms and social media. Digital advertising allows for precise targeting, ensuring that messages reach the right people at the right time. It also enables interactivity, engagement, and real-time feedback, enhancing the overall effectiveness of campaigns. Ethical considerations are another essential aspect of advertising. Advertisers must strike a balance between promoting their products or services and respecting consumer privacy and rights. Misleading or manipulative advertising practices can damage brand reputation and erode consumer trust. In conclusion, effective advertising requires a harmonious blend of creativity and strategy. Creative elements capture attention and leave a lasting impression, while data-driven insights ensure that messages are tailored to resonate with the target audience. As the advertising landscape continues to evolve, ethical considerations and digital innovations will shape the future of the industry.",
+      "key_points": [
+        "effective advertising combines creative storytelling with strategy",
+        "consumer research and data are required for targeting and impact",
+        "digital channels improve precision, interaction, and feedback",
+        "ethical practice is essential to maintain trust and brand reputation"
+      ],
+      "reference_summary": "Modern advertising succeeds when creative execution is combined with data-driven strategy and ethical practice across evolving digital platforms."
+    },
+    {
+      "id": "swt_009",
+      "title": "Solar Cell Technology",
+      "topic": "Science",
+      "difficulty": "medium",
+      "passage": "Recent research has led to a significant breakthrough in solar cell technology, offering the potential to revolutionize the way we harness and utilize solar energy. This innovation promises to make solar power more efficient and accessible than ever before. Traditional solar cells, known as photovoltaic cells, have limitations when it comes to capturing sunlight and converting it into electricity. A major challenge has been maximizing the absorption of sunlight across a broad spectrum of wavelengths. However, researchers have now developed a new type of solar cell that addresses this issue. The breakthrough involves the use of perovskite solar cells, a type of solar technology that has gained attention for its high efficiency and low production costs. Perovskite solar cells have the unique ability to absorb a wider range of light wavelengths, making them more effective in converting sunlight into electricity. Furthermore, perovskite solar cells can be manufactured using simpler and more cost-effective methods than traditional silicon solar cells. This means that solar panels incorporating this technology can potentially be produced at a lower cost, making solar energy more affordable and accessible to a broader range of people. Additionally, the flexibility and versatility of perovskite solar cells open up new possibilities for integration into various applications, such as wearable technology, building-integrated photovoltaics, and portable electronic devices. This breakthrough in solar cell technology not only holds promise for a more sustainable and eco-friendly future but also highlights the ongoing advancements in renewable energy. As researchers continue to refine and scale up perovskite solar cell production, we may soon see a significant increase in the adoption of solar energy as a clean and efficient power source.",
+      "key_points": [
+        "perovskite cells improve sunlight absorption and conversion efficiency",
+        "new manufacturing methods can reduce production cost",
+        "flexibility enables use in buildings, wearables, and portable devices",
+        "technology could accelerate broader adoption of clean solar energy"
+      ],
+      "reference_summary": "Perovskite solar cells offer higher efficiency, lower cost, and broader application potential, making solar power more scalable and accessible."
+    },
+    {
+      "id": "swt_010",
+      "title": "Microplastics in the Environment",
+      "topic": "Environment",
+      "difficulty": "medium",
+      "passage": "The pervasive presence of microplastics in the environment has become a growing concern for scientists and environmentalists worldwide. These tiny plastic particles, often measuring less than five millimeters, have been found in various ecosystems, from the deepest parts of the ocean to the most remote mountain peaks. Microplastics originate from a variety of sources, including the breakdown of larger plastic debris, microbeads in personal care products, and synthetic fibers from clothing. One of the primary concerns regarding microplastics is their potential impact on marine life. Many marine organisms, from tiny plankton to large whales, ingest these particles, which can lead to physical harm, reduced feeding, and exposure to toxic chemicals. Furthermore, microplastics can act as carriers for other pollutants, such as heavy metals and persistent organic pollutants, which can further exacerbate their environmental impact. The presence of microplastics in the food chain also raises concerns about potential risks to human health. Research has shown that humans are exposed to microplastics through various pathways, including the consumption of contaminated seafood and bottled water. While the long-term effects of microplastic ingestion on human health are still being studied, it's essential to address the sources of plastic pollution and reduce our reliance on single-use plastics. Addressing the issue of microplastics requires a multi-faceted approach, including improved waste management systems, public awareness campaigns, and international cooperation. By reducing plastic production, promoting recycling, and developing sustainable alternatives, we can mitigate the environmental impact of microplastics and protect the health of our planet and its inhabitants.",
+      "key_points": [
+        "microplastics are widespread across global ecosystems",
+        "sources include plastic breakdown, microbeads, and synthetic fibers",
+        "they harm marine life and may pose human health risks",
+        "solutions require waste reform, reduced plastic use, and cooperation"
+      ],
+      "reference_summary": "Microplastics are a global ecological and health risk, and reducing their impact needs coordinated action on plastic production, waste systems, and public policy."
+    },
+    {
+      "id": "swt_011",
+      "title": "The Power of Storytelling",
+      "topic": "Culture",
+      "difficulty": "easy",
+      "passage": "Storytelling is a fundamental human activity that has been used for centuries to convey information, share experiences, and connect with others. From ancient oral traditions to modern literature and film, stories have the power to captivate audiences, evoke emotions, and shape our understanding of the world. One of the primary functions of storytelling is to pass on knowledge and values from one generation to the next. Through myths, legends, and fables, cultures preserve their history, beliefs, and moral codes. Stories provide a framework for understanding complex concepts and making sense of the world around us. In addition to their educational value, stories also have a profound impact on our emotions. They can transport us to different times and places, allowing us to experience a wide range of emotions, from joy and excitement to sadness and fear. By empathizing with characters and their struggles, we gain a deeper understanding of the human condition and develop a sense of compassion and empathy. Storytelling also plays a crucial role in building communities and fostering social cohesion. Shared stories create a sense of belonging and provide a common ground for communication and understanding. In a world that is often fragmented and divided, stories can bridge cultural and social gaps, bringing people together through shared experiences and emotions. Furthermore, storytelling has been used as a powerful tool for social change and advocacy. By giving voice to marginalized groups and highlighting social injustices, stories can raise awareness and inspire action. From the works of social reformers to the personal narratives of individuals, storytelling has the potential to challenge prevailing narratives and spark meaningful conversations about important issues. In conclusion, storytelling is a versatile and influential human activity that continues to play a significant role in our lives. Whether it's through literature, film, or personal anecdotes, stories have the power to inform, inspire, and connect us in profound ways.",
+      "key_points": [
+        "storytelling preserves knowledge, values, and cultural memory",
+        "stories build empathy and emotional understanding",
+        "shared narratives strengthen communities and social cohesion",
+        "storytelling can drive awareness and social change"
+      ],
+      "reference_summary": "Storytelling educates, builds empathy, connects communities, and can motivate social change through shared human narratives."
+    },
+    {
+      "id": "swt_012",
+      "title": "The Evolution of Transportation",
+      "topic": "Transport",
+      "difficulty": "medium",
+      "passage": "The evolution of transportation has been a cornerstone of human progress, significantly shaping the way we live, work, and interact with the world. From the earliest forms of travel to the sophisticated systems of today, transportation has played a vital role in the development of civilizations and the globalization of our society. In ancient times, transportation was primarily limited to walking and the use of animals for carrying goods and people. The invention of the wheel marked a major turning point, leading to the development of carts and chariots. As civilizations expanded, maritime travel also became increasingly important, enabling trade and exploration across vast oceans. The Industrial Revolution brought about a transformative era in transportation with the invention of the steam engine. This led to the development of steam-powered ships and locomotives, drastically reducing travel times and enabling the movement of goods on a much larger scale. The subsequent invention of the internal combustion engine paved the way for the automobile and the airplane, further revolutionizing personal travel and global connectivity. In the modern era, transportation continues to evolve with the development of high-speed trains, electric vehicles, and advancements in aerospace technology. These innovations are driven by the need for more efficient, sustainable, and accessible transportation options. The integration of digital technologies, such as GPS and autonomous systems, is also transforming the way we navigate and manage transportation networks. However, the evolution of transportation also presents challenges. Issues such as traffic congestion, environmental pollution, and the need for infrastructure investment are ongoing concerns. Addressing these challenges requires a focus on sustainable transportation solutions, including public transit, cycling infrastructure, and the adoption of clean energy sources. In conclusion, the evolution of transportation has been a continuous journey of innovation and progress. From the wheel to the modern era of high-speed travel, transportation has shaped our world and continues to play a crucial role in our lives. By embracing new technologies and prioritizing sustainability, we can ensure that transportation remains a driver of positive change in the future.",
+      "key_points": [
+        "transportation innovations have continuously shaped civilization",
+        "major milestones include wheel, steam power, cars, and aircraft",
+        "modern systems focus on speed, efficiency, and digital integration",
+        "future progress depends on sustainable solutions to congestion and pollution"
+      ],
+      "reference_summary": "Transportation has evolved through major technological shifts and now must prioritize sustainability and smart systems to address modern challenges."
+    }
+  ]
+}

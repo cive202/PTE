@@ -46,9 +46,12 @@ Thumbs.db
 # PTE runtime artifacts (canonical layout)
 data/processed/mfa_runs/
 data/processed/logs/
+
 data/user_uploads/*/
 data/user_uploads/upload_*.*
 data/user_uploads/temp_*.*
+
+/docs/
 
 # PTE runtime artifacts (legacy layout fallback)
 PTE_MFA_TESTER_DOCKER/data/output_*/

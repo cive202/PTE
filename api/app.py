@@ -10,6 +10,7 @@ import shutil
 import requests
 import random
 from pathlib import Path
+from urllib.parse import urlencode
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 
 # Ensure project root is in path for imports
@@ -19,8 +20,24 @@ if PROJECT_ROOT not in sys.path:
 
 from api.validator import align_and_validate, align_and_validate_gen
 from api.image_evaluator import get_random_image, get_image_catalog, infer_chart_type, evaluate_description
-from api.lecture_evaluator import get_random_lecture, evaluate_lecture
-from pte_core.phoneme.g2p import PhonemeReferenceBuilder
+from api.lecture_evaluator import (
+    get_random_lecture,
+    get_lecture_by_id,
+    get_lecture_categories,
+    get_lecture_catalog,
+    evaluate_lecture,
+)
+from api.writing_evaluator import (
+    get_swt_task,
+    get_essay_task,
+    get_email_task,
+    get_writing_topics,
+    get_writing_difficulties,
+    get_writing_catalog,
+    evaluate_summarize_written_text,
+    evaluate_write_essay,
+    evaluate_write_email,
+)
 from pte_core.asr.phoneme_recognition import call_phoneme_service
 from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from api.file_utils import (
@@ -31,7 +48,14 @@ from api.file_utils import (
     FEATURE_DESCRIBE_IMAGE,
     FEATURE_RETELL_LECTURE
 )
-from api.tts_handler import synthesize_speech
+from api.tts_handler import (
+    synthesize_speech,
+    get_tts_capabilities,
+    list_voices,
+    normalize_provider,
+    normalize_speed_token,
+    get_default_voice,
+)
 from src.shared.paths import (
     IMAGES_DIR as SHARED_IMAGES_DIR,
     LECTURES_DIR as SHARED_LECTURES_DIR,
@@ -39,6 +63,7 @@ from src.shared.paths import (
     READ_ALOUD_REFERENCE_FILE,
     REPEAT_SENTENCE_REFERENCE_FILE,
     ensure_runtime_dirs,
+    USER_UPLOADS_DIR,
 )
 from src.shared.services import GRAMMAR_SERVICE_URL
 
@@ -72,6 +97,8 @@ _WORD_PRACTICE_SCORER = None
 def _get_word_practice_builder():
     global _WORD_PRACTICE_BUILDER
     if _WORD_PRACTICE_BUILDER is None:
+        # Lazy import to avoid slow NLTK/G2P downloads during Flask startup.
+        from pte_core.phoneme.g2p import PhonemeReferenceBuilder
         _WORD_PRACTICE_BUILDER = PhonemeReferenceBuilder()
     return _WORD_PRACTICE_BUILDER
 
@@ -85,6 +112,50 @@ def _get_word_practice_scorer():
 
 def _map_word_practice_accent(raw_accent):
     return WORD_PRACTICE_ACCENT_MAP.get(raw_accent, "Non-Native English")
+
+
+def _as_bool(value):
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _resolve_tts_request(feature: str = "default"):
+    capabilities = get_tts_capabilities(feature=feature)
+    default_provider = str(capabilities.get("default_provider", "edge"))
+    default_speed = str(capabilities.get("default_speed", "x1.0"))
+    default_voice = str(capabilities.get("default_voice", get_default_voice(feature=feature)))
+
+    provider = request.args.get("provider", default_provider)
+    speed = request.args.get("speed", default_speed)
+    voice = request.args.get("voice", default_voice)
+    rate = request.args.get("rate")
+    pitch = request.args.get("pitch")
+
+    resolved_provider = normalize_provider(provider)
+    resolved_speed = normalize_speed_token(speed)
+    resolved_voice = str(voice or default_voice).strip()
+    resolved_rate = str(rate or "").strip() or None
+    resolved_pitch = str(pitch or "").strip() or None
+    return {
+        "provider": resolved_provider,
+        "speed": resolved_speed,
+        "voice": resolved_voice,
+        "rate": resolved_rate,
+        "pitch": resolved_pitch,
+    }
+
+
+def _build_retell_audio_url(lecture_id: str, tts_params: dict) -> str:
+    query = {
+        "provider": tts_params.get("provider", "edge"),
+        "speed": tts_params.get("speed", "x1.0"),
+        "voice": tts_params.get("voice", ""),
+    }
+    if tts_params.get("rate"):
+        query["rate"] = tts_params["rate"]
+    if tts_params.get("pitch"):
+        query["pitch"] = tts_params["pitch"]
+    encoded = urlencode(query)
+    return f"/retell-lecture/audio/{lecture_id}?{encoded}"
 
 
 def _maybe_cleanup(paths, force=False):
@@ -158,6 +229,23 @@ def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_
                         if destination.exists():
                             shutil.rmtree(destination)
                         shutil.copytree(accent_dir, destination)
+    except Exception:
+        pass
+
+
+def _persist_writing_result(task_slug, payload):
+    if not isinstance(payload, dict):
+        return
+    try:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        short_id = str(uuid.uuid4())[:6]
+        safe_slug = re.sub(r"[^a-z0-9_]+", "_", str(task_slug).lower()).strip("_") or "writing"
+        attempt_dir = Path(USER_UPLOADS_DIR) / f"{safe_slug}_{timestamp}_{short_id}"
+        analysis_dir = attempt_dir / "analysis"
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        target = analysis_dir / "writing_result.json"
+        with open(target, "w", encoding="utf-8") as file_obj:
+            json.dump(payload, file_obj, ensure_ascii=False, indent=2)
     except Exception:
         pass
 
@@ -332,19 +420,93 @@ def check_grammar():
     except Exception as e:
         return jsonify({"error": f"Grammar service unreachable: {str(e)}"}), 503
 
+@app.route('/api/tts/options', methods=['GET'])
+def tts_options():
+    feature = request.args.get("feature", "default")
+    locale = request.args.get("locale")
+    force_refresh = _as_bool(request.args.get("refresh"))
+
+    capabilities = get_tts_capabilities(feature=feature)
+    provider = request.args.get("provider", capabilities.get("default_provider", "edge"))
+    try:
+        provider = normalize_provider(provider)
+    except ValueError:
+        provider = str(capabilities.get("default_provider", "edge"))
+
+    requested_locale = locale or capabilities.get("default_locale")
+    voices = list_voices(
+        provider=provider,
+        locale=requested_locale,
+        feature=feature,
+        force_refresh=force_refresh,
+    )
+    return jsonify(
+        {
+            "feature": feature,
+            "provider": provider,
+            "capabilities": capabilities,
+            "voices": voices,
+            "voice_count": len(voices),
+        }
+    )
+
+
+@app.route('/api/tts/voices', methods=['GET'])
+def tts_voices():
+    feature = request.args.get("feature", "default")
+    capabilities = get_tts_capabilities(feature=feature)
+    provider = request.args.get("provider", capabilities.get("default_provider", "edge"))
+    locale = request.args.get("locale")
+    force_refresh = _as_bool(request.args.get("refresh"))
+
+    try:
+        provider = normalize_provider(provider)
+        voices = list_voices(
+            provider=provider,
+            locale=locale,
+            feature=feature,
+            force_refresh=force_refresh,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": f"Voice listing failed: {exc}"}), 500
+
+    return jsonify(
+        {
+            "feature": feature,
+            "provider": provider,
+            "locale": locale,
+            "voices": voices,
+            "voice_count": len(voices),
+        }
+    )
+
+
 @app.route('/api/tts', methods=['GET'])
 def tts():
-    text = request.args.get('text', '').strip()
-    speed = request.args.get('speed', 'default').lower()
+    text = request.args.get("text", "").strip()
     if not text:
         return jsonify({"error": "No text provided"}), 400
-    if speed not in {"default", "slow"}:
-        speed = "default"
+    feature = request.args.get("feature", "default")
     try:
-        audio_bytes = synthesize_speech(text, speed=speed)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    return Response(audio_bytes, mimetype='audio/mpeg')
+        tts_params = _resolve_tts_request(feature=feature)
+        audio_bytes = synthesize_speech(
+            text,
+            speed=tts_params["speed"],
+            voice=tts_params["voice"],
+            provider=tts_params["provider"],
+            rate=tts_params["rate"],
+            pitch=tts_params["pitch"] or "+0Hz",
+            feature=feature,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    response = Response(audio_bytes, mimetype='audio/mpeg')
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
 
 @app.route('/api/word-practice', methods=['POST'])
 def word_practice():
@@ -556,13 +718,234 @@ def summarize_group_discussion_page():
 
 @app.route('/writing/summarize-written-text')
 def summarize_written_text_page():
-    """Summarize Written Text page (soon available)."""
+    """Summarize Written Text page."""
     return render_template('summarize_written_text.html')
 
 @app.route('/writing/write-essay')
 def write_essay_page():
-    """Write Essay page (soon available)."""
+    """Write Essay page."""
     return render_template('write_essay.html')
+
+
+@app.route('/writing/write-email')
+def write_email_page():
+    """Write Email page."""
+    return render_template('write_email.html')
+
+
+@app.route('/writing/summarize-written-text/get-topics', methods=['GET'])
+def get_swt_topics():
+    topics = get_writing_topics("summarize_written_text")
+    if not topics:
+        return jsonify({"error": "No topics available"}), 404
+    return jsonify({"topics": topics})
+
+
+@app.route('/writing/summarize-written-text/get-categories', methods=['GET'])
+def get_swt_categories():
+    difficulties = get_writing_difficulties("summarize_written_text")
+    if not difficulties:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": difficulties})
+
+
+@app.route('/writing/summarize-written-text/get-catalog', methods=['GET'])
+def get_swt_catalog():
+    catalog = get_writing_catalog("summarize_written_text")
+    if not catalog:
+        return jsonify({"error": "No SWT prompts available"}), 404
+    return jsonify({"items": catalog})
+
+
+@app.route('/writing/summarize-written-text/get-task', methods=['GET'])
+def get_swt_prompt():
+    topic = request.args.get("topic", None)
+    difficulty = request.args.get("difficulty", None)
+    prompt_id = request.args.get("prompt_id", None)
+    task = get_swt_task(topic=topic, prompt_id=prompt_id, difficulty=difficulty)
+    if not task:
+        return jsonify({"error": "No SWT prompts available"}), 404
+
+    return jsonify({
+        "id": task.get("id", ""),
+        "title": task.get("title", "Untitled"),
+        "topic": task.get("topic", "General"),
+        "difficulty": task.get("difficulty", "medium"),
+        "passage": task.get("passage", ""),
+        "recommended_word_range": f"{5}-{75}",
+    })
+
+
+@app.route('/writing/summarize-written-text/score', methods=['POST'])
+def score_swt():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form.to_dict(flat=True)
+
+    passage = str(payload.get("passage", ""))
+    response_text = str(payload.get("response", ""))
+    prompt_id = payload.get("prompt_id")
+
+    result = evaluate_summarize_written_text(passage, response_text, prompt_id=prompt_id)
+    if "error" in result:
+        return jsonify(result), 400
+
+    _persist_writing_result(
+        "summarize_written_text",
+        {
+            "request": {
+                "prompt_id": prompt_id,
+                "passage": passage,
+                "response": response_text,
+            },
+            "result": result,
+        },
+    )
+    return jsonify(result)
+
+
+@app.route('/writing/write-essay/get-topics', methods=['GET'])
+def get_essay_topics():
+    topics = get_writing_topics("write_essay")
+    if not topics:
+        return jsonify({"error": "No topics available"}), 404
+    return jsonify({"topics": topics})
+
+
+@app.route('/writing/write-essay/get-categories', methods=['GET'])
+def get_essay_categories():
+    difficulties = get_writing_difficulties("write_essay")
+    if not difficulties:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": difficulties})
+
+
+@app.route('/writing/write-essay/get-catalog', methods=['GET'])
+def get_essay_catalog():
+    catalog = get_writing_catalog("write_essay")
+    if not catalog:
+        return jsonify({"error": "No essay prompts available"}), 404
+    return jsonify({"items": catalog})
+
+
+@app.route('/writing/write-essay/get-task', methods=['GET'])
+def get_essay_prompt():
+    topic = request.args.get("topic", None)
+    difficulty = request.args.get("difficulty", None)
+    prompt_id = request.args.get("prompt_id", None)
+    task = get_essay_task(topic=topic, prompt_id=prompt_id, difficulty=difficulty)
+    if not task:
+        return jsonify({"error": "No essay prompts available"}), 404
+
+    return jsonify({
+        "id": task.get("id", ""),
+        "title": task.get("title", "Untitled"),
+        "topic": task.get("topic", "General"),
+        "difficulty": task.get("difficulty", "medium"),
+        "prompt": task.get("prompt", ""),
+        "recommended_word_range": task.get("recommended_word_range", "200-300"),
+    })
+
+
+@app.route('/writing/write-essay/score', methods=['POST'])
+def score_essay():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form.to_dict(flat=True)
+
+    prompt = str(payload.get("prompt", ""))
+    response_text = str(payload.get("response", ""))
+    prompt_id = payload.get("prompt_id")
+
+    result = evaluate_write_essay(prompt, response_text, prompt_id=prompt_id)
+    if "error" in result:
+        return jsonify(result), 400
+
+    _persist_writing_result(
+        "write_essay",
+        {
+            "request": {
+                "prompt_id": prompt_id,
+                "prompt": prompt,
+                "response": response_text,
+            },
+            "result": result,
+        },
+    )
+    return jsonify(result)
+
+
+@app.route('/writing/write-email/get-topics', methods=['GET'])
+def get_write_email_topics():
+    topics = get_writing_topics("write_email")
+    if not topics:
+        return jsonify({"error": "No topics available"}), 404
+    return jsonify({"topics": topics})
+
+
+@app.route('/writing/write-email/get-categories', methods=['GET'])
+def get_write_email_categories():
+    difficulties = get_writing_difficulties("write_email")
+    if not difficulties:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": difficulties})
+
+
+@app.route('/writing/write-email/get-catalog', methods=['GET'])
+def get_write_email_catalog():
+    catalog = get_writing_catalog("write_email")
+    if not catalog:
+        return jsonify({"error": "No write email prompts available"}), 404
+    return jsonify({"items": catalog})
+
+
+@app.route('/writing/write-email/get-task', methods=['GET'])
+def get_write_email_prompt():
+    topic = request.args.get("topic", None)
+    difficulty = request.args.get("difficulty", None)
+    prompt_id = request.args.get("prompt_id", None)
+    task = get_email_task(topic=topic, prompt_id=prompt_id, difficulty=difficulty)
+    if not task:
+        return jsonify({"error": "No write email prompts available"}), 404
+
+    return jsonify({
+        "id": task.get("id", ""),
+        "title": task.get("title", "Untitled"),
+        "topic": task.get("topic", "General"),
+        "difficulty": task.get("difficulty", "medium"),
+        "prompt": task.get("prompt", ""),
+        "recipient": task.get("recipient", ""),
+        "tone": task.get("tone", "formal"),
+        "recommended_word_range": task.get("recommended_word_range", "50-120"),
+    })
+
+
+@app.route('/writing/write-email/score', methods=['POST'])
+def score_write_email():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = request.form.to_dict(flat=True)
+
+    prompt = str(payload.get("prompt", ""))
+    response_text = str(payload.get("response", ""))
+    prompt_id = payload.get("prompt_id")
+
+    result = evaluate_write_email(prompt, response_text, prompt_id=prompt_id)
+    if "error" in result:
+        return jsonify(result), 400
+
+    _persist_writing_result(
+        "write_email",
+        {
+            "request": {
+                "prompt_id": prompt_id,
+                "prompt": prompt,
+                "response": response_text,
+            },
+            "result": result,
+        },
+    )
+    return jsonify(result)
 
 @app.route('/save', methods=['POST'])
 def save():
@@ -829,16 +1212,85 @@ def serve_lecture(filename):
 # ============================================================================
 # ROUTES - RETELL LECTURE
 # ============================================================================
+@app.route('/retell-lecture/get-categories', methods=['GET'])
+def get_retell_lecture_categories():
+    categories = get_lecture_categories()
+    if not categories:
+        return jsonify({"error": "No categories available"}), 404
+    return jsonify({"categories": categories})
+
+
+@app.route('/retell-lecture/get-catalog', methods=['GET'])
+def get_retell_lecture_catalog():
+    catalog = get_lecture_catalog()
+    if not catalog:
+        return jsonify({"error": "No lectures available"}), 404
+    return jsonify({"items": catalog})
+
+
 @app.route('/retell-lecture/get-lecture', methods=['GET'])
 def get_lecture_task():
-    lecture_data = get_random_lecture()
+    lecture_id = request.args.get("lecture_id", None)
+    difficulty = request.args.get("difficulty", None)
+    try:
+        tts_params = _resolve_tts_request(feature="retell_lecture")
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    if lecture_id:
+        lecture_data = get_lecture_by_id(lecture_id)
+    else:
+        lecture_data = get_random_lecture(difficulty=difficulty)
     if not lecture_data:
         return jsonify({"error": "No lectures available"}), 404
+
+    resolved_lecture_id = str(lecture_data.get("id", "")).strip()
+    if not resolved_lecture_id:
+        return jsonify({"error": "Lecture id is missing"}), 500
+
     return jsonify({
-        "lecture_id": lecture_data['id'],
-        "audio_url": f"/lectures/{lecture_data['filename']}",
-        "title": lecture_data['title']
+        "lecture_id": resolved_lecture_id,
+        "audio_url": _build_retell_audio_url(resolved_lecture_id, tts_params),
+        "title": lecture_data['title'],
+        "difficulty": lecture_data.get("difficulty", "medium"),
+        "tts": {
+            "provider": tts_params["provider"],
+            "voice": tts_params["voice"],
+            "speed": tts_params["speed"],
+        },
     })
+
+
+@app.route('/retell-lecture/audio/<lecture_id>', methods=['GET'])
+def retell_lecture_audio(lecture_id):
+    lecture_data = get_lecture_by_id(lecture_id)
+    if not lecture_data:
+        return jsonify({"error": "Lecture not found"}), 404
+
+    transcript = str(lecture_data.get("transcript", "")).strip()
+    if not transcript:
+        return jsonify({"error": "Lecture transcript not found"}), 404
+
+    try:
+        tts_params = _resolve_tts_request(feature="retell_lecture")
+        audio_bytes = synthesize_speech(
+            transcript,
+            speed=tts_params["speed"],
+            voice=tts_params["voice"],
+            provider=tts_params["provider"],
+            rate=tts_params["rate"],
+            pitch=tts_params["pitch"] or "+0Hz",
+            feature="retell_lecture",
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": f"TTS generation failed: {exc}"}), 500
+
+    response = Response(audio_bytes, mimetype="audio/mpeg")
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
 
 @app.route('/retell-lecture/submit', methods=['POST'])
 def submit_lecture():
