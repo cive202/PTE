@@ -7,8 +7,8 @@ This guide will help you set up the PTE Practice Platform on your Arch Linux sys
 Based on the screenshots provided:
 
 - **Main Application**: Flask backend (Port 5000)
-- **ASR/Grammar Service**: Docker container `cive202/pte-asr-grammar` (Port 8000)
-- **Phoneme Analysis Service**: Docker container `cive202/wav2vec2-phoneme-cpu` (Port 8001)
+- **ASR/Grammar Service**: Docker container `sushil346/pte-asr-grammar` (Port 8000)
+- **Phoneme Analysis Service**: Docker container `sushil346/wav2vec2-phoneme-cpu` (Port 8001)
 
 ## Prerequisites Installation
 
@@ -103,10 +103,10 @@ The screenshots show you already have these images on Docker Hub. Pull them:
 
 ```bash
 # Pull ASR/Grammar service
-docker pull cive202/pte-asr-grammar
+docker pull sushil346/pte-asr-grammar
 
 # Pull Phoneme analysis service
-docker pull cive202/wav2vec2-phoneme-cpu
+docker pull sushil346/wav2vec2-phoneme-cpu
 ```
 
 ### 2. Create Docker Compose File
@@ -119,7 +119,7 @@ version: '3.8'
 
 services:
   asr-grammar:
-    image: cive202/pte-asr-grammar
+    image: sushil346/pte-asr-grammar
     container_name: pte-asr-grammar
     ports:
       - "8000:8000"
@@ -132,7 +132,7 @@ services:
       start_period: 40s
 
   phoneme-cpu:
-    image: cive202/wav2vec2-phoneme-cpu
+    image: sushil346/wav2vec2-phoneme-cpu
     container_name: pte-phoneme-cpu
     ports:
       - "8001:8001"

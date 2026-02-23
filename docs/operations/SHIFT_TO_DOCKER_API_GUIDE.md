@@ -61,6 +61,28 @@ PTE_HOST_PROJECT_ROOT=/home/sushil/developer/pte/PTE
 docker compose up -d --build
 ```
 
+## 2.1) Publish images to Docker Hub (`sushil346`)
+
+Use this once after successful local build, so other machines can pull the same versions.
+
+```bash
+# Build images with current compose tags
+docker compose build
+
+# API
+docker tag sushil346/pte-api:latest sushil346/pte-api:00c3b4d
+docker push sushil346/pte-api:latest
+docker push sushil346/pte-api:00c3b4d
+
+# ASR / Grammar
+docker push sushil346/pte-asr-grammar:latest
+
+# Phoneme
+docker push sushil346/wav2vec2-phoneme-cpu:latest
+```
+
+If API push is slow, let `docker push sushil346/pte-api:latest` run longer; that image has one large layer.
+
 ## 3) Verify services
 
 ```bash

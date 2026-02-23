@@ -1,6 +1,6 @@
 services:
   asr-grammar:
-    image: cive202/pte-asr-grammar:latest
+    image: sushil346/pte-asr-grammar:latest
     build:
       context: ./docker/asr-grammar
     ports:
@@ -11,7 +11,7 @@ services:
       - pte-network
 
   wav2vec2-service:
-    image: cive202/wav2vec2-phoneme-cpu:latest
+    image: sushil346/wav2vec2-phoneme-cpu:latest
     build:
       context: ./docker/phoneme-service
     ports:
@@ -22,7 +22,7 @@ services:
       - pte-network
 
   api:
-    image: pte-api:latest
+    image: sushil346/pte-api:latest
     build:
       context: .
       dockerfile: docker/api/Dockerfile
