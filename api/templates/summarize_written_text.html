@@ -248,6 +248,7 @@
             });
 
             resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderCategoryOptions(categories) {
@@ -283,11 +284,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadPassage(topicItem.id);
+                card.onclick = () => loadPassage(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadPassage(topicItem.id);
+                        loadPassage(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -301,6 +302,10 @@
             });
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            sourceSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         async function loadCatalog() {
@@ -328,7 +333,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadPassage(promptId = null) {
+        async function loadPassage(promptId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -361,6 +366,9 @@
             summarySection.style.display = 'block';
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
             renderTopicCards();
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreSummary() {
@@ -406,13 +414,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadPassage(pick.id);
+            await loadPassage(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadPassage(filteredTopics[0].id);
+                await loadPassage(filteredTopics[0].id, true);
             } else {
                 currentPromptId = null;
                 sourceSection.style.display = 'none';

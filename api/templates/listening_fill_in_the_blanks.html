@@ -155,6 +155,11 @@
             background: #fdeaea;
         }
 
+        .fib-input.missed {
+            border-color: #9ac9ae;
+            background: #f1f9f4;
+        }
+
         @media (max-width: 900px) {
             .filter-shell {
                 grid-template-columns: 1fr;
@@ -332,11 +337,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadTask(topicItem.id);
+                card.onclick = () => loadTask(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadTask(topicItem.id);
+                        loadTask(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -348,6 +353,10 @@
             filteredTopics = allTopics.filter((item) => selectedCategory === 'all' || item.difficulty === selectedCategory);
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            fibBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function buildAudioBasePath(taskId) {
@@ -436,6 +445,7 @@
             fibBox.querySelectorAll('input[data-blank-id]').forEach((input) => {
                 input.classList.remove('correct');
                 input.classList.remove('incorrect');
+                input.classList.remove('missed');
             });
         }
 
@@ -447,11 +457,26 @@
                 const row = rowMap.get(blankId);
                 input.classList.remove('correct');
                 input.classList.remove('incorrect');
+                input.classList.remove('missed');
                 if (!row) {
                     return;
                 }
-                input.classList.add(row.is_correct ? 'correct' : 'incorrect');
+                const responseValue = String(row.response || '').trim();
+                if (row.is_correct) {
+                    input.classList.add('correct');
+                    return;
+                }
+                if (responseValue) {
+                    input.classList.add('incorrect');
+                    return;
+                }
+                input.classList.add('missed');
             });
+        }
+
+        function focusAnswerReview() {
+            const target = fibBox.querySelector('.fib-input.correct, .fib-input.incorrect, .fib-input.missed') || fibBox;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function renderResult(payload) {
@@ -470,6 +495,7 @@
 
             applyResultHighlights(analysis.items || []);
             resultSection.style.display = 'block';
+            focusAnswerReview();
         }
 
         async function loadCatalog() {
@@ -497,7 +523,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadTask(taskId = null) {
+        async function loadTask(taskId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -529,6 +555,9 @@
             refreshAudioSource(false);
             renderTopicCards();
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreResponse() {
@@ -574,13 +603,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadTask(pick.id);
+            await loadTask(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadTask(filteredTopics[0].id);
+                await loadTask(filteredTopics[0].id, true);
             } else {
                 currentTaskId = null;
                 listeningSection.style.display = 'none';

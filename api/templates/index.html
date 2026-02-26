@@ -585,7 +585,7 @@
         const wordPracticeResult = document.getElementById('word-practice-result');
 
         // Load saved accent from localStorage
-        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
         accentSelector.value = savedAccent;
 
         // Save accent to localStorage when changed
@@ -876,6 +876,23 @@
                 });
 
                 clearTimeout(timeoutId); // Clear timeout if request completes
+
+                if (!response.ok) {
+                    let serverMessage = `HTTP ${response.status}`;
+                    try {
+                        const body = await response.json();
+                        if (body && body.error) {
+                            serverMessage = body.error;
+                        }
+                    } catch (_) {
+                        // Keep default status text if body is not JSON.
+                    }
+                    throw new Error(serverMessage);
+                }
+
+                if (!response.body) {
+                    throw new Error("No response stream from server.");
+                }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();

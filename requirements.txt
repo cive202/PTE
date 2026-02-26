@@ -1,6 +1,7 @@
 # Core dependencies
 numpy>=1.20.0
 scipy>=1.7.0
+typing-extensions>=4.10.0
 
 # Audio processing
 soundfile>=0.10.0
@@ -20,6 +21,7 @@ Levenshtein>=0.20.0
 cmudict>=1.0.0
 g2p_en>=2.1.0
 praat-textgrids>=1.0.0
+TextGrid>=1.6.1
 panphon>=0.20.0
 
 # Web framework

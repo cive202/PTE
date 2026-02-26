@@ -7,11 +7,11 @@ ENV PYTHONPATH=/app
 WORKDIR /app
 
 # ffmpeg: audio conversion in api/app.py
-# docker.io: transitional support for MFA `docker run` calls from API
+# docker-cli: required for MFA `docker run` calls from API container
 # libsndfile1: required by librosa/soundfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    docker.io \
+    docker-cli \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 

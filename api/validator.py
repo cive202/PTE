@@ -663,7 +663,7 @@ def build_asr_only_result(
         },
     }
 
-def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
+def run_single_alignment_gen(accent, conf, run_id, docker_input_dir, error_sink=None):
     """
     Generator that runs MFA alignment and yields progress updates to keep connection alive.
     Yields: {"type": "progress", ...} or {"type": "result", "data": (accent, tg_path)}
@@ -729,6 +729,13 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
                     stderr_text = stderr.decode('utf-8', errors='ignore') if stderr else 'No stderr'
                     print(f"[MFA] FAILED for {accent}: exit code {process.returncode}, elapsed: {elapsed}s")
                     print(f"[MFA] stderr: {stderr_text[:1000]}")
+                    try:
+                        host_output_dir.mkdir(parents=True, exist_ok=True)
+                        (host_output_dir / "mfa_stderr.log").write_text(stderr_text, encoding="utf-8")
+                    except Exception:
+                        pass
+                    if isinstance(error_sink, dict):
+                        error_sink[accent] = stderr_text[:1000]
                     yield {"type": "result", "data": (accent, None)}
                 break
                 
@@ -753,6 +760,8 @@ def run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
         print(f"[MFA] Exception during alignment for {accent}: {e}")
         import traceback
         traceback.print_exc()
+        if isinstance(error_sink, dict):
+            error_sink[accent] = str(e)
         yield {"type": "result", "data": (accent, None)}
     finally:
         if process and process.poll() is None:
@@ -986,8 +995,17 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         }
         return
 
-    temp_host_dir = MFA_RUNTIME_DIR / run_id / "input"
+    run_host_dir = MFA_RUNTIME_DIR / run_id
+    temp_host_dir = run_host_dir / "input"
+    output_host_dir = run_host_dir / "output"
     os.makedirs(temp_host_dir, exist_ok=True)
+    os.makedirs(output_host_dir, exist_ok=True)
+    # MFA docker image can run as a non-root user; keep runtime dirs writable.
+    for path_obj in (run_host_dir, temp_host_dir, output_host_dir):
+        try:
+            os.chmod(path_obj, 0o777)
+        except Exception:
+            pass
     
     try:
         yield {"type": "progress", "percent": 25, "message": "Checking pronunciation..."}
@@ -1000,6 +1018,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         
         # Run Alignment (Sequential implementation for reliability)
         accent_tgs = {} # accent -> path to TG
+        mfa_errors = {} # accent -> summarized stderr/exception
         
         # Run MFA alignment (60-90 seconds)
         print(
@@ -1018,7 +1037,19 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             try:
                 # Run alignment using generator to keep connection alive with heartbeats
                 tg_file = None
-                for msg in run_single_alignment_gen(accent, conf, run_id, docker_input_dir):
+                try:
+                    alignment_iter = run_single_alignment_gen(
+                        accent,
+                        conf,
+                        run_id,
+                        docker_input_dir,
+                        error_sink=mfa_errors,
+                    )
+                except TypeError:
+                    # Backward-compatible path for tests/mocks with the legacy signature.
+                    alignment_iter = run_single_alignment_gen(accent, conf, run_id, docker_input_dir)
+
+                for msg in alignment_iter:
                     if msg['type'] == 'progress':
                         # Re-yield progress to keep client connection alive
                         try:
@@ -1066,6 +1097,15 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             base_tg = list(accent_tgs.values())[0]
         else:
             print(f"[DEBUG] MFA failed for all accents. Falling back to ASR results.")
+            error_context = ""
+            if mfa_errors:
+                first_accent = sorted(mfa_errors.keys())[0]
+                first_error = str(mfa_errors.get(first_accent, "")).strip()
+                if first_error:
+                    error_context = (
+                        f" MFA stderr ({first_accent}): {first_error[:280]} "
+                        f"(see {MFA_RUNTIME_DIR / run_id / 'output' / first_accent / 'mfa_stderr.log'})."
+                    )
             try:
                 yield {
                     "type": "result",
@@ -1075,7 +1115,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                         speech_rate_scale,
                         word_timestamps,
                         run_id,
-                        "Phoneme-level analysis unavailable. Showing ASR-based results.",
+                        "Phoneme-level analysis unavailable. Showing ASR-based results." + error_context,
                         mfa_runner_mode=mfa_runner_mode,
                         mfa_num_jobs=mfa_num_jobs,
                         cache_key=cache_key,

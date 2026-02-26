@@ -8,21 +8,20 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
-<body>
-    <div class="page-container">
+<body class="dashboard-page">
+    <div class="page-container dashboard-layout">
+        <main class="dashboard-main">
         <div class="page-header">
             <h1 class="page-title">PTE Practice Studio</h1>
             <p class="page-subtitle">A focused workspace for speaking, listening, and writing performance with AI scoring.</p>
             <div class="hero-meta">
                 <span class="hero-pill">Speech Analysis</span>
-                <span class="hero-pill">Listening Intelligence</span>
-                <span class="hero-pill">Reading Precision</span>
-                <span class="hero-pill">Fluency + Pronunciation</span>
+                <span class="hero-pill">Listening + Reading Precision</span>
                 <span class="hero-pill">Writing Feedback</span>
             </div>
         </div>
 
-        <div class="task-container">
+        <div class="task-container" id="speaking-section">
             <h2 class="section-title">Speaking Tasks</h2>
             <div class="card-grid">
                 <a href="/speaking/read-aloud" class="task-card status-available">
@@ -75,7 +74,7 @@
             </div>
         </div>
 
-        <div class="task-container">
+        <div class="task-container" id="listening-section">
             <h2 class="section-title">Listening Tasks</h2>
             <div class="card-grid">
                 <a href="/listening/summarize-spoken-text" class="task-card status-available">
@@ -120,11 +119,11 @@
             </div>
         </div>
 
-        <div class="task-container">
+        <div class="task-container" id="reading-section">
             <h2 class="section-title">Reading Tasks</h2>
             <div class="card-grid">
                 <a href="/reading/multiple-choice-multiple" class="task-card status-available">
-                    <div class="card-icon">R-MCM</div>
+                    <div class="card-icon">MCM</div>
                     <h3 class="card-title">Multiple Choice (Multiple)</h3>
                     <p class="card-description">Read a short passage and select all options supported by the text with official-style partial credit.</p>
                     <span class="card-badge badge-available">Available</span>
@@ -132,7 +131,7 @@
                 </a>
 
                 <a href="/reading/multiple-choice-single" class="task-card status-available">
-                    <div class="card-icon">R-MCS</div>
+                    <div class="card-icon">MCS</div>
                     <h3 class="card-title">Multiple Choice (Single)</h3>
                     <p class="card-description">Read and choose the single best answer based on main idea and supporting detail.</p>
                     <span class="card-badge badge-available">Available</span>
@@ -140,7 +139,7 @@
                 </a>
 
                 <a href="/reading/fill-in-the-blanks-dropdown" class="task-card status-available">
-                    <div class="card-icon">R-FIB</div>
+                    <div class="card-icon">FIB</div>
                     <h3 class="card-title">Fill in the Blanks (Dropdown)</h3>
                     <p class="card-description">Choose context-fit words from dropdown options for each blank in a passage.</p>
                     <span class="card-badge badge-available">Available</span>
@@ -149,7 +148,7 @@
             </div>
         </div>
 
-        <div class="coming-soon-wrap">
+        <div class="coming-soon-wrap" id="writing-section">
             <h2 class="section-title">Writing Tasks</h2>
             <div class="card-grid">
                 <a href="/writing/summarize-written-text" class="task-card status-available">
@@ -181,7 +180,78 @@
         <footer class="page-footer">
             PTE Practice Studio • Speaking + Listening + Writing Intelligence
         </footer>
+        </main>
+
+        <aside class="quick-nav" aria-label="Section navigation">
+            <a href="#speaking-section" class="quick-nav-link active">
+                <span class="quick-nav-dot" aria-hidden="true"></span>
+                <span>Speaking</span>
+            </a>
+            <a href="#listening-section" class="quick-nav-link">
+                <span class="quick-nav-dot" aria-hidden="true"></span>
+                <span>Listening</span>
+            </a>
+            <a href="#reading-section" class="quick-nav-link">
+                <span class="quick-nav-dot" aria-hidden="true"></span>
+                <span>Reading</span>
+            </a>
+            <a href="#writing-section" class="quick-nav-link">
+                <span class="quick-nav-dot" aria-hidden="true"></span>
+                <span>Writing</span>
+            </a>
+        </aside>
     </div>
+
+    <script>
+        (() => {
+            const navLinks = Array.from(document.querySelectorAll('.quick-nav-link'));
+            const sections = navLinks
+                .map((link) => {
+                    const hash = link.getAttribute('href') || '';
+                    const section = hash.startsWith('#') ? document.querySelector(hash) : null;
+                    return { link, section, hash };
+                })
+                .filter((item) => item.section);
+
+            if (!sections.length) return;
+
+            const setActive = (hash) => {
+                navLinks.forEach((link) => {
+                    const isActive = link.getAttribute('href') === hash;
+                    link.classList.toggle('active', isActive);
+                    if (isActive) {
+                        link.setAttribute('aria-current', 'true');
+                    } else {
+                        link.removeAttribute('aria-current');
+                    }
+                });
+            };
+
+            navLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    const hash = link.getAttribute('href');
+                    if (hash) setActive(hash);
+                });
+            });
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    const visible = entries
+                        .filter((entry) => entry.isIntersecting)
+                        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+                    if (!visible.length) return;
+                    setActive(`#${visible[0].target.id}`);
+                },
+                {
+                    root: null,
+                    rootMargin: '-35% 0px -50% 0px',
+                    threshold: [0.2, 0.4, 0.6],
+                }
+            );
+
+            sections.forEach((item) => observer.observe(item.section));
+        })();
+    </script>
 </body>
 
 </html>

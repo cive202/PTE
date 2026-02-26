@@ -48,6 +48,46 @@ CHART_TYPE_LABELS = {
     "other": "Other",
 }
 
+MEMORIZED_TEMPLATE_PATTERNS = [
+    r"\bat a fleeting glance\b",
+    r"\boverall it can be clearly seen\b",
+    r"\bit is clear from the (?:chart|graph|picture|image)\b",
+    r"\bthe given (?:chart|graph|picture|image)\b",
+    r"\bthis is all about\b",
+    r"\bi am done\b",
+    r"\bthank you\b",
+]
+
+HARD_TEMPLATE_PATTERNS = {
+    r"\bat a fleeting glance\b",
+    r"\bthis is all about\b",
+    r"\bi am done\b",
+}
+
+
+def _safe_int_env(name: str, default: int, minimum: int) -> int:
+    raw_value = os.getenv(name, str(default)).strip()
+    try:
+        parsed = int(raw_value)
+    except ValueError:
+        parsed = default
+    return max(minimum, parsed)
+
+
+def get_describe_image_runtime_config() -> Dict[str, int]:
+    """Runtime timings aligned with public PTE describe-image guidance."""
+    prep_seconds = _safe_int_env("PTE_DI_PREP_SECONDS", 25, 5)
+    response_seconds = _safe_int_env("PTE_DI_RESPONSE_SECONDS", 40, 10)
+    recommended_min_seconds = _safe_int_env("PTE_DI_RECOMMENDED_MIN_SECONDS", 20, 8)
+    if recommended_min_seconds > response_seconds:
+        recommended_min_seconds = response_seconds
+    return {
+        "prep_seconds": prep_seconds,
+        "response_seconds": response_seconds,
+        "recommended_response_min_seconds": recommended_min_seconds,
+        "recommended_response_max_seconds": response_seconds,
+    }
+
 
 def load_image_data() -> Dict:
     """Load image reference data from JSON file."""
@@ -299,27 +339,97 @@ def compute_pronunciation_score(mfa_words: List[Dict]) -> Tuple[float, float]:
     return pronun_score, raw
 
 
+def detect_memorized_template(student_text: str) -> Dict[str, object]:
+    """
+    Detect high-risk template-heavy language.
+
+    We only use this as a gating signal when content relevance is also weak.
+    """
+    text_lower = str(student_text or "").lower()
+    matched_patterns = []
+    hard_hit = False
+
+    for pattern in MEMORIZED_TEMPLATE_PATTERNS:
+        if re.search(pattern, text_lower):
+            matched_patterns.append(pattern)
+            if pattern in HARD_TEMPLATE_PATTERNS:
+                hard_hit = True
+
+    return {
+        "is_flagged": hard_hit or len(matched_patterns) >= 3,
+        "matched_count": len(matched_patterns),
+        "matched_patterns": matched_patterns[:5],
+    }
+
+
+def calculate_number_coverage(reference: str, student_text: str) -> float:
+    """
+    Reward number/data mention when the prompt itself includes numbers.
+    """
+    reference_numbers = set(re.findall(r"\b\d+(?:\.\d+)?%?\b", reference or ""))
+    if not reference_numbers:
+        return 1.0
+
+    student_numbers = set(re.findall(r"\b\d+(?:\.\d+)?%?\b", student_text or ""))
+    if not student_numbers:
+        return 0.0
+
+    matched = reference_numbers.intersection(student_numbers)
+    return len(matched) / len(reference_numbers)
+
+
+def infer_speaking_duration(
+    mfa_words: Optional[List[Dict]] = None,
+    fallback_seconds: Optional[float] = None,
+) -> Optional[float]:
+    """Estimate speech duration from MFA words, with client-side fallback."""
+    starts = []
+    ends = []
+    for word in mfa_words or []:
+        if not isinstance(word, dict):
+            continue
+        if word.get("status") == "deleted":
+            continue
+        start = word.get("start")
+        end = word.get("end")
+        if isinstance(start, (int, float)) and isinstance(end, (int, float)) and end > start:
+            starts.append(float(start))
+            ends.append(float(end))
+
+    if starts and ends:
+        return round(max(0.0, max(ends) - min(starts)), 2)
+
+    if isinstance(fallback_seconds, (int, float)) and fallback_seconds > 0:
+        return round(float(fallback_seconds), 2)
+
+    return None
+
+
 def calculate_score(
     reference: str,
     student_text: str,
     keywords: List[str],
     mfa_words: Optional[List[Dict]] = None,
+    speech_duration_seconds: Optional[float] = None,
 ) -> Tuple[int, Dict]:
     """
     Calculate PTE-style score (0-90) for image description — Hybrid engine.
 
-    Sub-scores (matching APEuni's Content / Pronun / Fluency breakdown):
-    - Content  (Semantic Match + Keyword Coverage): 0-90
-    - Pronun   (MFA word-level accuracy):           0-90
-    - Fluency  (length ratio + structure):          0-90
-    - Total    (weighted average of the three):     0-90
+    Sub-scores:
+    - Content  (semantic + keyword + data points): 0-90
+    - Pronun   (MFA word-level accuracy):          0-90
+    - Fluency  (structure + length + timing):      0-90
+    - Total: weighted 40/30/30 on a 0-90 scale.
 
-    Weights for total:
-        Content  40%  (semantic 26.7% + keyword 13.3%)
-        Pronun   30%
-        Fluency  30%  (structure 15% + length 15%)
+    Public PTE guidance includes this gating behavior:
+    when content quality is effectively zero, fluency and pronunciation should
+    not contribute to the score. We implement a conservative gate for that.
     """
-    if not student_text or len(student_text.strip()) < 10:
+    timing_cfg = get_describe_image_runtime_config()
+    text = (student_text or "").strip()
+    word_count = len(text.split())
+
+    if not text or len(text) < 10:
         return 0, {
             "content_score": 0,
             "pronun_score": 0,
@@ -328,65 +438,128 @@ def calculate_score(
             "structure_score": 0,
             "feedback": "Description too short or empty.",
             "word_count": 0,
+            "content_gate": {"active": True, "code": "too_short", "reason": "Description too short or empty."},
+            "duration_seconds": None,
         }
 
-    # ── 1. Content: Semantic Match (26.7% of total → 24 pts) ──────────────
-    semantic_sim = max(0.0, calculate_semantic_similarity(reference, student_text))
-    semantic_pts = semantic_sim * 24  # out of 24
+    semantic_sim = max(0.0, calculate_semantic_similarity(reference, text))
+    keyword_cov = calculate_keyword_coverage(keywords, text)
+    number_cov = calculate_number_coverage(reference, text)
+    template_evidence = detect_memorized_template(text)
+    duration_seconds = infer_speaking_duration(mfa_words, speech_duration_seconds)
 
-    # ── 2. Content: Keyword Coverage (13.3% of total → 12 pts) ───────────
-    keyword_cov = calculate_keyword_coverage(keywords, student_text)
-    keyword_pts = keyword_cov * 12   # out of 12
+    content_gate = {"active": False, "code": None, "reason": ""}
+    if word_count < 8:
+        content_gate = {
+            "active": True,
+            "code": "too_short",
+            "reason": "Response is too short to cover the image meaning.",
+        }
+    elif semantic_sim < 0.22 and keyword_cov < 0.2:
+        content_gate = {
+            "active": True,
+            "code": "irrelevant",
+            "reason": "Response does not meaningfully match the image content.",
+        }
+    elif template_evidence["is_flagged"] and semantic_sim < 0.45 and keyword_cov < 0.35:
+        content_gate = {
+            "active": True,
+            "code": "template_heavy",
+            "reason": "Response appears template-heavy and weakly tied to this image.",
+        }
 
-    content_raw = semantic_pts + keyword_pts  # 0-36 pts
-    # Scale to 0-90 for display
+    if content_gate["active"]:
+        details = {
+            "content_score": 0,
+            "pronun_score": 0,
+            "fluency_score": 0,
+            "keyword_score": 0,
+            "structure_score": 0,
+            "semantic_similarity": round(semantic_sim * 100, 1),
+            "keyword_coverage": round(keyword_cov * 100, 1),
+            "number_coverage": round(number_cov * 100, 1),
+            "structure_metrics": check_structure(text),
+            "word_count": word_count,
+            "content_gate": content_gate,
+            "template_evidence": template_evidence,
+            "duration_seconds": duration_seconds,
+            "duration_target_min_seconds": timing_cfg["recommended_response_min_seconds"],
+            "duration_target_max_seconds": timing_cfg["recommended_response_max_seconds"],
+            "length_ratio": 0.0,
+            "semantic_model_available": bool(TRANSFORMER_AVAILABLE and SEMANTIC_MODEL is not None),
+        }
+        return 0, details
+
+    # Content points: 22 + 10 + 4 = 36
+    semantic_pts = semantic_sim * 22
+    keyword_pts = keyword_cov * 10
+    number_pts = number_cov * 4
+    content_raw = semantic_pts + keyword_pts + number_pts
     content_score_90 = round(content_raw / 36 * 90, 1)
 
-    # ── 3. Pronunciation (30% of total → 27 pts) ─────────────────────────
     pronun_score_90, pronun_raw = compute_pronunciation_score(mfa_words or [])
-    pronun_pts = pronun_raw * 27     # 0-27 pts for total
+    pronun_pts = pronun_raw * 27
 
-    # ── 4. Fluency: Structure (15% of total → 13.5 pts) ──────────────────
-    structure = check_structure(student_text)
+    structure = check_structure(text)
     structure_pts = 0.0
-    if structure['has_intro']:      structure_pts += 4.5
-    if structure['has_conclusion']: structure_pts += 4.5
-    if structure['has_trends']:     structure_pts += 4.5
+    if structure['has_intro']:
+        structure_pts += 3.0
+    if structure['has_conclusion']:
+        structure_pts += 3.0
+    if structure['has_trends']:
+        structure_pts += 3.0
 
-    # ── 5. Fluency: Length ratio (15% of total → 13.5 pts) ───────────────
+    # Length fit: max 9 points.
     ref_len = len(reference.split())
-    stu_len = len(student_text.split())
+    ratio = 0.0
     if ref_len > 0:
-        ratio = stu_len / ref_len
+        ratio = word_count / ref_len
         if 0.6 <= ratio <= 1.5:
-            length_pts = 13.5
+            length_pts = 9.0
         elif ratio < 0.6:
-            length_pts = ratio / 0.6 * 13.5
+            length_pts = max(0.0, ratio / 0.6 * 9.0)
         else:
-            length_pts = max(6.0, 1.5 / ratio * 13.5)
+            length_pts = max(2.0, 1.5 / ratio * 9.0)
     else:
-        length_pts = 0.0
+        length_pts = 4.5
 
-    fluency_pts = structure_pts + length_pts  # 0-27 pts
+    # Time fit (public task behavior: short prep + capped response window): max 9.
+    duration_min = timing_cfg["recommended_response_min_seconds"]
+    duration_max = timing_cfg["recommended_response_max_seconds"]
+    if duration_seconds is None:
+        duration_pts = 6.0  # neutral fallback if no reliable timing exists
+    elif duration_min <= duration_seconds <= duration_max:
+        duration_pts = 9.0
+    elif duration_seconds < duration_min:
+        duration_pts = max(1.5, duration_seconds / duration_min * 9.0)
+    else:
+        duration_pts = max(2.0, duration_max / duration_seconds * 9.0)
+
+    fluency_pts = structure_pts + length_pts + duration_pts  # 0-27 pts
     fluency_score_90 = round(fluency_pts / 27 * 90, 1)
 
-    # ── Total ─────────────────────────────────────────────────────────────
-    raw_total = content_raw + pronun_pts + fluency_pts  # 0-90
+    raw_total = content_raw + pronun_pts + fluency_pts
     total_score = int(min(90, raw_total))
 
     details = {
-        # APEuni-style 0-90 sub-scores
         "content_score": content_score_90,
         "pronun_score": pronun_score_90,
         "fluency_score": fluency_score_90,
-        # Legacy breakdown (kept for backward compat)
         "keyword_score": round(keyword_pts, 1),
         "structure_score": round(structure_pts, 1),
-        # Raw metrics
+        "number_score": round(number_pts, 1),
         "semantic_similarity": round(semantic_sim * 100, 1),
         "keyword_coverage": round(keyword_cov * 100, 1),
+        "number_coverage": round(number_cov * 100, 1),
         "structure_metrics": structure,
-        "word_count": stu_len,
+        "word_count": word_count,
+        "duration_seconds": duration_seconds,
+        "duration_target_min_seconds": duration_min,
+        "duration_target_max_seconds": duration_max,
+        "length_ratio": round(ratio, 3),
+        "content_gate": content_gate,
+        "template_evidence": template_evidence,
+        "semantic_model_available": bool(TRANSFORMER_AVAILABLE and SEMANTIC_MODEL is not None),
     }
 
     return total_score, details
@@ -394,6 +567,21 @@ def calculate_score(
 
 def generate_feedback(score: int, details: Dict, keywords: List[str], student_text: str) -> str:
     """Generate human-readable feedback based on score and details."""
+    content_gate = details.get("content_gate", {})
+    if content_gate.get("active"):
+        gate_code = content_gate.get("code", "")
+        if gate_code == "template_heavy":
+            return (
+                "Your response sounds over-templated and does not stay specific to this image. "
+                "Use direct data points and image-specific comparisons."
+            )
+        if gate_code == "irrelevant":
+            return (
+                "Your response does not match the image meaning. Focus on key values, comparisons, "
+                "and the overall trend shown in the chart."
+            )
+        return "Your response is too short. Give a full image-specific description."
+
     feedback_parts = []
     
     # Structure Feedback
@@ -417,6 +605,19 @@ def generate_feedback(score: int, details: Dict, keywords: List[str], student_te
         if missing:
             feedback_parts.append(f"Try to use key words: {', '.join(missing)}.")
 
+    number_cov = details.get("number_coverage", 100)
+    if number_cov < 50:
+        feedback_parts.append("Include more data points (numbers or percentages) from the image.")
+
+    duration_seconds = details.get("duration_seconds")
+    min_seconds = details.get("duration_target_min_seconds")
+    max_seconds = details.get("duration_target_max_seconds")
+    if isinstance(duration_seconds, (int, float)) and isinstance(min_seconds, (int, float)):
+        if duration_seconds < min_seconds:
+            feedback_parts.append(f"Speak longer: target at least {int(min_seconds)} seconds for full coverage.")
+        elif isinstance(max_seconds, (int, float)) and duration_seconds > max_seconds:
+            feedback_parts.append(f"Keep your response within {int(max_seconds)} seconds.")
+
     if not feedback_parts:
         feedback_parts.append("Excellent description! You covered content, structure, and keywords well.")
     
@@ -427,6 +628,7 @@ def evaluate_description(
     image_id: str,
     student_text: str,
     mfa_words: Optional[List[Dict]] = None,
+    speech_duration_seconds: Optional[float] = None,
 ) -> Dict:
     """
     Main evaluation function.
@@ -436,6 +638,7 @@ def evaluate_description(
         student_text: ASR transcription of the student's speech.
         mfa_words:    Optional list of MFA word dicts (from align_and_validate).
                       When provided, pronunciation score is computed from them.
+        speech_duration_seconds: Optional client-side measured recording length.
     """
     image_data = get_image_by_id(image_id)
     if not image_data:
@@ -445,7 +648,13 @@ def evaluate_description(
     keywords  = image_data.get("keywords", [])
 
     # Calculate score (passes MFA words for pronunciation scoring)
-    score, details = calculate_score(reference, student_text, keywords, mfa_words=mfa_words)
+    score, details = calculate_score(
+        reference,
+        student_text,
+        keywords,
+        mfa_words=mfa_words,
+        speech_duration_seconds=speech_duration_seconds,
+    )
 
     # Generate feedback
     feedback = generate_feedback(score, details, keywords, student_text)

@@ -112,6 +112,14 @@
             font-weight: 600;
         }
 
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.7rem;
+            margin-bottom: 0.6rem;
+        }
+
         @media (max-width: 900px) {
             .filter-shell {
                 grid-template-columns: 1fr;
@@ -119,6 +127,11 @@
 
             #newPromptBtn {
                 width: 100%;
+            }
+
+            .section-head {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -148,7 +161,6 @@
                 </div>
                 <div style="display:flex; gap:0.6rem; align-items:center;">
                     <button class="btn secondary" id="newPromptBtn">Load Random</button>
-                    <span class="card-badge badge-progress" id="timerBadge">09:00</span>
                 </div>
             </div>
             <div class="topic-count" id="topicCount">Loading topics...</div>
@@ -157,7 +169,10 @@
         </div>
 
         <div class="task-container" id="promptSection" style="display:none;">
-            <h2 class="section-title">Email Prompt</h2>
+            <div class="section-head">
+                <h2 class="section-title" style="margin: 0;">Email Prompt</h2>
+                <span class="card-badge badge-progress" id="timerBadge">09:00</span>
+            </div>
             <textarea id="emailPrompt" rows="4" readonly placeholder="Loading prompt..."></textarea>
             <div id="promptMeta" style="margin-top: 0.35rem; color: #60748d; font-size: 0.9rem;"></div>
         </div>
@@ -290,6 +305,7 @@
             });
 
             resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderCategoryOptions(categories) {
@@ -325,11 +341,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadPrompt(topicItem.id);
+                card.onclick = () => loadPrompt(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadPrompt(topicItem.id);
+                        loadPrompt(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -343,6 +359,10 @@
             });
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            promptSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         async function loadCatalog() {
@@ -370,7 +390,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadPrompt(promptId = null) {
+        async function loadPrompt(promptId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -407,6 +427,9 @@
             resetTimer(true);
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
             renderTopicCards();
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreEmail() {
@@ -452,13 +475,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadPrompt(pick.id);
+            await loadPrompt(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadPrompt(filteredTopics[0].id);
+                await loadPrompt(filteredTopics[0].id, true);
             } else {
                 currentPromptId = null;
                 promptSection.style.display = 'none';

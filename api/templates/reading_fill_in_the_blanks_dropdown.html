@@ -146,6 +146,11 @@
             background: #fdeaea;
         }
 
+        .fib-select.missed {
+            border-color: #9ac9ae;
+            background: #f1f9f4;
+        }
+
         @media (max-width: 900px) {
             .filter-shell {
                 grid-template-columns: 1fr;
@@ -291,11 +296,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadTask(topicItem.id);
+                card.onclick = () => loadTask(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadTask(topicItem.id);
+                        loadTask(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -307,6 +312,10 @@
             filteredTopics = allTopics.filter((item) => selectedCategory === 'all' || item.difficulty === selectedCategory);
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            fibBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderTemplate(template, blanks, existingValues = {}) {
@@ -376,6 +385,7 @@
             fibBox.querySelectorAll('select[data-blank-id]').forEach((node) => {
                 node.classList.remove('correct');
                 node.classList.remove('incorrect');
+                node.classList.remove('missed');
             });
         }
 
@@ -387,11 +397,26 @@
                 const row = rowMap.get(blankId);
                 node.classList.remove('correct');
                 node.classList.remove('incorrect');
+                node.classList.remove('missed');
                 if (!row) {
                     return;
                 }
-                node.classList.add(row.is_correct ? 'correct' : 'incorrect');
+                const selectedValue = String(row.selected || '').trim();
+                if (row.is_correct) {
+                    node.classList.add('correct');
+                    return;
+                }
+                if (selectedValue) {
+                    node.classList.add('incorrect');
+                    return;
+                }
+                node.classList.add('missed');
             });
+        }
+
+        function focusAnswerReview() {
+            const target = fibBox.querySelector('.fib-select.correct, .fib-select.incorrect, .fib-select.missed') || fibBox;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function renderResult(payload) {
@@ -410,6 +435,7 @@
 
             applyResultHighlights(analysis.items || []);
             resultSection.style.display = 'block';
+            focusAnswerReview();
         }
 
         async function loadCatalog() {
@@ -437,7 +463,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadTask(taskId = null) {
+        async function loadTask(taskId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -468,6 +494,9 @@
             readingSection.style.display = 'block';
             renderTopicCards();
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreResponse() {
@@ -513,13 +542,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadTask(pick.id);
+            await loadTask(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadTask(filteredTopics[0].id);
+                await loadTask(filteredTopics[0].id, true);
             } else {
                 currentTaskId = null;
                 readingSection.style.display = 'none';

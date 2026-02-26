@@ -4,6 +4,7 @@ import datetime
 import subprocess
 import json
 import re
+import difflib
 import threading
 import uuid
 import shutil
@@ -19,12 +20,21 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from api.validator import align_and_validate, align_and_validate_gen
-from api.image_evaluator import get_random_image, get_image_catalog, infer_chart_type, evaluate_description
+from api.image_evaluator import (
+    get_random_image,
+    get_image_catalog,
+    infer_chart_type,
+    evaluate_description,
+    get_describe_image_runtime_config,
+)
 from api.lecture_evaluator import (
     get_random_lecture,
     get_lecture_by_id,
     get_lecture_categories,
     get_lecture_catalog,
+    get_retell_lecture_runtime_config,
+    resolve_prompt_transcript,
+    estimate_prompt_seconds,
     evaluate_lecture,
 )
 from api.writing_evaluator import (
@@ -76,7 +86,6 @@ from api.tts_handler import (
 )
 from src.shared.paths import (
     IMAGES_DIR as SHARED_IMAGES_DIR,
-    LECTURES_DIR as SHARED_LECTURES_DIR,
     REPEAT_SENTENCE_AUDIO_DIR as SHARED_REPEAT_SENTENCE_AUDIO_DIR,
     READ_ALOUD_REFERENCE_FILE,
     REPEAT_SENTENCE_REFERENCE_FILE,
@@ -87,7 +96,6 @@ from src.shared.services import GRAMMAR_SERVICE_URL
 
 app = Flask(__name__)
 IMAGES_DIR = os.fspath(SHARED_IMAGES_DIR)
-LECTURES_DIR = os.fspath(SHARED_LECTURES_DIR)
 REPEAT_SENTENCE_AUDIO_DIR = os.fspath(SHARED_REPEAT_SENTENCE_AUDIO_DIR)
 REPEAT_SENTENCE_JSON = os.fspath(REPEAT_SENTENCE_REFERENCE_FILE)
 READ_ALOUD_JSON = os.fspath(READ_ALOUD_REFERENCE_FILE)
@@ -216,6 +224,104 @@ def _resolve_reading_task_type(task_slug: str) -> str:
     return READING_ROUTE_TO_TASK[normalized]
 
 
+def _mask_select_missing_word_transcript(transcript: str) -> str:
+    """
+    Replace the final lexical word with a spoken beep cue so the answer is not
+    directly present in audio for Select Missing Word.
+    """
+    text = str(transcript or "").strip()
+    if not text:
+        return text
+
+    # Match final word plus optional trailing punctuation at end of string.
+    match = re.search(r"([A-Za-z]+(?:'[A-Za-z]+)?)\s*([.!?…]*)\s*$", text)
+    if not match:
+        return text
+
+    word_start, _word_end = match.span(1)
+    trailing_punct = match.group(2) or ""
+    prefix = text[:word_start].rstrip()
+    if not prefix:
+        return f"beep{trailing_punct}"
+    return f"{prefix} beep{trailing_punct}"
+
+
+def _normalize_word_token(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9']+", "", str(value or "").strip().lower())
+
+
+def _build_select_missing_word_options(task: dict) -> list[dict]:
+    """
+    Build SMW options so that:
+    - correct option remains the missing final word
+    - three distractors are words that are actually present in transcript audio
+    """
+    options = task.get("options", [])
+    if not isinstance(options, list):
+        return []
+
+    normalized_options = []
+    for option in options:
+        if not isinstance(option, dict):
+            continue
+        option_id = str(option.get("id", "")).strip().upper()
+        option_text = str(option.get("text", "")).strip()
+        if option_id and option_text:
+            normalized_options.append({"id": option_id, "text": option_text})
+
+    if len(normalized_options) < 2:
+        return normalized_options
+
+    correct_id = str(task.get("correct_option", "")).strip().upper()
+    if not correct_id:
+        return normalized_options
+
+    correct_text = ""
+    for option in normalized_options:
+        if option["id"] == correct_id:
+            correct_text = option["text"]
+            break
+    if not correct_text:
+        return normalized_options
+
+    transcript = str(task.get("transcript", "")).strip()
+    transcript_words = re.findall(r"[A-Za-z]+(?:'[A-Za-z]+)?", transcript)
+    if not transcript_words:
+        return normalized_options
+
+    correct_norm = _normalize_word_token(correct_text)
+    distinct_words = []
+    seen = set()
+    for word in transcript_words:
+        word_norm = _normalize_word_token(word)
+        if not word_norm or word_norm == correct_norm or word_norm in seen:
+            continue
+        seen.add(word_norm)
+        distinct_words.append((word, word_norm))
+
+    required_distractors = max(0, len(normalized_options) - 1)
+    if len(distinct_words) < required_distractors:
+        return normalized_options
+
+    ranked = sorted(
+        distinct_words,
+        key=lambda item: difflib.SequenceMatcher(None, correct_norm, item[1]).ratio(),
+        reverse=True,
+    )
+    distractors = [word for word, _ in ranked[:required_distractors]]
+
+    rebuilt = []
+    distractor_idx = 0
+    for option in normalized_options:
+        if option["id"] == correct_id:
+            rebuilt.append({"id": option["id"], "text": correct_text})
+            continue
+        rebuilt.append({"id": option["id"], "text": distractors[distractor_idx]})
+        distractor_idx += 1
+
+    return rebuilt
+
+
 def _maybe_cleanup(paths, force=False):
     if KEEP_UPLOAD_ARTIFACTS and not force:
         return
@@ -313,7 +419,7 @@ def run_mfa_job(job_id, audio_path, text_path):
         JOB_STORE[job_id]['status'] = 'processing'
         
         # Get accent from job store
-        accent = JOB_STORE[job_id].get('accent', 'US_ARPA')
+        accent = JOB_STORE[job_id].get('accent', 'US_MFA')
         
         # Use the main engine from validator.py
         result = align_and_validate(audio_path, text_path, accents=[accent])
@@ -333,6 +439,7 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
     """Background worker for image description evaluation with MFA phone analysis."""
     try:
         IMAGE_JOB_STORE[job_id]['status'] = 'processing'
+        recording_seconds = IMAGE_JOB_STORE[job_id].get('recording_seconds')
         
         # Transcribe audio using the main engine's ASR
         from pte_core.asr.voice2text import voice2text
@@ -347,19 +454,25 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
         
         # Run MFA alignment to get phone-level data
         from api.validator import align_and_validate
-        accent = IMAGE_JOB_STORE[job_id].get('accent', 'US_ARPA')
+        accent = IMAGE_JOB_STORE[job_id].get('accent', 'US_MFA')
         mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
         _persist_attempt_artifacts(audio_path, mfa_result, filename="image_mfa_result.json")
         
         # Evaluate description (pass MFA words so pronunciation score is computed)
         mfa_words = mfa_result.get('words', []) if mfa_result else []
-        result = evaluate_description(image_id, transcription, mfa_words=mfa_words)
+        result = evaluate_description(
+            image_id,
+            transcription,
+            mfa_words=mfa_words,
+            speech_duration_seconds=recording_seconds,
+        )
         
         # Include enhanced transcription details for UI overlay
         result['transcription_details'] = {
             'text': transcription,
             'words': mfa_words,
-            'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {}
+            'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {},
+            'word_timestamps': word_timestamps,
         }
         
         IMAGE_JOB_STORE[job_id]['status'] = 'complete'
@@ -377,6 +490,7 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
     """Background worker for lecture evaluation with MFA phone analysis."""
     try:
         LECTURE_JOB_STORE[job_id]['status'] = 'processing'
+        recording_seconds = LECTURE_JOB_STORE[job_id].get('recording_seconds')
         
         # Transcribe audio using the main engine's ASR
         from pte_core.asr.voice2text import voice2text
@@ -391,21 +505,26 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
         
         # Run MFA alignment to get phone-level data
         from api.validator import align_and_validate
-        accent = LECTURE_JOB_STORE[job_id].get('accent', 'US_ARPA')
+        accent = LECTURE_JOB_STORE[job_id].get('accent', 'US_MFA')
         mfa_result = align_and_validate(audio_path, temp_text_path, accents=[accent])
         _persist_attempt_artifacts(audio_path, mfa_result, filename="lecture_mfa_result.json")
         
-        # Evaluate summary
-        result = evaluate_lecture(lecture_id, transcription)
-        
         # Use MFA words directly (they already contain timing and status)
         mfa_words = mfa_result.get('words', []) if mfa_result else []
+        # Evaluate summary with pronunciation and duration evidence
+        result = evaluate_lecture(
+            lecture_id,
+            transcription,
+            mfa_words=mfa_words,
+            speech_duration_seconds=recording_seconds,
+        )
         
         # Include enhanced transcription details for UI overlay
         result['transcription_details'] = {
             'text': transcription,
             'words': mfa_words,
-            'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {}
+            'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {},
+            'word_timestamps': word_timestamps,
         }
         
         LECTURE_JOB_STORE[job_id]['status'] = 'complete'
@@ -575,7 +694,7 @@ def word_practice():
         return jsonify({"error": "No audio file provided"}), 400
 
     raw_word = request.form.get('word', '')
-    accent = request.form.get('accent', 'US_ARPA')
+    accent = request.form.get('accent', 'US_MFA')
     clean_word = re.sub(r"[^a-zA-Z']+", "", raw_word).lower()
     if not clean_word:
         return jsonify({"error": "No valid word provided"}), 400
@@ -1144,6 +1263,8 @@ def get_listening_task_route(task_slug):
         payload["question"] = str(task.get("question", default_question))
         payload["prompt_text"] = str(task.get("prompt_text", "")).strip()
         options = task.get("options", [])
+        if task_type == "select_missing_word":
+            options = _build_select_missing_word_options(task)
         payload["options"] = [
             {
                 "id": str(option.get("id", "")).strip(),
@@ -1198,6 +1319,12 @@ def listening_audio(task_slug, item_id):
     transcript = str(task.get("transcript", "")).strip()
     if not transcript:
         return jsonify({"error": "Task transcript not found"}), 404
+
+    # For Select Missing Word, do not speak the final answer word.
+    if task_type == "select_missing_word":
+        transcript = _mask_select_missing_word_transcript(transcript)
+        if not transcript:
+            return jsonify({"error": "Task transcript is invalid for select missing word"}), 500
 
     try:
         tts_params = _resolve_tts_request(feature="listening")
@@ -1578,7 +1705,7 @@ def check():
     file = request.files['audio']
     text = request.form.get('text', '')
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
-    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
+    accent = request.form.get('accent', 'US_MFA')  # Default to US_MFA
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, text_path = get_paired_paths(feature)
@@ -1650,7 +1777,7 @@ def check_stream():
     file = request.files['audio']
     text = request.form.get('text', '')
     feature = request.form.get('feature', FEATURE_READ_ALOUD)
-    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
+    accent = request.form.get('accent', 'US_MFA')  # Default to US_MFA
     
     audio_path, text_path = get_paired_paths(feature)
     temp_upload = get_temp_filepath("temp_upload", "tmp", directory=os.path.dirname(audio_path))
@@ -1706,6 +1833,7 @@ def get_image_task():
 
     difficulty_value = str(image_data.get('difficulty', 'general')).strip().lower() or "general"
     chart_type_value = infer_chart_type(image_data)
+    timing_config = get_describe_image_runtime_config()
 
     return jsonify({
         "image_id": image_data['id'],
@@ -1713,7 +1841,8 @@ def get_image_task():
         "title": image_data['title'],
         "topic": difficulty_value.title(),
         "difficulty": difficulty_value,
-        "chart_type": chart_type_value
+        "chart_type": chart_type_value,
+        "timing": timing_config,
     })
 
 @app.route('/speaking/describe-image/get-topics', methods=['GET'])
@@ -1730,6 +1859,7 @@ def get_describe_image_topics():
         key=lambda value: (preferred_difficulty_order.get(value, 99), value),
     )
     chart_types = ["bargraph", "piechart", "other"]
+    timing_config = get_describe_image_runtime_config()
 
     return jsonify({
         "topics": [item.get("title", "Untitled") for item in catalog],
@@ -1737,7 +1867,8 @@ def get_describe_image_topics():
         "filters": {
             "difficulty": difficulties,
             "chart_type": chart_types,
-        }
+        },
+        "timing": timing_config,
     })
 
 @app.route('/describe-image/submit', methods=['POST'])
@@ -1747,7 +1878,16 @@ def submit_description():
     
     file = request.files['audio']
     image_id = request.form.get('image_id', '')
-    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
+    accent = request.form.get('accent', 'US_MFA')  # Default to US_MFA
+    recording_seconds = None
+    recording_seconds_raw = request.form.get('recording_seconds', '').strip()
+    if recording_seconds_raw:
+        try:
+            parsed_seconds = float(recording_seconds_raw)
+            if parsed_seconds > 0:
+                recording_seconds = round(parsed_seconds, 2)
+        except ValueError:
+            recording_seconds = None
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_DESCRIBE_IMAGE)
@@ -1767,6 +1907,7 @@ def submit_description():
             'image_id': image_id,
             'audio_path': audio_path,
             'accent': accent,
+            'recording_seconds': recording_seconds,
             'created_at': datetime.datetime.now().isoformat()
         }
         
@@ -1802,10 +1943,6 @@ def description_status(job_id):
 def serve_image(filename):
     return send_from_directory(IMAGES_DIR, filename)
 
-@app.route('/lectures/<path:filename>')
-def serve_lecture(filename):
-    return send_from_directory(LECTURES_DIR, filename)
-
 # ============================================================================
 # ROUTES - RETELL LECTURE
 # ============================================================================
@@ -1822,7 +1959,7 @@ def get_retell_lecture_catalog():
     catalog = get_lecture_catalog()
     if not catalog:
         return jsonify({"error": "No lectures available"}), 404
-    return jsonify({"items": catalog})
+    return jsonify({"items": catalog, "timing": get_retell_lecture_runtime_config()})
 
 
 @app.route('/retell-lecture/get-lecture', methods=['GET'])
@@ -1845,11 +1982,26 @@ def get_lecture_task():
     if not resolved_lecture_id:
         return jsonify({"error": "Lecture id is missing"}), 500
 
+    prompt_transcript = resolve_prompt_transcript(lecture_data)
+    prompt_duration_seconds = estimate_prompt_seconds(prompt_transcript, speed=tts_params["speed"])
+    runtime_timing = get_retell_lecture_runtime_config()
+    key_points = lecture_data.get("key_points", [])
+    example_response = str(lecture_data.get("example_response", "")).strip()
+    if not example_response and isinstance(key_points, list):
+        cleaned_points = [str(item).strip() for item in key_points if str(item).strip()]
+        if cleaned_points:
+            example_response = " ".join(cleaned_points[:3])
+
     return jsonify({
         "lecture_id": resolved_lecture_id,
         "audio_url": _build_retell_audio_url(resolved_lecture_id, tts_params),
         "title": lecture_data['title'],
         "difficulty": lecture_data.get("difficulty", "medium"),
+        "timing": runtime_timing,
+        "prompt_duration_seconds": prompt_duration_seconds,
+        "prompt_word_count": len(re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?", prompt_transcript)),
+        "audio_source": "edge_tts_dynamic",
+        "example_response": example_response,
         "tts": {
             "provider": tts_params["provider"],
             "voice": tts_params["voice"],
@@ -1864,7 +2016,7 @@ def retell_lecture_audio(lecture_id):
     if not lecture_data:
         return jsonify({"error": "Lecture not found"}), 404
 
-    transcript = str(lecture_data.get("transcript", "")).strip()
+    transcript = resolve_prompt_transcript(lecture_data)
     if not transcript:
         return jsonify({"error": "Lecture transcript not found"}), 404
 
@@ -1896,7 +2048,16 @@ def submit_lecture():
     
     file = request.files['audio']
     lecture_id = request.form.get('lecture_id', '')
-    accent = request.form.get('accent', 'US_ARPA')  # Default to US_ARPA
+    accent = request.form.get('accent', 'US_MFA')  # Default to US_MFA
+    recording_seconds = None
+    recording_seconds_raw = request.form.get('recording_seconds', '').strip()
+    if recording_seconds_raw:
+        try:
+            parsed_seconds = float(recording_seconds_raw)
+            if parsed_seconds > 0:
+                recording_seconds = round(parsed_seconds, 2)
+        except ValueError:
+            recording_seconds = None
     
     job_id = str(uuid.uuid4())[:8]
     audio_path, _ = get_paired_paths(FEATURE_RETELL_LECTURE)
@@ -1916,6 +2077,7 @@ def submit_lecture():
             'lecture_id': lecture_id,
             'audio_path': audio_path,
             'accent': accent,
+            'recording_seconds': recording_seconds,
             'created_at': datetime.datetime.now().isoformat()
         }
         

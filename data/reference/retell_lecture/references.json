@@ -20,7 +20,8 @@
                 "Music supports therapy, stress relief, and well-being.",
                 "Music bridges cultures and builds empathy across communities.",
                 "Music evolves with society and reflects human creativity."
-            ]
+            ],
+            "example_response": "The lecture explains that music is much more than entertainment because it strongly affects emotions and mental health. It can be used in therapy to reduce stress and improve well-being. The speaker also says music works as a cultural bridge, helping people understand different communities and build empathy. Finally, music keeps evolving with social change, from classical forms to modern styles, which shows ongoing human creativity and innovation."
         },
         {
             "id": "lec_649",
@@ -42,7 +43,8 @@
                 "It supported major movements like the Renaissance and Reformation.",
                 "It increased literacy and weakened elite control over knowledge.",
                 "It reshaped culture, politics, religion, and science."
-            ]
+            ],
+            "example_response": "The speaker describes how Gutenberg's printing press transformed history by making books widely available instead of hand-copied and rare. This expansion of printed material increased literacy and helped spread new ideas during the Renaissance, Scientific Revolution, and Reformation. The lecture also highlights that the press reduced elite control over knowledge, encouraged debate and education, and influenced language, politics, religion, and science. Overall, it was a major catalyst for social progress."
         },
         {
             "id": "lec_654",
@@ -64,7 +66,8 @@
                 "Local food systems reduce transport emissions and strengthen communities.",
                 "Adoption requires collaboration among governments, farmers, and consumers.",
                 "Sustainable methods are essential for global food security."
-            ]
+            ],
+            "example_response": "This lecture argues that sustainable farming is essential as population growth increases food demand. The speaker explains that environmentally friendly methods, such as reducing chemicals, conserving water, and protecting biodiversity, support long-term productivity. Another key point is local food systems, which lower transport emissions and strengthen communities through fresher food and local economic support. The lecture concludes that governments, farmers, and consumers must cooperate with policy, education, and technology to secure future food supply."
         },
         {
             "id": "lec_648",
@@ -86,7 +89,8 @@
                 "Major milestones include Sputnik and the 1969 Apollo moon landing.",
                 "Mars rovers Curiosity and Perseverance are central to current exploration.",
                 "Space science drives innovation and expands our understanding of the universe."
-            ]
+            ],
+            "example_response": "The lecture traces space exploration from early telescope observations to modern missions. It mentions early astronomers like Galileo, then the twentieth-century breakthrough of Sputnik and the Apollo moon landing in 1969. The speaker emphasizes recent Mars missions, especially the Curiosity and Perseverance rovers, which search for signs of past life and prepare for future human travel. Overall, space exploration is presented as a continuing journey that drives scientific innovation and deepens our understanding of the universe."
         },
         {
             "id": "lec_647",
@@ -108,7 +112,8 @@
                 "It expanded education and access to information.",
                 "It accelerated innovation, business transformation, and entrepreneurship.",
                 "It created challenges such as privacy, misinformation, and digital divide."
-            ]
+            ],
+            "example_response": "The speaker says the Internet has transformed modern life by enabling instant global communication and connection. It also expanded education by giving broader access to information, courses, and learning resources. The lecture highlights economic impact too, explaining that online platforms support innovation, new industries, and entrepreneurship. At the same time, it warns about challenges, including privacy risks, misinformation, and the digital divide. In summary, the Internet remains a powerful but complex driver of progress."
         }
     ]
 }

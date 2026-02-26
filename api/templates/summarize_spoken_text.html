@@ -139,6 +139,13 @@
             font-weight: 700;
         }
 
+        .response-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.7rem;
+        }
+
         @media (max-width: 900px) {
             .filter-shell {
                 grid-template-columns: 1fr;
@@ -149,6 +156,11 @@
             }
 
             .audio-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .response-head {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -190,7 +202,6 @@
             <div class="audio-shell">
                 <div class="audio-head">
                     <span id="taskTitle">Loading...</span>
-                    <span class="timer-pill" id="timerBadge">10:00</span>
                 </div>
                 <div class="tts-toolbar">
                     <button id="btnReplayAudio" class="tts-pill-btn" type="button" title="Replay audio">🔊</button>
@@ -203,7 +214,10 @@
         </div>
 
         <div class="task-container" id="responseSection" style="display:none;">
-            <h2 class="section-title">Your Summary</h2>
+            <div class="response-head">
+                <h2 class="section-title" style="margin: 0;">Your Summary</h2>
+                <span class="timer-pill" id="timerBadge">10:00</span>
+            </div>
             <textarea id="summaryText" rows="7" placeholder="Write your 50-70 word summary here."></textarea>
             <div style="display:flex; justify-content:space-between; margin-top:0.45rem; color:#60748d; font-size:0.9rem;">
                 <span>Target range: 50-70 words (hard gate under 40 or above 100).</span>
@@ -362,11 +376,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadTask(topicItem.id);
+                card.onclick = () => loadTask(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadTask(topicItem.id);
+                        loadTask(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -378,6 +392,10 @@
             filteredTopics = allTopics.filter((item) => selectedCategory === 'all' || item.difficulty === selectedCategory);
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            responseSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function buildAudioBasePath(taskId) {
@@ -421,6 +439,7 @@
             });
 
             resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         async function loadCatalog() {
@@ -448,7 +467,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadTask(taskId = null) {
+        async function loadTask(taskId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -483,6 +502,9 @@
             refreshAudioSource(false);
             renderTopicCards();
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreSummary() {
@@ -531,13 +553,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadTask(pick.id);
+            await loadTask(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadTask(filteredTopics[0].id);
+                await loadTask(filteredTopics[0].id, true);
             } else {
                 currentTaskId = null;
                 listeningSection.style.display = 'none';

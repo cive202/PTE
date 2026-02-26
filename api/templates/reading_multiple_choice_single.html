@@ -158,6 +158,21 @@
             background: #f5faff;
         }
 
+        .option-row.correct {
+            border-color: #1f8a4c;
+            background: #e8f7ee;
+        }
+
+        .option-row.incorrect {
+            border-color: #c93434;
+            background: #fdeaea;
+        }
+
+        .option-row.missed {
+            border-color: #9ac9ae;
+            background: #f1f9f4;
+        }
+
         .option-label {
             min-width: 1.3rem;
             color: #2f4863;
@@ -310,11 +325,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadTask(topicItem.id);
+                card.onclick = () => loadTask(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadTask(topicItem.id);
+                        loadTask(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -328,12 +343,17 @@
             renderTopicCards();
         }
 
+        function focusQuestionArea() {
+            questionText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         function renderOptions(options) {
             const rows = Array.isArray(options) ? options : [];
             optionsList.innerHTML = '';
             rows.forEach((option) => {
                 const row = document.createElement('label');
                 row.className = 'option-row';
+                row.setAttribute('data-option-id', String(option.id || '').trim());
                 row.innerHTML = `
                     <input type="radio" name="mcs_option" value="${option.id}" data-option-id="${option.id}" style="margin-top:0.2rem;">
                     <span class="option-label">${option.id})</span>
@@ -346,6 +366,42 @@
         function selectedOptionId() {
             const node = optionsList.querySelector('input[type="radio"]:checked');
             return node ? String(node.getAttribute('data-option-id') || '').trim() : '';
+        }
+
+        function clearOptionHighlights() {
+            optionsList.querySelectorAll('.option-row').forEach((row) => {
+                row.classList.remove('correct', 'incorrect', 'missed');
+            });
+        }
+
+        function applyResultHighlights(analysis) {
+            const selected = String((analysis || {}).selected_option || '').trim().toUpperCase();
+            const correct = String((analysis || {}).correct_option || '').trim().toUpperCase();
+
+            clearOptionHighlights();
+            optionsList.querySelectorAll('.option-row').forEach((row) => {
+                const optionId = String(row.getAttribute('data-option-id') || '').trim().toUpperCase();
+                if (!optionId) {
+                    return;
+                }
+
+                if (optionId === correct && optionId === selected) {
+                    row.classList.add('correct');
+                    return;
+                }
+                if (optionId === correct) {
+                    row.classList.add('missed');
+                    return;
+                }
+                if (optionId === selected) {
+                    row.classList.add('incorrect');
+                }
+            });
+        }
+
+        function focusAnswerReview() {
+            const target = optionsList.querySelector('.option-row.correct, .option-row.incorrect, .option-row.missed') || optionsList;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function renderResult(payload) {
@@ -364,7 +420,9 @@
                 feedbackList.appendChild(li);
             });
 
+            applyResultHighlights(analysis);
             resultSection.style.display = 'block';
+            focusAnswerReview();
         }
 
         async function loadCatalog() {
@@ -392,7 +450,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadTask(taskId = null) {
+        async function loadTask(taskId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -425,6 +483,9 @@
             readingSection.style.display = 'block';
             renderTopicCards();
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreResponse() {
@@ -469,13 +530,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadTask(pick.id);
+            await loadTask(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadTask(filteredTopics[0].id);
+                await loadTask(filteredTopics[0].id, true);
             } else {
                 currentTaskId = null;
                 readingSection.style.display = 'none';
@@ -488,6 +549,7 @@
             optionsList.querySelectorAll('input[type="radio"]').forEach((node) => {
                 node.checked = false;
             });
+            clearOptionHighlights();
             clearStatus();
             resultSection.style.display = 'none';
         });

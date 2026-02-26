@@ -1,88 +1,102 @@
-# PTE Practice Platform - Simple Setup (New System)
+# PTE Platform Startup Guide (Current System)
 
-This guide explains how to bring the full platform up on a clean machine in simple, technical steps. It assumes you will run everything with Docker Compose (recommended).
+This document replaces the old startup guide and matches the current repository setup.
 
-## What runs where (simple)
+## 1) Current architecture
 
-Based on the screenshots provided:
+The platform runs 3 services:
 
-- **API (Flask)**: `sushil346/pte-api` (Port 5000)
-- **ASR/Grammar**: `sushil346/pte-asr-grammar` (Port 8000)
-- **Phoneme**: `sushil346/wav2vec2-phoneme-cpu` (Port 8001)
+- `api` (Flask web app): `http://localhost:5000`
+- `asr-grammar` (ASR + grammar microservice): `http://localhost:8000`
+- `wav2vec2-service` (phoneme microservice): `http://localhost:8001`
 
-## 1) Install prerequisites
+Runtime data is stored in `./data` and mounted into containers.
 
-### Update system
+Important: Read Aloud MFA alignment is executed through Docker from the API runtime. When API runs in Docker, `PTE_HOST_PROJECT_ROOT` must be set correctly in `.env`.
+
+## 2) Prerequisites
+
+### Required for Docker-first setup (recommended)
+
+- Docker Engine
+- Docker Compose plugin (`docker compose`)
+- Git
+
+### Required only if you run API directly on host
+
+- Python 3.10+
+- `pip` and `venv`
+- `ffmpeg`
+
+### Arch Linux install example
 
 ```bash
 sudo pacman -Syu
-```
-
-### Install required packages
-
-```bash
-sudo pacman -S python python-pip python-virtualenv git ffmpeg docker docker-compose
-
-# Enable and start Docker service
-sudo systemctl enable docker
-sudo systemctl start docker
-
-# Add your user to docker group (to run docker without sudo)
+sudo pacman -S docker docker-compose git python python-pip python-virtualenv ffmpeg
+sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
-
-# Log out and back in for group changes to take effect, or run:
 newgrp docker
 ```
 
-### Verify installs
+### Verify tools
 
 ```bash
-# Check Python version (should be 3.10+)
-python --version
-
-# Check Docker
 docker --version
-docker-compose --version
-
-# Check FFmpeg
-ffmpeg -version
-
-# Check Git
+docker compose version
 git --version
+python --version
+ffmpeg -version
 ```
 
-## 2) Get the code
+## 3) Project bootstrap
+
+From your workspace root:
 
 ```bash
-git clone https://github.com/cive202/PTE.git
-cd PTE
+cd /home/sushil/developer/pte/PTE
 ```
 
-## 3) Create `.env`
+Create environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your absolute project path:
+Set absolute host path in `.env`:
 
 ```bash
-PTE_HOST_PROJECT_ROOT=/absolute/path/to/PTE
+PTE_HOST_PROJECT_ROOT=/home/sushil/developer/pte/PTE
 ```
 
-Example:
+This is required for MFA bind mounts when API runs in container.
+
+Ensure runtime directories exist (safe to run always):
 
 ```bash
-PTE_HOST_PROJECT_ROOT=/home/youruser/PTE
+mkdir -p data/user_uploads data/processed/mfa_runs data/models/mfa
 ```
 
-## 4) Start everything with Docker
+## 4) Start full stack with Docker (recommended)
 
 ```bash
 docker compose up -d --build
 ```
 
-## 5) Verify services
+Check container status:
+
+```bash
+docker compose ps
+```
+
+Expected container names:
+
+- `pte-api`
+- `pte-asr-grammar-service`
+- `wav2vec2-phoneme-cpu`
+
+## 5) Verify startup
+
+Run health/smoke checks:
 
 ```bash
 curl http://localhost:8000/health
@@ -90,224 +104,189 @@ curl http://localhost:8001/health
 curl http://localhost:5000/
 ```
 
-If all three return OK/200, the system is up.
+If all respond, open:
 
-## Troubleshooting (quick)
+- `http://localhost:5000`
 
-If API cannot reach ASR/Phoneme:
+## 6) Logs and lifecycle commands
+
+```bash
+# Follow logs
+docker compose logs -f --tail=200 api
+docker compose logs -f --tail=200 asr-grammar
+docker compose logs -f --tail=200 wav2vec2-service
+
+# Stop
+docker compose down
+
+# Restart
+docker compose restart api
+
+# Rebuild only API after code/dependency/Dockerfile changes
+docker compose build api
+docker compose up -d api
+```
+
+## 7) Startup diagnostics
+
+You can run diagnostics from host Python or inside the API container.
+
+From host:
+
+```bash
+python -m api.startup_diagnostics
+```
+
+From API container:
+
+```bash
+docker compose exec api python -m api.startup_diagnostics
+```
+
+Report includes:
+
+- import/module checks
+- required directory checks
+- ASR and phoneme health checks
+- Docker CLI availability
+
+## 8) Fast development mode (live code mounts)
+
+Use compose override for rapid iteration:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+Behavior:
+
+- Python/template/source edits are reflected quickly
+- rebuild required only for dependency/system image changes
+
+Rebuild API in dev mode:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build api
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d api
+```
+
+## 9) Alternative mode: API on host, model services in Docker
+
+Use this only if needed.
+
+Start microservices in Docker:
+
+```bash
+docker compose up -d asr-grammar wav2vec2-service
+```
+
+Prepare host Python env:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+python -c "import nltk; nltk.download('cmudict')"
+```
+
+Run Flask API on host:
+
+```bash
+python api/app.py --port 5000
+```
+
+Then open `http://localhost:5000`.
+
+## 10) Startup-critical environment variables
+
+- `PTE_HOST_PROJECT_ROOT`
+  Required when API runs in Docker and launches MFA containers.
+
+- `PTE_MFA_DOCKER_MOUNT_BASE_DIR`
+  Optional explicit override for MFA model mount source.
+
+- `PTE_MFA_DOCKER_MOUNT_RUNTIME_DIR`
+  Optional explicit override for MFA runtime mount source.
+
+- `PTE_SKIP_MFA`
+  Set `1` to skip MFA and return ASR-only analysis fallback.
+
+- `PTE_MFA_NUM_JOBS`
+  Optional MFA parallel jobs override.
+
+- `PTE_READ_ALOUD_CACHE_ENABLED`
+  Enable/disable Read Aloud result cache (`1` by default).
+
+- `PTE_READ_ALOUD_CACHE_MAX_AGE_SECONDS`
+  Cache TTL (default 7 days).
+
+- `PTE_KEEP_UPLOAD_ARTIFACTS`
+  Keep uploaded/generated artifacts (`1` by default).
+
+## 11) Troubleshooting
+
+### MFA alignment fails or falls back to ASR-only
+
+Check Docker from the same runtime where API executes:
+
+```bash
+docker info
+docker ps
+```
+
+Inspect MFA stderr logs:
+
+```bash
+ls -1t data/processed/mfa_runs | head
+# then inspect latest run
+# data/processed/mfa_runs/<run_id>/output/<accent>/mfa_stderr.log
+```
+
+### MFA bind mount/path errors
+
+- Confirm `.env` has correct absolute `PTE_HOST_PROJECT_ROOT`.
+- Confirm these exist on host:
+  - `data/models/mfa`
+  - `data/processed/mfa_runs`
+
+### API cannot reach ASR/phoneme services
 
 ```bash
 docker compose ps
 docker compose logs --tail=200 api
+docker compose logs --tail=200 asr-grammar
+docker compose logs --tail=200 wav2vec2-service
 ```
 
-If MFA paths fail, re-check `PTE_HOST_PROJECT_ROOT` in `.env`.
-
-## Full detailed guide
-
-See `docs/operations/NEW_SYSTEM_SETUP.md` for a longer, step-by-step version.
-
-### 2. End-to-End Test
-
-1. Open the web UI
-2. Try a "Read Aloud" or "Repeat Sentence" task
-3. Record or upload audio
-4. Verify that:
-   - Audio is processed
-   - Results are returned from microservices
-   - Scoring displays correctly
-
-### 3. Check Service Endpoints
+### Port already in use
 
 ```bash
-# Check all services are responding
-curl http://localhost:5000/  # Main app
-curl http://localhost:8000/health  # ASR service
-curl http://localhost:8001/health  # Phoneme service
+ss -tulpn | grep :5000
+ss -tulpn | grep :8000
+ss -tulpn | grep :8001
 ```
 
-## Troubleshooting
+### Docker permission denied
 
-### Docker Issues
+Use Docker group access instead of opening socket permissions:
 
 ```bash
-# Restart Docker daemon
-sudo systemctl restart docker
-
-# Remove and rebuild containers
-docker-compose down
-docker-compose up -d --force-recreate
-
-# View container logs
-docker logs pte-asr-grammar
-docker logs pte-phoneme-cpu
-```
-
-### Port Conflicts
-
-```bash
-# Check what's using a port
-sudo netstat -tulpn | grep :5000
-sudo netstat -tulpn | grep :8000
-sudo netstat -tulpn | grep :8001
-
-# Or using ss
-sudo ss -tulpn | grep :5000
-```
-
-### Python Environment Issues
-
-```bash
-# Deactivate and recreate virtual environment
-deactivate
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Permission Issues
-
-```bash
-# If Docker permission denied
-sudo chmod 666 /var/run/docker.sock
-
-# Or ensure user is in docker group
-groups $USER
-# Should show 'docker' in the list
-```
-
-## Useful Commands
-
-### Docker Management
-
-```bash
-# Stop all services
-docker-compose down
-
-# Start services
-docker-compose up -d
-
-# Restart a specific service
-docker-compose restart asr-grammar
-
-# View resource usage
-docker stats
-
-# Clean up unused images/containers
-docker system prune -a
-```
-
-### Application Management
-
-```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Deactivate virtual environment
-deactivate
-
-# Update dependencies
-pip install -r requirements.txt --upgrade
-
-# Freeze current dependencies
-pip freeze > requirements.txt
-```
-
-## Systemd Service (Optional)
-
-To run the application as a system service:
-
-```bash
-# Create service file
-sudo nano /etc/systemd/system/pte-platform.service
-```
-
-Add this content:
-
-```ini
-[Unit]
-Description=PTE Practice Platform
-After=network.target docker.service
-Requires=docker.service
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/path/to/PTE/api
-Environment="PATH=/path/to/PTE/venv/bin"
-ExecStart=/path/to/PTE/venv/bin/python app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable pte-platform
-sudo systemctl start pte-platform
-sudo systemctl status pte-platform
-```
-
-## Project Structure Reference
-
-```
-PTE/
-├── api/
-│   ├── app.py              # Main Flask application
-│   └── ...
-├── venv/                   # Virtual environment
-├── requirements.txt        # Python dependencies
-├── docker-compose.yml      # Docker services configuration
-└── README.md              # Project documentation
-```
-
-## Quick Start Summary
-
-```bash
-# 1. Install prerequisites (one-time)
-sudo pacman -S python python-pip docker docker-compose ffmpeg git
-
-# 2. Setup Docker
-sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 newgrp docker
-
-# 3. Setup project
-cd ~/PTE
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python -c "import nltk; nltk.download('cmudict')"
-
-# 4. Start Docker services
-docker-compose up -d
-
-# 5. Start Flask app
-cd api
-python app.py
-
-# 6. Access at http://localhost:5000
 ```
 
-## Support & Logs
-
-When asking for help, provide:
+## 12) Minimal quick start
 
 ```bash
-# System info
-uname -a
-python --version
-docker --version
+cd /home/sushil/developer/pte/PTE
+cp .env.example .env
+# edit .env: set PTE_HOST_PROJECT_ROOT to this absolute path
 
-# Docker logs
-docker-compose logs
-
-# Application logs
-cat api/logs/*.log  # if logging to file
+docker compose up -d --build
+curl http://localhost:8000/health
+curl http://localhost:8001/health
+curl http://localhost:5000/
 ```
 
----
+If these checks pass, the current system is running correctly.

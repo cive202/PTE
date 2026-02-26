@@ -596,7 +596,7 @@
         const wordPracticeResult = document.getElementById('word-practice-result');
 
         // Load saved accent from localStorage
-        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
         accentSelector.value = savedAccent;
 
         // Save accent to localStorage when changed
@@ -657,6 +657,7 @@
             selectedTopic = topic;
             topicSelectionPhase.style.display = 'none';
             activePhase.style.display = 'block';
+            activePhase.scrollIntoView({ behavior: 'smooth', block: 'start' });
             startTask(topic);
         }
 

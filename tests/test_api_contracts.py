@@ -31,6 +31,32 @@ def test_repeat_sentence_task_contract(client):
         assert required_key in payload
 
 
+def test_describe_image_task_contract(client):
+    response = client.get("/describe-image/get-image")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    for required_key in ("image_id", "image_url", "title", "difficulty", "chart_type", "timing"):
+        assert required_key in payload
+    assert isinstance(payload["timing"], dict)
+    assert payload["timing"]["prep_seconds"] > 0
+    assert payload["timing"]["response_seconds"] > 0
+
+
+def test_describe_image_topics_contract(client):
+    response = client.get("/speaking/describe-image/get-topics")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert "images" in payload
+    assert isinstance(payload["images"], list)
+    assert payload["images"]
+    assert "timing" in payload
+    assert payload["timing"]["response_seconds"] > 0
+
+
 def test_respond_to_a_situation_page(client):
     response = client.get("/speaking/respond-to-a-situation")
     assert response.status_code == 200
@@ -213,6 +239,12 @@ def test_retell_lecture_catalog_contract(client):
     assert "items" in payload
     assert isinstance(payload["items"], list)
     assert payload["items"]
+    assert "timing" in payload
+    assert payload["timing"]["prep_seconds"] > 0
+    assert payload["timing"]["response_seconds"] > 0
+    first = payload["items"][0]
+    for required_key in ("id", "title", "difficulty", "prompt_seconds_estimate", "prompt_word_count"):
+        assert required_key in first
 
 
 def test_retell_lecture_task_contract(client):
@@ -221,8 +253,24 @@ def test_retell_lecture_task_contract(client):
 
     payload = response.get_json()
     assert isinstance(payload, dict)
-    for required_key in ("lecture_id", "audio_url", "title", "difficulty"):
+    for required_key in (
+        "lecture_id",
+        "audio_url",
+        "title",
+        "difficulty",
+        "timing",
+        "prompt_duration_seconds",
+        "prompt_word_count",
+        "audio_source",
+        "example_response",
+        "tts",
+    ):
         assert required_key in payload
+    assert payload["timing"]["prep_seconds"] > 0
+    assert payload["timing"]["response_seconds"] > 0
+    assert payload["prompt_duration_seconds"] > 0
+    assert payload["prompt_word_count"] > 0
+    assert payload["audio_source"] == "edge_tts_dynamic"
 
 
 def test_listening_sst_categories_contract(client):
@@ -433,6 +481,118 @@ def test_listening_smw_score_contract(client):
     assert "analysis" in data
     assert "feedback" in data
     assert isinstance(data["feedback"], list)
+
+
+def test_listening_smw_audio_masks_final_word(client, monkeypatch):
+    captured = {}
+
+    def fake_get_listening_task(task_type, topic=None, task_id=None, difficulty=None):
+        assert task_type == "select_missing_word"
+        assert task_id == "smw_test"
+        return {
+            "id": "smw_test",
+            "transcript": "Sustainable systems improve food security.",
+        }
+
+    def fake_resolve_tts_request(feature="default"):
+        assert feature == "listening"
+        return {"speed": "x1.0", "voice": "en-AU-NatashaNeural", "provider": "edge", "rate": None, "pitch": None}
+
+    def fake_synthesize_speech(text, speed, voice, provider, rate, pitch, feature):
+        captured["text"] = text
+        captured["feature"] = feature
+        return b"FAKEAUDIO"
+
+    monkeypatch.setattr(app_module, "get_listening_task", fake_get_listening_task)
+    monkeypatch.setattr(app_module, "_resolve_tts_request", fake_resolve_tts_request)
+    monkeypatch.setattr(app_module, "synthesize_speech", fake_synthesize_speech)
+
+    response = client.get("/listening/select-missing-word/audio/smw_test")
+    assert response.status_code == 200
+    assert captured["feature"] == "listening"
+    assert captured["text"].endswith("beep.")
+    assert "security." not in captured["text"].lower()
+
+
+def test_listening_smw_task_uses_present_word_distractors(client, monkeypatch):
+    def fake_get_listening_task(task_type, topic=None, task_id=None, difficulty=None):
+        assert task_type == "select_missing_word"
+        return {
+            "id": "smw_logic",
+            "title": "SMW Logic",
+            "topic": "General",
+            "difficulty": "medium",
+            "transcript": "Sustainable systems improve food security for communities.",
+            "prompt_text": "Choose the missing ending word.",
+            "question": "Which word is missing at the end?",
+            "options": [
+                {"id": "A", "text": "communities"},
+                {"id": "B", "text": "weather"},
+                {"id": "C", "text": "mountains"},
+                {"id": "D", "text": "history"},
+            ],
+            "correct_option": "A",
+        }
+
+    def fake_resolve_tts_request(feature="default"):
+        assert feature == "listening"
+        return {"speed": "x1.0", "voice": "en-AU-NatashaNeural", "provider": "edge", "rate": None, "pitch": None}
+
+    monkeypatch.setattr(app_module, "get_listening_task", fake_get_listening_task)
+    monkeypatch.setattr(app_module, "_resolve_tts_request", fake_resolve_tts_request)
+
+    response = client.get("/listening/select-missing-word/get-task?task_id=smw_logic")
+    assert response.status_code == 200
+    payload = response.get_json()
+
+    options = payload.get("options", [])
+    assert len(options) == 4
+
+    by_id = {str(item["id"]).upper(): str(item["text"]).lower() for item in options}
+    assert by_id["A"] == "communities"
+
+    transcript_words = {
+        "sustainable",
+        "systems",
+        "improve",
+        "food",
+        "security",
+        "for",
+        "communities",
+    }
+    distractors = [by_id["B"], by_id["C"], by_id["D"]]
+    assert all(word in transcript_words for word in distractors)
+    assert "communities" not in distractors
+
+
+def test_listening_non_smw_audio_keeps_transcript(client, monkeypatch):
+    captured = {}
+
+    def fake_get_listening_task(task_type, topic=None, task_id=None, difficulty=None):
+        assert task_type == "multiple_choice_single"
+        assert task_id == "mcs_test"
+        return {
+            "id": "mcs_test",
+            "transcript": "The correct answer remains unchanged.",
+        }
+
+    def fake_resolve_tts_request(feature="default"):
+        assert feature == "listening"
+        return {"speed": "x1.0", "voice": "en-AU-NatashaNeural", "provider": "edge", "rate": None, "pitch": None}
+
+    def fake_synthesize_speech(text, speed, voice, provider, rate, pitch, feature):
+        captured["text"] = text
+        captured["feature"] = feature
+        return b"FAKEAUDIO"
+
+    monkeypatch.setattr(app_module, "get_listening_task", fake_get_listening_task)
+    monkeypatch.setattr(app_module, "_resolve_tts_request", fake_resolve_tts_request)
+    monkeypatch.setattr(app_module, "synthesize_speech", fake_synthesize_speech)
+
+    response = client.get("/listening/multiple-choice-single/audio/mcs_test")
+    assert response.status_code == 200
+    assert captured["feature"] == "listening"
+    assert captured["text"] == "The correct answer remains unchanged."
 
 
 def test_reading_mcm_task_contract(client):

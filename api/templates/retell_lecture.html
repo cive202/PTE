@@ -259,6 +259,49 @@
             font-weight: 600;
         }
 
+        .timing-panel {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.7rem;
+            margin: 0 auto 0.95rem;
+            max-width: 780px;
+            padding: 0.85rem;
+            border: 1px solid #d6e1ed;
+            border-radius: 12px;
+            background: #f7fbff;
+        }
+
+        .timing-phase {
+            background: #ffffff;
+            border: 1px solid #d5e2f0;
+            border-radius: 10px;
+            padding: 0.62rem 0.7rem;
+            text-align: center;
+        }
+
+        .timing-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #4f637c;
+        }
+
+        .timing-value {
+            margin-top: 0.2rem;
+            font-size: 1.22rem;
+            font-weight: 800;
+            color: #1f3d63;
+        }
+
+        .timing-hint {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: #4e6785;
+        }
+
         @media (max-width: 900px) {
             .filter-shell {
                 grid-template-columns: 1fr;
@@ -277,6 +320,10 @@
             .tts-pill-select.voice {
                 width: 100%;
                 max-width: none;
+            }
+
+            .timing-panel {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -570,9 +617,9 @@
             <h1 class="page-title">Retell Lecture</h1>
             <p class="page-subtitle">Listen to the lecture and summarize the main points.</p>
             <div class="hero-meta">
-                <span class="hero-pill">Audio Comprehension</span>
-                <span class="hero-pill">Summary Precision</span>
-                <span class="hero-pill">AI Fluency Score</span>
+                <span class="hero-pill">Lecture 60-90s</span>
+                <span class="hero-pill">10s Prep + 40s Response</span>
+                <span class="hero-pill">Content + Pronunciation + Fluency</span>
             </div>
         </div>
 
@@ -581,8 +628,9 @@
             <strong>Instructions:</strong>
             <ol style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
                 <li>Listen to the audio lecture completely</li>
-                <li>Wait 10 seconds to prepare</li>
-                <li>Record your summary (40 seconds max)</li>
+                <li>Preparation starts automatically after the lecture ends</li>
+                <li>You can start speaking early or wait for auto-start</li>
+                <li>Recording auto-stops at the response time limit</li>
                 <li>Click "Submit" to get your score</li>
             </ol>
         </div>
@@ -603,6 +651,21 @@
             <div class="lecture-container" id="lectureContainer">
                 <div class="lecture-icon">🎧</div>
                 <div class="lecture-title" id="lectureTitle">Loading lecture...</div>
+                <div class="timing-panel" id="timingPanel">
+                    <div class="timing-phase">
+                        <div class="timing-label">Prompt</div>
+                        <div class="timing-value" id="promptDuration">~75s</div>
+                    </div>
+                    <div class="timing-phase">
+                        <div class="timing-label">Preparation</div>
+                        <div class="timing-value" id="prepCountdown">10s</div>
+                    </div>
+                    <div class="timing-phase">
+                        <div class="timing-label">Response</div>
+                        <div class="timing-value" id="responseCountdown">40s</div>
+                    </div>
+                    <div class="timing-hint" id="timingHint">Play the lecture to begin.</div>
+                </div>
                 <div class="tts-toolbar">
                     <button id="btnReplayLecture" class="tts-pill-btn" type="button" title="Replay lecture audio">🔊</button>
                     <select id="ttsSpeedSelect" class="tts-pill-select speed" aria-label="Playback speed"></select>
@@ -656,16 +719,23 @@
 
             <div class="details-grid">
                 <div class="detail-card">
-                    <div class="detail-label">Content Accuracy</div>
+                    <div class="detail-label">Content</div>
                     <div class="detail-value" id="contentScore">0</div>
+                    <div style="font-size:0.75rem;color:#6c757d;margin-top:2px;">/90</div>
                 </div>
                 <div class="detail-card">
-                    <div class="detail-label">Keyword Coverage</div>
-                    <div class="detail-value" id="keywordScore">0%</div>
+                    <div class="detail-label">Pronunciation</div>
+                    <div class="detail-value" id="pronunScore">0</div>
+                    <div style="font-size:0.75rem;color:#6c757d;margin-top:2px;">/90</div>
                 </div>
                 <div class="detail-card">
                     <div class="detail-label">Oral Fluency</div>
                     <div class="detail-value" id="fluencyScore">0</div>
+                    <div style="font-size:0.75rem;color:#6c757d;margin-top:2px;">/90</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">Key Points</div>
+                    <div class="detail-value" id="keyPointScore">0%</div>
                 </div>
             </div>
 
@@ -687,6 +757,11 @@
                         <h4 style="margin: 0 0 0.75rem 0; color: #004085;">📖 Lecture Transcript</h4>
                         <p id="referenceText" style="margin: 0; line-height: 1.6; color: #333;"></p>
                     </div>
+                    <div id="exampleResponseBox"
+                        style="display: none; background: #eefbf3; padding: 1.5rem; border-radius: 6px; border-left: 4px solid #21a366;">
+                        <h4 style="margin: 0 0 0.75rem 0; color: #166b3f;">🗣 Example Retell</h4>
+                        <p id="exampleResponseText" style="margin: 0; line-height: 1.6; color: #1f2f26;"></p>
+                    </div>
                 </div>
             </div>
 
@@ -701,35 +776,32 @@
     </div>
     </div>
 
+    <script src="/static/js/tts_preset_controls.js"></script>
     <script>
         let mediaRecorder;
+        let activeRecordingStream = null;
         let audioChunks = [];
         let audioBlob = null;
         let currentLectureId = null;
-        let pollInterval = null;
         let currentResult = null;
         let allLectureTopics = [];
         let filteredLectureTopics = [];
-        let currentTtsProvider = 'edge';
-        let availableVoiceMap = new Map();
-        let currentResolvedVoiceId = null;
-
-        const TTS_VOICE_KEY = 'retellLectureVoice';
-        const TTS_SPEED_KEY = 'retellLectureSpeed';
-        const RANDOM_VOICE_ID = '__random__';
-
-        const curatedVoiceOptions = [
-            { id: 'en-US-GuyNeural', label: 'Blake (US)', gender: 'male' },
-            { id: 'en-AU-NatashaNeural', label: 'Anna (AU)', gender: 'female' },
-            { id: 'en-GB-SoniaNeural', label: 'Helen (UK)', gender: 'female' },
-            { id: 'en-IN-PrabhatNeural', label: 'Amir (IN)', gender: 'male' },
-        ];
-
-        const fallbackSpeedOptions = [
-            { id: 'x0.85', label: 'x0.85' },
-            { id: 'x1.0', label: 'x1.0' },
-            { id: 'x1.15', label: 'x1.15' },
-        ];
+        let pollInterval = null;
+        let prepTimerId = null;
+        let responseTimerId = null;
+        let autoStopTimerId = null;
+        let recordingStartEpochMs = null;
+        let lastRecordingDurationSeconds = null;
+        let discardNextRecording = false;
+        let isPreparingRecorder = false;
+        let lectureTiming = {
+            prompt_min_seconds: 60,
+            prompt_max_seconds: 90,
+            prep_seconds: 10,
+            response_seconds: 40,
+            recommended_response_min_seconds: 22,
+            recommended_response_max_seconds: 40,
+        };
 
         const difficultySelect = document.getElementById('difficultySelect');
         const topicCount = document.getElementById('topicCount');
@@ -742,6 +814,7 @@
         const btnNewLecture = document.getElementById('btnNewLecture');
         const btnReplayLecture = document.getElementById('btnReplayLecture');
         const lectureTaskSection = document.getElementById('lectureTaskSection');
+        const lectureContainer = document.getElementById('lectureContainer');
         const recordingIndicator = document.getElementById('recordingIndicator');
         const audioPlayback = document.getElementById('audioPlayback');
         const audioPlayer = document.getElementById('audioPlayer');
@@ -758,185 +831,325 @@
         const ttsVoiceSelect = document.getElementById('ttsVoiceSelect');
         const ttsSpeedSelect = document.getElementById('ttsSpeedSelect');
         const ttsMeta = document.getElementById('ttsMeta');
+        const promptDuration = document.getElementById('promptDuration');
+        const prepCountdown = document.getElementById('prepCountdown');
+        const responseCountdown = document.getElementById('responseCountdown');
+        const timingHint = document.getElementById('timingHint');
 
-        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
         accentSelector.value = savedAccent;
         accentSelector.addEventListener('change', () => {
             localStorage.setItem('selectedAccent', accentSelector.value);
         });
 
+        const ttsController = window.createTtsPresetController({
+            feature: 'retell_lecture',
+            storagePrefix: 'retellLecture',
+            voiceSelect: ttsVoiceSelect,
+            speedSelect: ttsSpeedSelect,
+            metaLabel: ttsMeta,
+            replayButton: btnReplayLecture,
+            audioElement: lecturePlayer,
+            onSelectionChange: () => {
+                if (currentLectureId) {
+                    refreshLectureAudioSource(false);
+                }
+            },
+        });
+
         function titleCase(value) {
             const text = String(value || '').trim().toLowerCase();
-            if (!text) {
-                return '';
-            }
+            if (!text) return '';
             return text.charAt(0).toUpperCase() + text.slice(1);
         }
 
-        function setTtsMeta(message) {
-            ttsMeta.textContent = message || '';
+        function setRecordButton(disabled, label = '🎤 Start Recording') {
+            btnRecord.disabled = Boolean(disabled);
+            btnRecord.textContent = label;
         }
 
-        function formatVoiceOptionLabel(voice) {
-            if (voice && voice.label) {
-                return String(voice.label);
-            }
-            const shortName = String(voice.short_name || voice.shortName || '').trim();
-            const locale = String(voice.locale || '').trim();
-            const friendly = String(voice.display_name || voice.friendly_name || shortName).trim();
-            if (locale && !friendly.includes('(')) {
-                return `${friendly} (${locale})`;
-            }
-            return friendly;
-        }
-
-        function voiceLabelById(voiceId) {
-            const voiceItem = availableVoiceMap.get(String(voiceId || '').trim());
-            return voiceItem ? formatVoiceOptionLabel(voiceItem) : String(voiceId || '').trim();
-        }
-
-        function randomVoiceId() {
-            const pick = curatedVoiceOptions[Math.floor(Math.random() * curatedVoiceOptions.length)];
-            return pick ? pick.id : curatedVoiceOptions[0].id;
-        }
-
-        function ensureVoiceOption(voiceName) {
-            const normalized = String(voiceName || '').trim();
-            if (!normalized) {
-                return curatedVoiceOptions[0].id;
-            }
-            if (normalized === RANDOM_VOICE_ID) {
-                return RANDOM_VOICE_ID;
-            }
-            if (availableVoiceMap.has(normalized)) {
-                return normalized;
-            }
-            return curatedVoiceOptions[0].id;
-        }
-
-        function resolveVoiceForRequest(forceRepickRandom = false) {
-            const selected = ensureVoiceOption(ttsVoiceSelect.value);
-            if (selected !== RANDOM_VOICE_ID) {
-                currentResolvedVoiceId = selected;
-                return selected;
-            }
-            if (!forceRepickRandom && currentResolvedVoiceId && availableVoiceMap.has(currentResolvedVoiceId)) {
-                return currentResolvedVoiceId;
-            }
-            currentResolvedVoiceId = randomVoiceId();
-            return currentResolvedVoiceId;
-        }
-
-        function currentVoiceMetaLabel() {
-            const selectedVoice = ensureVoiceOption(ttsVoiceSelect.value);
-            if (selectedVoice !== RANDOM_VOICE_ID) {
-                return voiceLabelById(selectedVoice);
-            }
-            if (currentResolvedVoiceId) {
-                return `Random (${voiceLabelById(currentResolvedVoiceId)})`;
-            }
-            return 'Random';
-        }
-
-        function buildLectureAudioUrl(lectureId, forceRepickRandom = false) {
-            const safeLectureId = encodeURIComponent(String(lectureId || '').trim());
-            const params = new URLSearchParams();
-            params.set('provider', currentTtsProvider || 'edge');
-            const effectiveVoice = resolveVoiceForRequest(forceRepickRandom);
-            params.set('voice', effectiveVoice);
-            if (ttsSpeedSelect.value) {
-                params.set('speed', ttsSpeedSelect.value);
-            }
-            return `/retell-lecture/audio/${safeLectureId}?${params.toString()}`;
-        }
-
-        function populateVoiceOptions(preferredVoice) {
-            ttsVoiceSelect.innerHTML = '';
-            availableVoiceMap = new Map();
-
-            curatedVoiceOptions.forEach((voice) => {
-                const option = document.createElement('option');
-                option.value = voice.id;
-                option.textContent = formatVoiceOptionLabel(voice);
-                ttsVoiceSelect.appendChild(option);
-                availableVoiceMap.set(voice.id, voice);
+        function focusLectureTask() {
+            lectureTaskSection.style.display = 'block';
+            requestAnimationFrame(() => {
+                lectureContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
-
-            const randomOption = document.createElement('option');
-            randomOption.value = RANDOM_VOICE_ID;
-            randomOption.textContent = 'Random';
-            ttsVoiceSelect.appendChild(randomOption);
-
-            const savedVoice = localStorage.getItem(TTS_VOICE_KEY);
-            const selected = ensureVoiceOption(preferredVoice || savedVoice || curatedVoiceOptions[0].id);
-            ttsVoiceSelect.value = selected;
-            localStorage.setItem(TTS_VOICE_KEY, selected);
-            currentResolvedVoiceId = selected === RANDOM_VOICE_ID ? null : selected;
         }
 
-        function populateSpeedOptions(speedOptions, preferredSpeed) {
-            ttsSpeedSelect.innerHTML = '';
-            const options = Array.isArray(speedOptions) && speedOptions.length ? speedOptions : fallbackSpeedOptions;
-            options.forEach((speed) => {
-                const id = String(speed.id || '').trim();
-                if (!id) {
-                    return;
-                }
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = String(speed.label || id).trim();
-                ttsSpeedSelect.appendChild(option);
-            });
-            const savedSpeed = localStorage.getItem(TTS_SPEED_KEY);
-            ttsSpeedSelect.value = preferredSpeed || savedSpeed || 'x1.0';
-            if (!ttsSpeedSelect.value) {
-                ttsSpeedSelect.value = 'x1.0';
+        function clearRetellTimers() {
+            if (prepTimerId) {
+                clearInterval(prepTimerId);
+                prepTimerId = null;
             }
-            localStorage.setItem(TTS_SPEED_KEY, ttsSpeedSelect.value);
-        }
-
-        async function loadTtsOptions(forceRefresh = false) {
-            const params = new URLSearchParams({
-                feature: 'retell_lecture',
-                locale: 'en',
-            });
-            if (forceRefresh) {
-                params.set('refresh', '1');
+            if (responseTimerId) {
+                clearInterval(responseTimerId);
+                responseTimerId = null;
             }
-
-            try {
-                const response = await fetch(`/api/tts/options?${params.toString()}`);
-                const data = await response.json();
-                if (!response.ok || data.error) {
-                    throw new Error(data.error || 'Failed to load TTS options.');
-                }
-
-                const capabilities = data.capabilities || {};
-                currentTtsProvider = String(data.provider || capabilities.default_provider || 'edge').trim().toLowerCase();
-                populateVoiceOptions(capabilities.default_voice);
-                populateSpeedOptions(capabilities.speed_options, capabilities.default_speed);
-                setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
-            } catch (_error) {
-                populateVoiceOptions(curatedVoiceOptions[0].id);
-                populateSpeedOptions(fallbackSpeedOptions, 'x1.0');
-                currentTtsProvider = 'edge';
-                setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
+            if (autoStopTimerId) {
+                clearTimeout(autoStopTimerId);
+                autoStopTimerId = null;
             }
         }
 
-        function refreshLectureAudioSource(showMessage = true) {
-            if (!currentLectureId) {
-                return;
+        function stopRecordingStream() {
+            if (!activeRecordingStream) return;
+            activeRecordingStream.getTracks().forEach((track) => track.stop());
+            activeRecordingStream = null;
+        }
+
+        function applyLectureTiming(rawTiming) {
+            const timing = rawTiming || {};
+            const prep = Number(timing.prep_seconds);
+            const response = Number(timing.response_seconds);
+            const promptMin = Number(timing.prompt_min_seconds);
+            const promptMax = Number(timing.prompt_max_seconds);
+            const responseMin = Number(timing.recommended_response_min_seconds);
+
+            lectureTiming = {
+                prompt_min_seconds: Number.isFinite(promptMin) && promptMin > 0 ? Math.round(promptMin) : 60,
+                prompt_max_seconds: Number.isFinite(promptMax) && promptMax > 0 ? Math.round(promptMax) : 90,
+                prep_seconds: Number.isFinite(prep) && prep > 0 ? Math.round(prep) : 10,
+                response_seconds: Number.isFinite(response) && response > 0 ? Math.round(response) : 40,
+                recommended_response_min_seconds: Number.isFinite(responseMin) && responseMin > 0
+                    ? Math.round(responseMin)
+                    : 22,
+                recommended_response_max_seconds: Number.isFinite(response) && response > 0 ? Math.round(response) : 40,
+            };
+            if (lectureTiming.recommended_response_min_seconds > lectureTiming.response_seconds) {
+                lectureTiming.recommended_response_min_seconds = lectureTiming.response_seconds;
             }
+            prepCountdown.textContent = `${lectureTiming.prep_seconds}s`;
+            responseCountdown.textContent = `${lectureTiming.response_seconds}s`;
+            timingHint.textContent = 'Play the lecture to begin.';
+        }
+
+        function setPromptDuration(seconds) {
+            const parsed = Number(seconds);
+            if (Number.isFinite(parsed) && parsed > 0) {
+                promptDuration.textContent = `~${Math.round(parsed)}s`;
+            } else {
+                promptDuration.textContent = `~${Math.round((lectureTiming.prompt_min_seconds + lectureTiming.prompt_max_seconds) / 2)}s`;
+            }
+        }
+
+        function resetRecordingState() {
+            clearRetellTimers();
+            recordingIndicator.classList.remove('active');
+            recordingStartEpochMs = null;
+            btnStop.disabled = true;
+            setRecordButton(true);
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                discardNextRecording = true;
+                mediaRecorder.stop();
+            } else {
+                mediaRecorder = null;
+                stopRecordingStream();
+            }
+        }
+
+        function resetAttemptArtifacts() {
+            audioBlob = null;
+            audioChunks = [];
+            lastRecordingDurationSeconds = null;
+            audioPlayer.src = '';
+            audioPlayback.style.display = 'none';
+            btnSubmit.disabled = true;
+            btnRerecord.style.display = 'none';
+            results.classList.remove('show');
+            statusDiv.classList.remove('show');
+            progressContainer.classList.remove('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Processing...';
+            prepCountdown.textContent = `${lectureTiming.prep_seconds}s`;
+            responseCountdown.textContent = `${lectureTiming.response_seconds}s`;
+            timingHint.textContent = 'Play the lecture to begin.';
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+            setRecordButton(true);
+        }
+
+        function resetLectureState() {
+            currentLectureId = null;
+            currentResult = null;
+            lectureTitle.textContent = 'Select category to load a lecture';
+            lecturePlayer.src = '';
+            lecturePlayer.load();
+            lecturePlayer.style.display = 'none';
+            loadingText.style.display = 'none';
+            resetRecordingState();
+            resetAttemptArtifacts();
+            setRecordButton(true);
+            setPromptDuration(null);
+        }
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'show ' + type;
+        }
+
+        function buildLectureAudioBasePath(lectureId) {
+            return `/retell-lecture/audio/${encodeURIComponent(String(lectureId || '').trim())}`;
+        }
+
+        function attachLecturePlaybackHandlers() {
+            lecturePlayer.onplay = () => {
+                resetRecordingState();
+                resetAttemptArtifacts();
+                setRecordButton(true);
+                timingHint.textContent = 'Listening... preparation starts automatically when audio ends.';
+            };
+
+            lecturePlayer.onended = () => {
+                timingHint.textContent = `Preparation begins (${lectureTiming.prep_seconds}s).`;
+                showStatus('Lecture finished. Preparation countdown started.', 'success');
+                beginPreparationCountdown();
+            };
+        }
+
+        function refreshLectureAudioSource(showNotice = true) {
+            if (!currentLectureId) return;
+            resetRecordingState();
+            resetAttemptArtifacts();
             loadingText.style.display = 'block';
             lecturePlayer.style.display = 'none';
-            btnRecord.disabled = true;
-            lecturePlayer.src = buildLectureAudioUrl(currentLectureId, ttsVoiceSelect.value === RANDOM_VOICE_ID);
+            setRecordButton(true);
+            lecturePlayer.src = ttsController.buildAudioUrl(
+                buildLectureAudioBasePath(currentLectureId),
+                ttsController.shouldRepickRandom()
+            );
             lecturePlayer.load();
-            if (showMessage) {
-                showStatus(`Voice updated: ${currentVoiceMetaLabel()} • ${ttsSpeedSelect.value}`, 'success');
+            if (showNotice) {
+                showStatus(`Voice updated: ${ttsController.getCurrentVoiceLabel()} • ${ttsController.getSpeed()}`, 'success');
             }
-            setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
+        }
+
+        async function ensureRecorderReady() {
+            if (mediaRecorder && mediaRecorder.state === 'inactive' && activeRecordingStream) {
+                return true;
+            }
+            if (isPreparingRecorder) {
+                return false;
+            }
+
+            isPreparingRecorder = true;
+            try {
+                stopRecordingStream();
+                activeRecordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(activeRecordingStream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                mediaRecorder.onstop = () => {
+                    clearRetellTimers();
+                    recordingIndicator.classList.remove('active');
+                    btnStop.disabled = true;
+                    stopRecordingStream();
+                    mediaRecorder = null;
+
+                    if (discardNextRecording) {
+                        discardNextRecording = false;
+                        setRecordButton(true);
+                        return;
+                    }
+                    setRecordButton(false);
+
+                    if (!audioChunks.length) {
+                        timingHint.textContent = 'No speech captured. Try recording again.';
+                        return;
+                    }
+
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    if (recordingStartEpochMs) {
+                        lastRecordingDurationSeconds = Math.max(1, Math.round((Date.now() - recordingStartEpochMs) / 1000));
+                    }
+                    recordingStartEpochMs = null;
+
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+                    btnSubmit.disabled = false;
+                    btnRerecord.style.display = 'inline-block';
+                    timingHint.textContent = `Recording complete (${lastRecordingDurationSeconds || '?'}s).`;
+                    showStatus('Recording complete. You can submit or re-record.', 'success');
+                };
+                return true;
+            } catch (err) {
+                showStatus('Microphone access failed: ' + err.message, 'error');
+                return false;
+            } finally {
+                isPreparingRecorder = false;
+            }
+        }
+
+        function startRecordingNow(isAutoStart = false) {
+            if (!mediaRecorder || mediaRecorder.state !== 'inactive') {
+                return;
+            }
+            clearRetellTimers();
+            prepCountdown.textContent = '0s';
+            responseCountdown.textContent = `${lectureTiming.response_seconds}s`;
+            timingHint.textContent = isAutoStart
+                ? 'Recording started automatically.'
+                : 'Recording started.';
+
+            recordingStartEpochMs = Date.now();
+            audioChunks = [];
+            mediaRecorder.start();
+            recordingIndicator.classList.add('active');
+            setRecordButton(true, '🎙 Recording...');
+            btnStop.disabled = false;
+
+            let remaining = lectureTiming.response_seconds;
+            responseTimerId = setInterval(() => {
+                remaining = Math.max(remaining - 1, 0);
+                responseCountdown.textContent = `${remaining}s`;
+                timingHint.textContent = `Recording... ${remaining}s left`;
+                if (remaining <= 0) {
+                    stopActiveRecording(true);
+                }
+            }, 1000);
+            autoStopTimerId = setTimeout(() => stopActiveRecording(true), lectureTiming.response_seconds * 1000 + 250);
+        }
+
+        async function beginPreparationCountdown() {
+            if (prepTimerId || (mediaRecorder && mediaRecorder.state === 'recording')) {
+                return;
+            }
+            const recorderReady = await ensureRecorderReady();
+            if (!recorderReady) {
+                return;
+            }
+
+            let remaining = lectureTiming.prep_seconds;
+            prepCountdown.textContent = `${remaining}s`;
+            responseCountdown.textContent = `${lectureTiming.response_seconds}s`;
+            timingHint.textContent = `Preparation: ${remaining}s. Press Start Recording to begin now.`;
+            setRecordButton(false);
+            btnStop.disabled = true;
+
+            prepTimerId = setInterval(() => {
+                remaining = Math.max(remaining - 1, 0);
+                prepCountdown.textContent = `${remaining}s`;
+                timingHint.textContent = `Preparation: ${remaining}s. Press Start Recording to begin now.`;
+                if (remaining <= 0) {
+                    startRecordingNow(true);
+                }
+            }, 1000);
+        }
+
+        function stopActiveRecording(autoStopped = false) {
+            if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+                return;
+            }
+            clearRetellTimers();
+            mediaRecorder.stop();
+            if (autoStopped) {
+                showStatus(`Time is up (${lectureTiming.response_seconds}s). Recording stopped automatically.`, 'success');
+            }
         }
 
         function renderCategoryOptions(categories) {
@@ -966,9 +1179,9 @@
                 card.setAttribute('role', 'button');
                 card.setAttribute('tabindex', '0');
                 card.innerHTML = `
-                    <div class="topic-card-title">${topicItem.title}</div>
-                    <div class="topic-card-meta">
-                        <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
+                    <div class=\"topic-card-title\">${topicItem.title}</div>
+                    <div class=\"topic-card-meta\">
+                        <span class=\"topic-meta-pill\">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
                 card.onclick = () => loadNewLecture(topicItem.id);
@@ -984,38 +1197,11 @@
 
         function applyTopicFilters() {
             const selectedCategory = difficultySelect.value || 'all';
-            filteredLectureTopics = allLectureTopics.filter((item) => {
-                return selectedCategory === 'all' || item.difficulty === selectedCategory;
-            });
+            filteredLectureTopics = allLectureTopics.filter((item) => (
+                selectedCategory === 'all' || item.difficulty === selectedCategory
+            ));
             topicCount.textContent = `Showing ${filteredLectureTopics.length} of ${allLectureTopics.length} topics`;
             renderTopicCards();
-        }
-
-        function resetLectureState() {
-            currentLectureId = null;
-            currentResult = null;
-            lectureTitle.textContent = 'Select category to load a lecture';
-            lecturePlayer.src = '';
-            lecturePlayer.load();
-            lecturePlayer.style.display = 'none';
-            loadingText.style.display = 'none';
-            audioBlob = null;
-            audioChunks = [];
-            audioPlayer.src = '';
-            audioPlayback.style.display = 'none';
-            btnRecord.disabled = true;
-            btnStop.disabled = true;
-            btnSubmit.disabled = true;
-            btnRerecord.style.display = 'none';
-            recordingIndicator.classList.remove('active');
-            results.classList.remove('show');
-            progressContainer.classList.remove('active');
-            if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-            }
-            statusDiv.classList.remove('show');
-            setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value || 'x1.0'}`);
         }
 
         async function loadCatalog() {
@@ -1025,6 +1211,7 @@
                 throw new Error(data.error || 'Failed to load lecture catalog.');
             }
             allLectureTopics = Array.isArray(data.items) ? data.items : [];
+            applyLectureTiming(data.timing || null);
         }
 
         async function loadCategories() {
@@ -1038,99 +1225,74 @@
             } catch (_error) {
                 // Fall back to categories derived from catalog.
             }
-
-            const fallbackCategories = Array.from(new Set(allLectureTopics.map((item) => String(item.difficulty || 'medium').toLowerCase())));
-            renderCategoryOptions(fallbackCategories);
+            const fallback = Array.from(new Set(allLectureTopics.map((item) => String(item.difficulty || 'medium').toLowerCase())));
+            renderCategoryOptions(fallback);
         }
 
-        function loadNewLecture(lectureId = null) {
+        async function loadNewLecture(lectureId = null) {
             const difficulty = difficultySelect.value || 'all';
-            lectureTaskSection.style.display = 'block';
+            focusLectureTask();
+            resetRecordingState();
+            resetAttemptArtifacts();
             loadingText.style.display = 'block';
             lecturePlayer.style.display = 'none';
-            btnRecord.disabled = true;
+            setRecordButton(true);
             btnStop.disabled = true;
-            btnSubmit.disabled = true;
-            audioBlob = null;
-            audioPlayback.style.display = 'none';
-            btnRerecord.style.display = 'none';
-            results.classList.remove('show');
-            statusDiv.classList.remove('show');
 
-            const params = new URLSearchParams();
+            const params = ttsController.buildQuery(ttsController.shouldRepickRandom());
             if (lectureId) {
                 params.set('lecture_id', lectureId);
             } else if (difficulty !== 'all') {
                 params.set('difficulty', difficulty);
             }
-            params.set('provider', currentTtsProvider || 'edge');
-            const selectedVoiceToken = ensureVoiceOption(ttsVoiceSelect.value);
-            const requestedVoice = selectedVoiceToken === RANDOM_VOICE_ID
-                ? resolveVoiceForRequest(true)
-                : selectedVoiceToken;
-            params.set('voice', requestedVoice);
-            if (ttsSpeedSelect.value) {
-                params.set('speed', ttsSpeedSelect.value);
-            }
-            const url = params.toString()
-                ? `/retell-lecture/get-lecture?${params.toString()}`
-                : '/retell-lecture/get-lecture';
+            const url = `/retell-lecture/get-lecture?${params.toString()}`;
 
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        showStatus(data.error, 'error');
-                        return;
-                    }
-                    currentLectureId = data.lecture_id;
-                    if (data.tts) {
-                        currentTtsProvider = String(data.tts.provider || currentTtsProvider || 'edge').trim().toLowerCase();
-                        if (data.tts.voice) {
-                            const currentSelection = ensureVoiceOption(ttsVoiceSelect.value);
-                            const incomingVoice = ensureVoiceOption(data.tts.voice);
-                            currentResolvedVoiceId = incomingVoice;
-                            if (currentSelection !== RANDOM_VOICE_ID) {
-                                ttsVoiceSelect.value = incomingVoice;
-                                localStorage.setItem(TTS_VOICE_KEY, ttsVoiceSelect.value);
-                            } else {
-                                ttsVoiceSelect.value = RANDOM_VOICE_ID;
-                            }
-                        }
-                        if (data.tts.speed) {
-                            const speedValue = String(data.tts.speed);
-                            if (Array.from(ttsSpeedSelect.options).some((option) => option.value === speedValue)) {
-                                ttsSpeedSelect.value = speedValue;
-                                localStorage.setItem(TTS_SPEED_KEY, speedValue);
-                            }
-                        }
-                    }
-                    lectureTitle.textContent = data.title;
-                    lecturePlayer.src = data.audio_url || buildLectureAudioUrl(currentLectureId);
-                    lecturePlayer.load();
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to load lecture.');
+                }
 
-                    // Enable record when audio is ready
-                    lecturePlayer.oncanplay = () => {
-                        loadingText.style.display = 'none';
-                        lecturePlayer.style.display = 'inline-block';
-                        btnRecord.disabled = false;
-                    };
-                    lecturePlayer.onerror = () => {
-                        loadingText.style.display = 'none';
-                        lecturePlayer.style.display = 'none';
-                        btnRecord.disabled = true;
-                        showStatus('Lecture audio could not be loaded. Try another voice or reload.', 'error');
-                    };
+                currentLectureId = data.lecture_id;
+                lectureTitle.textContent = data.title || 'Retell Lecture';
+                applyLectureTiming(data.timing || null);
+                setPromptDuration(data.prompt_duration_seconds);
+                timingHint.textContent = 'Lecture ready. Press play.';
 
-                    setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
-                    showStatus(`Loaded: ${data.title} (${titleCase(data.difficulty || difficulty)})`, 'success');
-                    renderTopicCards();
-                })
-                .catch(err => {
+                const fallbackAudioUrl = ttsController.buildAudioUrl(
+                    buildLectureAudioBasePath(currentLectureId),
+                    ttsController.shouldRepickRandom()
+                );
+                lecturePlayer.src = data.audio_url || fallbackAudioUrl;
+                lecturePlayer.load();
+                attachLecturePlaybackHandlers();
+                lecturePlayer.oncanplay = () => {
+                    loadingText.style.display = 'none';
+                    lecturePlayer.style.display = 'inline-block';
+                    setRecordButton(!lecturePlayer.ended);
+                    lecturePlayer.play().catch(() => {
+                        timingHint.textContent = 'Lecture ready. Press play.';
+                    });
+                };
+                lecturePlayer.onerror = () => {
                     loadingText.style.display = 'none';
                     lecturePlayer.style.display = 'none';
-                    showStatus('Failed to load lecture: ' + err.message, 'error');
-                });
+                    setRecordButton(true);
+                    showStatus('Lecture audio could not be loaded. Try another voice or reload.', 'error');
+                };
+
+                showStatus(
+                    `Loaded: ${data.title} (${titleCase(data.difficulty || difficulty)}) • Prompt ~${data.prompt_duration_seconds || '?'}s`,
+                    'success'
+                );
+                renderTopicCards();
+            } catch (err) {
+                loadingText.style.display = 'none';
+                lecturePlayer.style.display = 'none';
+                setRecordButton(true);
+                showStatus('Failed to load lecture: ' + err.message, 'error');
+            }
         }
 
         btnLoadLecture.onclick = () => {
@@ -1143,86 +1305,35 @@
         };
         btnNewLecture.onclick = btnLoadLecture.onclick;
 
-        ttsVoiceSelect.addEventListener('change', () => {
-            const selected = ensureVoiceOption(ttsVoiceSelect.value);
-            ttsVoiceSelect.value = selected;
-            localStorage.setItem(TTS_VOICE_KEY, selected);
-            currentResolvedVoiceId = selected === RANDOM_VOICE_ID ? null : selected;
-            setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
-            if (currentLectureId) {
-                refreshLectureAudioSource(false);
-            }
-        });
-
-        ttsSpeedSelect.addEventListener('change', () => {
-            localStorage.setItem(TTS_SPEED_KEY, ttsSpeedSelect.value);
-            setTtsMeta(`Voice: ${currentVoiceMetaLabel()} • Speed: ${ttsSpeedSelect.value}`);
-            if (currentLectureId) {
-                refreshLectureAudioSource(false);
-            }
-        });
-
-        btnReplayLecture.onclick = () => {
-            if (!lecturePlayer.src) {
+        btnRecord.onclick = async () => {
+            if (!currentLectureId) return;
+            if (prepTimerId) {
+                startRecordingNow(false);
                 return;
             }
-            lecturePlayer.currentTime = 0;
-            lecturePlayer.play().catch(() => { });
-        };
-
-        btnRecord.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-
-                mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-
-                    // Create playback URL
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    audioPlayer.src = audioUrl;
-                    audioPlayback.style.display = 'block';
-
-                    // Enable buttons
-                    btnSubmit.disabled = false;
-                    btnRerecord.style.display = 'inline-block';
-                    recordingIndicator.classList.remove('active');
-                    showStatus('Recording complete. You can listen to it or submit.', 'success');
-                };
-
-                mediaRecorder.start();
-                btnRecord.disabled = true;
-                btnStop.disabled = false;
-                recordingIndicator.classList.add('active');
-                results.classList.remove('show');
-                statusDiv.classList.remove('show');
-
-                // Pause lecture if playing
-                lecturePlayer.pause();
-
-            } catch (err) {
-                showStatus('Error accessing microphone: ' + err.message, 'error');
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                return;
             }
+            if (!lecturePlayer.ended) {
+                showStatus('Wait for lecture to finish. Preparation starts automatically after playback.', 'error');
+                return;
+            }
+            await beginPreparationCountdown();
         };
 
         btnStop.onclick = () => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                btnRecord.disabled = false;
-                btnStop.disabled = true;
+                stopActiveRecording(false);
             }
         };
 
         btnRerecord.onclick = () => {
-            audioBlob = null;
-            audioPlayer.src = '';
-            audioPlayback.style.display = 'none';
-            btnRerecord.style.display = 'none';
-            btnSubmit.disabled = true;
-            statusDiv.classList.remove('show');
+            resetRecordingState();
+            resetAttemptArtifacts();
+            if (lecturePlayer.ended) {
+                timingHint.textContent = 'Press Start Recording to begin preparation again.';
+                setRecordButton(false);
+            }
         };
 
         btnSubmit.onclick = async () => {
@@ -1230,62 +1341,61 @@
 
             results.classList.remove('show');
             statusDiv.classList.remove('show');
-
             progressContainer.classList.add('active');
             progressFill.style.width = '10%';
-            progressText.textContent = '📤 Uploading audio...';
+            progressText.textContent = 'Uploading audio...';
             btnSubmit.disabled = true;
 
             const formData = new FormData();
-            formData.append('audio', audioBlob, 'summary.wav');
+            formData.append('audio', audioBlob, 'retell_summary.wav');
             formData.append('lecture_id', currentLectureId);
             formData.append('accent', accentSelector.value);
+            if (Number.isFinite(lastRecordingDurationSeconds) && lastRecordingDurationSeconds > 0) {
+                formData.append('recording_seconds', String(lastRecordingDurationSeconds));
+            }
 
             try {
-                const res = await fetch('/retell-lecture/submit', { method: 'POST', body: formData });
-                const data = await res.json();
-
-                if (data.error) {
-                    progressContainer.classList.remove('active');
-                    showStatus('Error: ' + data.error, 'error');
-                    btnSubmit.disabled = false;
-                    return;
+                const response = await fetch('/retell-lecture/submit', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to submit recording.');
                 }
 
                 const jobId = data.job_id;
                 progressFill.style.width = '20%';
-                progressText.textContent = '🔄 Evaluating... (~10 seconds)';
-
+                progressText.textContent = 'Evaluating...';
                 let elapsed = 0;
+
                 pollInterval = setInterval(async () => {
                     elapsed += 2;
-                    const progress = Math.min(20 + (elapsed / 10) * 70, 90);
-                    progressFill.style.width = progress + '%';
+                    const progress = Math.min(20 + (elapsed / (data.estimated_time || 10)) * 70, 90);
+                    progressFill.style.width = `${progress}%`;
+                    progressText.textContent = `Evaluating... (${elapsed}s)`;
 
                     try {
                         const statusRes = await fetch(`/retell-lecture/status/${jobId}`);
                         const status = await statusRes.json();
-
                         if (status.status === 'complete') {
                             clearInterval(pollInterval);
+                            pollInterval = null;
                             progressFill.style.width = '100%';
-                            progressText.textContent = '✅ Complete!';
+                            progressText.textContent = 'Complete';
                             setTimeout(() => {
                                 progressContainer.classList.remove('active');
                                 displayResult(status.result);
-                            }, 500);
+                            }, 300);
                             btnSubmit.disabled = false;
                         } else if (status.status === 'failed') {
                             clearInterval(pollInterval);
+                            pollInterval = null;
                             progressContainer.classList.remove('active');
-                            showStatus('Error: ' + status.error, 'error');
+                            showStatus(status.error || 'Evaluation failed.', 'error');
                             btnSubmit.disabled = false;
                         }
-                    } catch (pollErr) {
-                        console.error('Poll error:', pollErr);
+                    } catch (_pollErr) {
+                        // Keep polling until timeout or completion.
                     }
                 }, 2000);
-
             } catch (err) {
                 progressContainer.classList.remove('active');
                 showStatus('Submission failed: ' + err.message, 'error');
@@ -1294,67 +1404,68 @@
         };
 
         async function displayResult(result) {
-            currentResult = result;
-            if (result.textgrid_content) {
-                delete result.textgrid_content;
+            currentResult = result || {};
+            if (currentResult.textgrid_content) {
+                delete currentResult.textgrid_content;
             }
-            jsonOutput.innerText = JSON.stringify(result, null, 2);
+            jsonOutput.innerText = JSON.stringify(currentResult, null, 2);
 
-            document.getElementById('scoreNumber').textContent = result.score;
-            document.getElementById('feedbackText').textContent = result.feedback;
-            document.getElementById('contentScore').textContent = result.details.content_score;
-            document.getElementById('keywordScore').textContent = result.details.keyword_coverage + '%';
-            document.getElementById('fluencyScore').textContent = result.details.fluency_score;
+            const details = currentResult.details || {};
+            document.getElementById('scoreNumber').textContent = currentResult.score ?? 0;
+            document.getElementById('feedbackText').textContent = currentResult.feedback || '';
+            document.getElementById('contentScore').textContent = details.content_score ?? 0;
+            document.getElementById('pronunScore').textContent = details.pronun_score ?? 0;
+            document.getElementById('fluencyScore').textContent = details.fluency_score ?? 0;
+            document.getElementById('keyPointScore').textContent = `${details.key_point_coverage ?? 0}%`;
 
-            // Render interactive transcription with MFA info
+            ['contentScore', 'pronunScore', 'fluencyScore'].forEach((id) => {
+                const el = document.getElementById(id);
+                const val = parseFloat(el.textContent);
+                el.style.color = val >= 70 ? '#28a745' : val >= 45 ? '#fd7e14' : '#dc3545';
+            });
+
             const transcriptionBox = document.getElementById('transcriptionText');
-            const details = result.transcription_details || { text: result.transcription || "", words: [] };
-
+            const transDetails = currentResult.transcription_details || { text: currentResult.transcription || '', words: [] };
             transcriptionBox.innerHTML = '';
 
-            // Check grammar using LanguageTool via proxy
             let grammarIssues = [];
             try {
                 const grammarRes = await fetch('/api/grammar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: details.text })
+                    body: JSON.stringify({ text: transDetails.text }),
                 });
                 const grammarData = await grammarRes.json();
                 grammarIssues = grammarData.matches || [];
-            } catch (err) {
-                console.error("Grammar check failed:", err);
+            } catch (_err) {
+                grammarIssues = [];
             }
 
-            // Create interactive words
-            const words = details.text.split(/\s+/);
+            const words = String(transDetails.text || '').split(/\s+/);
             words.forEach((word, idx) => {
                 if (!word) return;
-
-                const wordData = details.words[idx] || {};
+                const wordData = transDetails.words[idx] || {};
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
                 wordSpan.textContent = word;
 
-                // Overlay content
                 let overlayHTML = `
-                    <div class="overlay-section">
-                        <div class="overlay-title">Word Analysis</div>
-                        <div class="overlay-content">
-                            <div><span class="status-indicator status-${wordData.status || 'unknown'}"></span>Status: ${wordData.status || 'unknown'}</div>
+                    <div class=\"overlay-section\">
+                        <div class=\"overlay-title\">Word Analysis</div>
+                        <div class=\"overlay-content\">
+                            <div><span class=\"status-indicator status-${wordData.status || 'unknown'}\"></span>Status: ${wordData.status || 'unknown'}</div>
                             <div>Timing: ${(wordData.start !== undefined && wordData.start !== null) ? wordData.start.toFixed(2) : 'N/A'}s - ${(wordData.end !== undefined && wordData.end !== null) ? wordData.end.toFixed(2) : 'N/A'}s</div>
                         </div>
                     </div>
                 `;
 
-                // Find grammar issues for this word
-                const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
+                const wordIssues = grammarIssues.filter((issue) => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
                 if (wordIssues.length > 0) {
                     wordSpan.classList.add('grammar-error');
                     overlayHTML += `
-                        <div class="overlay-section">
-                            <div class="overlay-title" style="color: #ff5252;">Grammar/Spelling</div>
-                            ${wordIssues.map(i => `<div>• ${i}</div>`).join('')}
+                        <div class=\"overlay-section\">
+                            <div class=\"overlay-title\" style=\"color:#ff5252;\">Grammar/Spelling</div>
+                            ${wordIssues.map((issue) => `<div>• ${issue}</div>`).join('')}
                         </div>
                     `;
                 }
@@ -1363,24 +1474,30 @@
                 overlay.className = 'word-overlay';
                 overlay.innerHTML = overlayHTML;
                 wordSpan.appendChild(overlay);
-
                 transcriptionBox.appendChild(wordSpan);
                 transcriptionBox.appendChild(document.createTextNode(' '));
             });
 
             results.classList.add('show');
-            showStatus(`Evaluation complete! Score: ${result.score}/90`, 'success');
+            showStatus(`Evaluation complete! Score: ${currentResult.score || 0}/90`, 'success');
         }
 
-        // Ideal Answer Button Handler
         document.getElementById('btnShowIdeal').onclick = () => {
             if (!currentResult) return;
-
             const idealContent = document.getElementById('idealAnswerContent');
             const btnShowIdeal = document.getElementById('btnShowIdeal');
-
+            const exampleBox = document.getElementById('exampleResponseBox');
+            const exampleText = document.getElementById('exampleResponseText');
             if (idealContent.style.display === 'none') {
-                document.getElementById('referenceText').textContent = currentResult.reference || 'No reference available';
+                document.getElementById('referenceText').textContent = currentResult.reference || 'No transcript available';
+                const example = String(currentResult.example_response || '').trim();
+                if (example) {
+                    exampleText.textContent = example;
+                    exampleBox.style.display = 'block';
+                } else {
+                    exampleText.textContent = '';
+                    exampleBox.style.display = 'none';
+                }
                 idealContent.style.display = 'block';
                 btnShowIdeal.textContent = '📖 Hide Transcript';
             } else {
@@ -1389,12 +1506,7 @@
             }
         };
 
-        function showStatus(message, type) {
-            statusDiv.textContent = message;
-            statusDiv.className = 'show ' + type;
-        }
-
-        difficultySelect.addEventListener('change', async () => {
+        difficultySelect.addEventListener('change', () => {
             applyTopicFilters();
             if (filteredLectureTopics.length) {
                 loadNewLecture(filteredLectureTopics[0].id);
@@ -1407,13 +1519,13 @@
         (async function initPage() {
             try {
                 lectureTaskSection.style.display = 'none';
-                await loadTtsOptions();
+                await ttsController.init();
                 resetLectureState();
                 await loadCatalog();
                 await loadCategories();
                 applyTopicFilters();
                 if (filteredLectureTopics.length) {
-                    loadNewLecture(filteredLectureTopics[0].id);
+                    await loadNewLecture(filteredLectureTopics[0].id);
                 }
             } catch (error) {
                 showStatus(error.message || 'Failed to initialize page.', 'error');

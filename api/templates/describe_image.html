@@ -249,6 +249,48 @@
             margin-left: 0.2rem;
         }
 
+        .timing-panel {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 10px;
+            border: 1px solid #d3e0ee;
+            background: #f7fbff;
+        }
+
+        .timing-phase {
+            background: #ffffff;
+            border: 1px solid #d5e2f0;
+            border-radius: 10px;
+            padding: 0.65rem 0.75rem;
+            text-align: center;
+        }
+
+        .timing-label {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #50657f;
+        }
+
+        .timing-value {
+            margin-top: 0.2rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1f3d63;
+        }
+
+        .timing-hint {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #4e6785;
+        }
+
         .progress-bar {
             height: 12px;
             background: #e9ecef;
@@ -823,7 +865,7 @@
             <h1 class="page-title">Describe Image</h1>
             <p class="page-subtitle">Look at the image and describe what you see in detail.</p>
             <div class="hero-meta">
-                <span class="hero-pill">40s Speaking</span>
+                <span class="hero-pill">25s Prep + 40s Speaking</span>
                 <span class="hero-pill">AI Content Score</span>
                 <span class="hero-pill">Pronunciation Insights</span>
             </div>
@@ -858,11 +900,23 @@
         <div class="instructions">
             <strong>Instructions:</strong>
             <ol style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
-                <li>Study the image carefully</li>
-                <li>Click "Start Recording" and describe the image in detail</li>
-                <li>Click "Stop Recording" when finished</li>
+                <li>Click "Start Recording" to begin the preparation countdown</li>
+                <li>Use preparation time to plan key points</li>
+                <li>Speak clearly when recording starts (auto-stops at time limit)</li>
                 <li>Click "Submit Description" to get your score</li>
             </ol>
+        </div>
+
+        <div class="timing-panel" id="timingPanel">
+            <div class="timing-phase">
+                <div class="timing-label">Preparation</div>
+                <div class="timing-value" id="prepCountdown">25s</div>
+            </div>
+            <div class="timing-phase">
+                <div class="timing-label">Speaking</div>
+                <div class="timing-value" id="speakCountdown">40s</div>
+            </div>
+            <div class="timing-hint" id="timingHint">Press Start Recording to begin preparation.</div>
         </div>
 
         <div class="image-title" id="imageTitle">Loading image...</div>
@@ -1094,6 +1148,19 @@
         let availableDifficultyFilters = [];
         let pollInterval = null;
         let currentResult = null; // Store result for ideal answer display
+        let describeImageTiming = {
+            prep_seconds: 25,
+            response_seconds: 40,
+            recommended_response_min_seconds: 20,
+            recommended_response_max_seconds: 40,
+        };
+        let prepTimerId = null;
+        let speakingTimerId = null;
+        let autoStopTimerId = null;
+        let activeRecordingStream = null;
+        let recordingStartEpochMs = null;
+        let lastRecordingDurationSeconds = null;
+        let isPreparing = false;
 
         const topicSelectionPhase = document.getElementById('topic-selection-phase');
         const activePhase = document.getElementById('active-phase');
@@ -1121,18 +1188,216 @@
         const results = document.getElementById('results');
         const jsonOutput = document.getElementById('json-output');
         const accentSelector = document.getElementById('accent-selector');
+        const prepCountdown = document.getElementById('prepCountdown');
+        const speakCountdown = document.getElementById('speakCountdown');
+        const timingHint = document.getElementById('timingHint');
         const modalTtsWord = document.getElementById('modal-tts-word');
         const wordPracticeRecordBtn = document.getElementById('word-practice-record-btn');
         const wordPracticeStopBtn = document.getElementById('word-practice-stop-btn');
         const wordPracticeStatus = document.getElementById('word-practice-status');
         const wordPracticeResult = document.getElementById('word-practice-result');
 
-        const savedAccent = localStorage.getItem('selectedAccent') || 'US_ARPA';
+        const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
         accentSelector.value = savedAccent;
         accentSelector.addEventListener('change', () => {
             localStorage.setItem('selectedAccent', accentSelector.value);
         });
 
+        function clearTimingIntervals() {
+            if (prepTimerId) {
+                clearInterval(prepTimerId);
+                prepTimerId = null;
+            }
+            if (speakingTimerId) {
+                clearInterval(speakingTimerId);
+                speakingTimerId = null;
+            }
+            if (autoStopTimerId) {
+                clearTimeout(autoStopTimerId);
+                autoStopTimerId = null;
+            }
+        }
+
+        function stopRecordingStream() {
+            if (!activeRecordingStream) return;
+            activeRecordingStream.getTracks().forEach((track) => track.stop());
+            activeRecordingStream = null;
+        }
+
+        function handleRecorderDataAvailable(event) {
+            if (event.data && event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        }
+
+        function handleRecorderStop() {
+            clearTimingIntervals();
+            stopRecordingStream();
+            recordingIndicator.style.display = 'none';
+            btnStop.disabled = true;
+            btnRecord.disabled = false;
+
+            if (!audioChunks.length) {
+                audioBlob = null;
+                btnSubmit.disabled = true;
+                btnRerecord.style.display = 'none';
+                timingHint.textContent = 'Recording stopped. Press Start Recording to try again.';
+                return;
+            }
+
+            audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            if (recordingStartEpochMs) {
+                lastRecordingDurationSeconds = Math.max(1, Math.round((Date.now() - recordingStartEpochMs) / 1000));
+            }
+            recordingStartEpochMs = null;
+
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayer.src = audioUrl;
+            audioPlayback.style.display = 'block';
+            audioUploadedInfo.textContent = "Audio uploaded: describe_image_recording.wav";
+            audioUploadedInfo.style.display = 'block';
+            btnSubmit.disabled = false;
+            btnRerecord.style.display = 'inline-block';
+            const durationLabel = lastRecordingDurationSeconds ? `${lastRecordingDurationSeconds}s` : 'recorded';
+            timingHint.textContent = `Recording complete (${durationLabel}). You can submit or re-record.`;
+            showStatus('Recording complete. You can listen to it or submit directly.', 'success');
+        }
+
+        function setupMediaRecorder() {
+            if (!activeRecordingStream) return;
+            mediaRecorder = new MediaRecorder(activeRecordingStream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = handleRecorderDataAvailable;
+            mediaRecorder.onstop = handleRecorderStop;
+        }
+
+        function startRecordingImmediately() {
+            if (!mediaRecorder || mediaRecorder.state !== 'inactive') return;
+            clearTimingIntervals();
+            prepCountdown.textContent = '0s';
+            timingHint.textContent = 'Recording starts now.';
+            prepTimerId = null;
+            mediaRecorder.start();
+            beginSpeakingCountdown();
+            btnRecord.disabled = true;
+            btnStop.disabled = false;
+            results.classList.remove('show');
+            statusDiv.classList.remove('show');
+        }
+
+        async function prepareRecorderAndStartPrep() {
+            if (isPreparing) return;
+            isPreparing = true;
+            try {
+                btnSubmit.disabled = true;
+                btnRerecord.style.display = 'none';
+                clearTimingIntervals();
+                stopRecordingStream();
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+                mediaRecorder = null;
+                audioBlob = null;
+                lastRecordingDurationSeconds = null;
+                timingHint.textContent = `Preparing to record (${describeImageTiming.prep_seconds}s)`;
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                activeRecordingStream = stream;
+                setupMediaRecorder();
+                btnRecord.disabled = false;
+                btnStop.disabled = true;
+                startPreparationCountdown();
+                showStatus('Microphone ready. Preparation countdown started.', 'success');
+            } catch (err) {
+                showStatus('Microphone access failed: ' + err.message, 'error');
+            } finally {
+                isPreparing = false;
+            }
+        }
+
+        function applyTimingConfig(rawConfig) {
+            const nextConfig = rawConfig || {};
+            const prepSeconds = Number(nextConfig.prep_seconds);
+            const responseSeconds = Number(nextConfig.response_seconds);
+            const recommendedMin = Number(nextConfig.recommended_response_min_seconds);
+
+            describeImageTiming = {
+                prep_seconds: Number.isFinite(prepSeconds) && prepSeconds > 0 ? Math.round(prepSeconds) : 25,
+                response_seconds: Number.isFinite(responseSeconds) && responseSeconds > 0 ? Math.round(responseSeconds) : 40,
+                recommended_response_min_seconds: Number.isFinite(recommendedMin) && recommendedMin > 0
+                    ? Math.round(recommendedMin)
+                    : 20,
+            };
+            describeImageTiming.recommended_response_max_seconds = describeImageTiming.response_seconds;
+            if (describeImageTiming.recommended_response_min_seconds > describeImageTiming.response_seconds) {
+                describeImageTiming.recommended_response_min_seconds = describeImageTiming.response_seconds;
+            }
+
+            prepCountdown.textContent = `${describeImageTiming.prep_seconds}s`;
+            speakCountdown.textContent = `${describeImageTiming.response_seconds}s`;
+            timingHint.textContent = `Press Start Recording to begin ${describeImageTiming.prep_seconds}s preparation.`;
+        }
+
+        function resetTimingPanel() {
+            clearTimingIntervals();
+            prepCountdown.textContent = `${describeImageTiming.prep_seconds}s`;
+            speakCountdown.textContent = `${describeImageTiming.response_seconds}s`;
+            timingHint.textContent = `Press Start Recording to begin ${describeImageTiming.prep_seconds}s preparation.`;
+            recordingIndicator.style.display = 'none';
+            recordingStartEpochMs = null;
+        }
+
+        function beginSpeakingCountdown() {
+            let remaining = describeImageTiming.response_seconds;
+            speakCountdown.textContent = `${remaining}s`;
+            timingHint.textContent = `Recording in progress. Time left: ${remaining}s`;
+            recordingStartEpochMs = Date.now();
+            recordingIndicator.style.display = 'inline';
+
+            speakingTimerId = setInterval(() => {
+                remaining = Math.max(remaining - 1, 0);
+                speakCountdown.textContent = `${remaining}s`;
+                timingHint.textContent = `Recording in progress. Time left: ${remaining}s`;
+                if (remaining <= 0) {
+                    stopRecordingSession(true);
+                }
+            }, 1000);
+
+            autoStopTimerId = setTimeout(() => stopRecordingSession(true), describeImageTiming.response_seconds * 1000 + 250);
+        }
+
+        function stopRecordingSession(wasAutoStopped = false) {
+            const preparing = Boolean(prepTimerId);
+            clearTimingIntervals();
+            btnStop.disabled = true;
+            btnRecord.disabled = false;
+
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                if (wasAutoStopped) {
+                    showStatus(`Time is up (${describeImageTiming.response_seconds}s). Recording stopped automatically.`, 'success');
+                }
+            } else if (preparing) {
+                stopRecordingStream();
+            }
+        }
+
+        function startPreparationCountdown() {
+            let remaining = describeImageTiming.prep_seconds;
+            prepCountdown.textContent = `${remaining}s`;
+            speakCountdown.textContent = `${describeImageTiming.response_seconds}s`;
+            timingHint.textContent = `Preparation started. ${remaining}s remaining before recording starts.`;
+
+            prepTimerId = setInterval(() => {
+                remaining = Math.max(remaining - 1, 0);
+                prepCountdown.textContent = `${remaining}s`;
+                timingHint.textContent = `Preparation started. ${remaining}s remaining before recording starts.`;
+                if (remaining <= 0) {
+                    startRecordingImmediately();
+                }
+            }, 1000);
+        }
+
+        applyTimingConfig(null);
         // Load topic selection on page load
         loadTopics();
 
@@ -1236,6 +1501,7 @@
                     showStatus('Error loading topics: ' + data.error, 'error');
                     return;
                 }
+                applyTimingConfig(data.timing);
 
                 if (Array.isArray(data.images) && data.images.length > 0) {
                     allImageTopics = data.images.map((item) => ({
@@ -1291,6 +1557,7 @@
             selectedTopic = topicItem;
             topicSelectionPhase.style.display = 'none';
             activePhase.style.display = 'block';
+            activePhase.scrollIntoView({ behavior: 'smooth', block: 'start' });
             loadNewImage(topicItem.id);
         }
 
@@ -1337,6 +1604,9 @@
                     return;
                 }
 
+                if (data.timing) {
+                    applyTimingConfig(data.timing);
+                }
                 currentImageId = data.image_id;
                 imageTitle.textContent = data.title;
                 imageContainer.innerHTML = `<img src="${data.image_url}" alt="${data.title}">`;
@@ -1344,7 +1614,10 @@
 
                 results.classList.remove('show');
                 statusDiv.classList.remove('show');
+                clearTimingIntervals();
+                stopRecordingStream();
                 audioBlob = null;
+                lastRecordingDurationSeconds = null;
                 audioPlayer.src = '';
                 audioPlayback.style.display = 'none';
                 audioUploadedInfo.style.display = 'none';
@@ -1356,12 +1629,16 @@
                 btnStop.disabled = true;
                 btnSubmit.disabled = true;
                 btnRerecord.style.display = 'none';
+                resetTimingPanel();
+                prepareRecorderAndStartPrep();
             } catch (err) {
                 showStatus('Failed to load image: ' + err.message, 'error');
             }
         }
 
         btnChangeTopic.onclick = () => {
+            clearTimingIntervals();
+            stopRecordingStream();
             activePhase.style.display = 'none';
             topicSelectionPhase.style.display = 'block';
             results.classList.remove('show');
@@ -1372,64 +1649,53 @@
             progressContainer.style.display = 'none';
             btnSubmit.disabled = true;
             btnRerecord.style.display = 'none';
+            resetTimingPanel();
         };
 
         btnNewImage.onclick = () => loadNewImage();
 
-        btnRecord.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-
-                mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-
-                    // Create playback URL
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    audioPlayer.src = audioUrl;
-                    audioPlayback.style.display = 'block';
-                    audioUploadedInfo.textContent = "Audio uploaded: describe_image_recording.wav";
-                    audioUploadedInfo.style.display = 'block';
-
-                    // Enable buttons
-                    btnSubmit.disabled = false;
-                    btnRerecord.style.display = 'inline-block';
-                    recordingIndicator.style.display = 'none';
-                    showStatus('Recording complete. You can listen to it or submit directly.', 'success');
-                };
-
-                mediaRecorder.start();
-                btnRecord.disabled = true;
-                btnStop.disabled = false;
-                recordingIndicator.style.display = 'inline';
-                results.classList.remove('show');
-                statusDiv.classList.remove('show');
-            } catch (err) {
-                showStatus('Error accessing microphone: ' + err.message, 'error');
+        btnRecord.onclick = () => {
+            if (prepTimerId) {
+                startRecordingImmediately();
+                return;
+            }
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                prepareRecorderAndStartPrep();
             }
         };
 
         btnStop.onclick = () => {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
+            if (prepTimerId) {
+                clearTimingIntervals();
+                stopRecordingStream();
+                mediaRecorder = null;
                 btnRecord.disabled = false;
                 btnStop.disabled = true;
-                recordingIndicator.style.display = 'none';
+                resetTimingPanel();
+                showStatus('Preparation cancelled.', 'success');
+                return;
+            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecordingSession(false);
             }
         };
 
         btnRerecord.onclick = () => {
+            clearTimingIntervals();
+            stopRecordingStream();
             // Reset recording state
             audioBlob = null;
+            lastRecordingDurationSeconds = null;
             audioPlayer.src = '';
             audioPlayback.style.display = 'none';
             audioUploadedInfo.style.display = 'none';
             audioUploadedInfo.textContent = '';
             btnRerecord.style.display = 'none';
             btnSubmit.disabled = true;
+            btnStop.disabled = true;
+            btnRecord.disabled = false;
+            resetTimingPanel();
+            prepareRecorderAndStartPrep();
             statusDiv.classList.remove('show');
         };
 
@@ -1448,6 +1714,9 @@
             formData.append('audio', audioBlob, 'description.wav');
             formData.append('image_id', currentImageId);
             formData.append('accent', accentSelector.value);
+            if (Number.isFinite(lastRecordingDurationSeconds) && lastRecordingDurationSeconds > 0) {
+                formData.append('recording_seconds', String(lastRecordingDurationSeconds));
+            }
 
             try {
                 // Submit job

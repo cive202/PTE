@@ -3,7 +3,9 @@ venv/
 env_aloud/
 env/
 .env
+.env.*
 .venv/
+!.env.example
 
 # Python cache
 __pycache__/
@@ -44,14 +46,10 @@ Thumbs.db
 *.swp
 
 # PTE runtime artifacts (canonical layout)
-data/processed/mfa_runs/
-data/processed/logs/
-
-data/user_uploads/*/
-data/user_uploads/upload_*.*
-data/user_uploads/temp_*.*
-
-/docs/
+data/processed/
+data/user_uploads/
+data/models/
+data/archive/
 
 # PTE runtime artifacts (legacy layout fallback)
 PTE_MFA_TESTER_DOCKER/data/output_*/
@@ -71,3 +69,6 @@ C:/
 # App logs
 api.log
 app.log
+
+# Local Docker image export artifacts
+*.tar

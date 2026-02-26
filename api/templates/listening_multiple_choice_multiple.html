@@ -155,6 +155,21 @@
             background: #f5faff;
         }
 
+        .option-row.correct {
+            border-color: #1f8a4c;
+            background: #e8f7ee;
+        }
+
+        .option-row.incorrect {
+            border-color: #c93434;
+            background: #fdeaea;
+        }
+
+        .option-row.missed {
+            border-color: #9ac9ae;
+            background: #f1f9f4;
+        }
+
         .option-label {
             min-width: 1.3rem;
             color: #2f4863;
@@ -337,11 +352,11 @@
                         <span class="topic-meta-pill">${titleCase(topicItem.difficulty)}</span>
                     </div>
                 `;
-                card.onclick = () => loadTask(topicItem.id);
+                card.onclick = () => loadTask(topicItem.id, true);
                 card.onkeydown = (event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        loadTask(topicItem.id);
+                        loadTask(topicItem.id, true);
                     }
                 };
                 topicGrid.appendChild(card);
@@ -353,6 +368,10 @@
             filteredTopics = allTopics.filter((item) => selectedCategory === 'all' || item.difficulty === selectedCategory);
             topicCount.textContent = `Showing ${filteredTopics.length} of ${allTopics.length} topics`;
             renderTopicCards();
+        }
+
+        function focusQuestionArea() {
+            questionText.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function buildAudioBasePath(taskId) {
@@ -380,6 +399,7 @@
             currentOptions.forEach((option) => {
                 const row = document.createElement('label');
                 row.className = 'option-row';
+                row.setAttribute('data-option-id', String(option.id || '').trim());
                 row.innerHTML = `
                     <input type="checkbox" value="${option.id}" data-option-id="${option.id}" style="margin-top:0.2rem;">
                     <span class="option-label">${option.id})</span>
@@ -393,6 +413,44 @@
             return Array.from(optionsList.querySelectorAll('input[type="checkbox"]:checked'))
                 .map((node) => String(node.getAttribute('data-option-id') || '').trim())
                 .filter(Boolean);
+        }
+
+        function clearOptionHighlights() {
+            optionsList.querySelectorAll('.option-row').forEach((row) => {
+                row.classList.remove('correct', 'incorrect', 'missed');
+            });
+        }
+
+        function applyResultHighlights(analysis) {
+            const selectedOptions = Array.isArray((analysis || {}).selected_options) ? analysis.selected_options : [];
+            const correctOptions = Array.isArray((analysis || {}).correct_options) ? analysis.correct_options : [];
+            const selectedSet = new Set(selectedOptions.map((value) => String(value || '').trim().toUpperCase()));
+            const correctSet = new Set(correctOptions.map((value) => String(value || '').trim().toUpperCase()));
+
+            clearOptionHighlights();
+            optionsList.querySelectorAll('.option-row').forEach((row) => {
+                const optionId = String(row.getAttribute('data-option-id') || '').trim().toUpperCase();
+                if (!optionId) {
+                    return;
+                }
+
+                if (correctSet.has(optionId) && selectedSet.has(optionId)) {
+                    row.classList.add('correct');
+                    return;
+                }
+                if (correctSet.has(optionId)) {
+                    row.classList.add('missed');
+                    return;
+                }
+                if (selectedSet.has(optionId)) {
+                    row.classList.add('incorrect');
+                }
+            });
+        }
+
+        function focusAnswerReview() {
+            const target = optionsList.querySelector('.option-row.correct, .option-row.incorrect, .option-row.missed') || optionsList;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function renderResult(payload) {
@@ -411,7 +469,9 @@
                 feedbackList.appendChild(li);
             });
 
+            applyResultHighlights(analysis);
             resultSection.style.display = 'block';
+            focusAnswerReview();
         }
 
         async function loadCatalog() {
@@ -439,7 +499,7 @@
             renderCategoryOptions(fallbackCategories);
         }
 
-        async function loadTask(taskId = null) {
+        async function loadTask(taskId = null, shouldFocus = false) {
             clearStatus();
             resultSection.style.display = 'none';
 
@@ -472,6 +532,9 @@
             refreshAudioSource(false);
             renderTopicCards();
             setStatus(`Loaded: ${data.title} (${data.topic}, ${titleCase(data.difficulty)})`);
+            if (shouldFocus) {
+                focusQuestionArea();
+            }
         }
 
         async function scoreResponse() {
@@ -516,13 +579,13 @@
                 return;
             }
             const pick = filteredTopics[Math.floor(Math.random() * filteredTopics.length)];
-            await loadTask(pick.id);
+            await loadTask(pick.id, true);
         });
 
         difficultySelect.addEventListener('change', async () => {
             applyTopicFilter();
             if (filteredTopics.length) {
-                await loadTask(filteredTopics[0].id);
+                await loadTask(filteredTopics[0].id, true);
             } else {
                 currentTaskId = null;
                 listeningSection.style.display = 'none';
@@ -535,6 +598,7 @@
             optionsList.querySelectorAll('input[type="checkbox"]').forEach((node) => {
                 node.checked = false;
             });
+            clearOptionHighlights();
             clearStatus();
             resultSection.style.display = 'none';
         });
