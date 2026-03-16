@@ -54,6 +54,33 @@
             opacity: 0.6;
         }
 
+        .word.pause-correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .word.pause-warn {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #f0c36d;
+        }
+
+        .word.pause-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .word.gap-marker {
+            min-width: 22px;
+            justify-content: center;
+            white-space: pre;
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+
         .stress-error {
             border-bottom: 2px solid #da6221;
             box-shadow: inset 0 -2px 0 rgba(218, 98, 33, 0.2);
@@ -366,8 +393,7 @@
                 <div class="accent-mini">
                     <label for="accent-selector">Accent</label>
                     <select id="accent-selector">
-                        <option value="US_ARPA">US (ARPA)</option>
-                        <option value="US_MFA">US (MFA)</option>
+                        <option value="US_MFA">USA</option>
                         <option value="UK">UK</option>
                         <option value="Indian">Indian</option>
                         <option value="Nigerian">Nigerian</option>
@@ -455,13 +481,6 @@
 
                 <div id="results" style="margin-top: 1.5rem; line-height: 2.5;"></div>
 
-                <div style="margin-top: 2rem;">
-                    <details>
-                        <summary>View Raw JSON Data</summary>
-                        <pre id="json-output"
-                            style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 0.85rem; max-height: 320px; overflow-y: auto; margin-top: 10px; border: 1px solid #1c2e42;"></pre>
-                    </details>
-                </div>
             </div>
         </div>
     </div>
@@ -520,10 +539,9 @@
                         style="padding:0.45rem 0.75rem;">Try Again</button>
                     <button id="word-practice-stop-btn" class="btn secondary" type="button"
                         style="padding:0.45rem 0.75rem;" disabled>Stop</button>
-                    <span id="word-practice-status" style="font-size:0.82rem; color:#5b6e84;">Try checking pronunciation for this word again.
-                        (no MFA)</span>
                 </div>
-                <div id="word-practice-result" style="margin-top:0.55rem; font-size:0.82rem; color:#2d3d52;"></div>
+                <div id="word-practice-status" style="display:none; margin-top:0.55rem; font-size:0.82rem; color:#5b6e84;"></div>
+                <div id="word-practice-result" style="display:none; margin-top:0.55rem; font-size:0.82rem; color:#2d3d52;"></div>
             </div>
             <div id="modal-debug-info" style="margin-top: 1rem; font-size: 0.8em; color: #999; display:none;"></div>
         </div>
@@ -612,7 +630,6 @@
         const audioUploadedInfo = document.getElementById('audio-uploaded-info');
         const audioPlayback = document.getElementById('audio-playback');
         const recordedAudio = document.getElementById('recorded-audio');
-        const jsonOutput = document.getElementById('json-output');
         const progressContainer = document.getElementById('progress-container');
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
@@ -625,7 +642,9 @@
 
         // Load saved accent from localStorage
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
-        accentSelector.value = savedAccent;
+        const normalizedAccent = savedAccent === 'US_ARPA' ? 'US_MFA' : savedAccent;
+        accentSelector.value = normalizedAccent;
+        localStorage.setItem('selectedAccent', accentSelector.value);
 
         // Save accent to localStorage when changed
         accentSelector.addEventListener('change', () => {
@@ -722,10 +741,17 @@
             }
         }
 
+        function isPauseLikeWord(wordData) {
+            return Boolean(window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData));
+        }
+
+        function isGapMarkerWord(wordData) {
+            return Boolean(window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData));
+        }
+
         function resetUI() {
             resultsDiv.innerHTML = '';
             statusDiv.textContent = '';
-            jsonOutput.textContent = '';
             transcriptionBox.style.display = 'none';
             audioUploadedInfo.style.display = 'none';
             audioUploadedInfo.textContent = '';
@@ -825,7 +851,6 @@
             if (data.textgrid_content) {
                 delete data.textgrid_content;
             }
-            jsonOutput.innerText = JSON.stringify(data, null, 2);
             if (data.error) {
                 statusDiv.innerText = "Error: " + data.error;
                 return;
@@ -839,14 +864,19 @@
                 transcriptText.innerText = data.transcript;
             }
             resultsDiv.innerHTML = '';
-            data.words.forEach(w => {
+            const baseRows = Array.isArray(data.words) ? data.words : [];
+            const displayRows = window.WordLevelFeedback
+                ? window.WordLevelFeedback.buildDisplayRowsWithGapMarkers(baseRows, data.speech_rate_scale)
+                : baseRows;
+
+            displayRows.forEach(w => {
                 const span = document.createElement('span');
-                span.innerText = w.word;
+                span.innerText = w.display_word || w.word;
                 span.className = 'word';
 
-                if (w.start !== undefined && w.end !== undefined) {
+                if (window.WordLevelFeedback && window.WordLevelFeedback.canOpenWordModal(w)) {
                     span.classList.add('clickable');
-                    span.title = `Click to listen (${w.start}s - ${w.end}s)`;
+                    span.title = 'Click to inspect this item';
                     span.onclick = () => openWordModal(w);
                 }
 
@@ -857,33 +887,17 @@
                 else if (normalizedStatus === 'omitted') span.classList.add('omitted');
                 else span.classList.add('wrong');
 
-                if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(w)) {
-                    span.classList.add('stress-error');
+                if (isGapMarkerWord(w)) {
+                    span.classList.add('gap-marker');
+                } else if (isPauseLikeWord(w) && window.WordLevelFeedback) {
+                    const pauseVariant = window.WordLevelFeedback.pauseStatusVariant(w);
+                    if (pauseVariant) {
+                        span.classList.add(pauseVariant);
+                    }
                 }
 
-                // Add pause indicator if available
-                if (w.pause_eval) {
-                    const pauseSpan = document.createElement('span');
-                    pauseSpan.style.fontSize = '0.8em';
-                    pauseSpan.style.color = '#666';
-                    pauseSpan.style.margin = '0 2px';
-
-                    if (w.pause_eval.duration > 0) {
-                        pauseSpan.innerText = `[${w.pause_eval.duration}s]`;
-                        // Highlight long pauses or missing pauses if needed
-                        if (w.pause_eval.status === 'long_pause') {
-                            pauseSpan.style.color = 'red';
-                            pauseSpan.style.fontWeight = 'bold';
-                        }
-                    } else if (w.pause_eval.status === 'missed_pause') {
-                        pauseSpan.innerText = `[No Pause]`;
-                        pauseSpan.style.color = 'red';
-                    }
-                    resultsDiv.appendChild(pauseSpan);
-                } else if (w.end) {
-                    // Check if there is a gap to the next word
-                    // This logic is simplified; the backend usually handles pause evaluation at punctuation.
-                    // Ideally, we'd check if the next word's start time is significantly later.
+                if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(w)) {
+                    span.classList.add('stress-error');
                 }
 
                 resultsDiv.appendChild(span);
@@ -906,7 +920,6 @@
             }
             resultsDiv.innerHTML = "";
             transcriptionBox.style.display = 'none';
-            jsonOutput.innerText = "";
             resetWordFeedback();
             // document.getElementById('textgrid-container').style.display = 'none'; // ID removed
             progressContainer.style.display = 'block';
@@ -1023,6 +1036,8 @@
         }
 
         async function submitWordPractice(blob, word) {
+            wordPracticeStatus.style.display = 'block';
+            wordPracticeResult.style.display = 'none';
             wordPracticeStatus.textContent = "Analyzing...";
             wordPracticeStatus.style.color = "#5b6e84";
             const formData = new FormData();
@@ -1046,13 +1061,16 @@
                         : '#c93434';
                 wordPracticeStatus.textContent = `${data.status.toUpperCase()} • ${data.accuracy}%`;
                 wordPracticeStatus.style.color = statusColor;
+                wordPracticeResult.style.display = 'block';
                 wordPracticeResult.innerHTML = `
                     <div><strong>Expected:</strong> ${data.expected_phones || '-'}</div>
                     <div><strong>Spoken:</strong> ${data.observed_phones || '-'}</div>
                 `;
             } catch (err) {
+                wordPracticeStatus.style.display = 'block';
                 wordPracticeStatus.textContent = err.message || 'Word practice failed';
                 wordPracticeStatus.style.color = '#c93434';
+                wordPracticeResult.style.display = 'none';
                 wordPracticeResult.textContent = '';
             }
         }
@@ -1077,13 +1095,16 @@
                     wordPracticeStopBtn.disabled = true;
                     await submitWordPractice(blob, currentModalWord);
                 };
+                wordPracticeStatus.style.display = 'block';
                 wordPracticeStatus.textContent = "Recording... say this word clearly";
                 wordPracticeStatus.style.color = "#5b6e84";
+                wordPracticeResult.style.display = 'none';
                 wordPracticeResult.textContent = "";
                 wordPracticeRecordBtn.disabled = true;
                 wordPracticeStopBtn.disabled = false;
                 wordPracticeRecorder.start();
             } catch (err) {
+                wordPracticeStatus.style.display = 'block';
                 wordPracticeStatus.textContent = `Mic error: ${err.message}`;
                 wordPracticeStatus.style.color = '#c93434';
             }
@@ -1103,18 +1124,28 @@
         }
 
         function openWordModal(wordData) {
-            modalWordText.innerText = wordData.word;
-            modalTimestamp.innerText = `${wordData.start}s - ${wordData.end}s`;
-            currentModalWord = (wordData.word || '').trim();
+            const isPauseToken = isPauseLikeWord(wordData);
+            const isGapMarker = isGapMarkerWord(wordData);
+            const displayLabel = isGapMarker
+                ? 'Gap'
+                : isPauseToken && window.WordLevelFeedback
+                    ? window.WordLevelFeedback.punctuationLabel(wordData.word)
+                    : (wordData.word || '?');
+
+            modalWordText.innerText = displayLabel;
+            modalTimestamp.innerText = `${Number(wordData.start || 0).toFixed(2)}s - ${Number(wordData.end || 0).toFixed(2)}s`;
+            currentModalWord = isPauseToken || isGapMarker ? '' : (wordData.word || '').trim();
             if (wordPracticeStatus) {
-                wordPracticeStatus.textContent = "Fast phoneme check (no MFA)";
+                wordPracticeStatus.style.display = 'none';
+                wordPracticeStatus.textContent = '';
                 wordPracticeStatus.style.color = "#5b6e84";
             }
             if (wordPracticeResult) {
+                wordPracticeResult.style.display = 'none';
                 wordPracticeResult.textContent = "";
             }
             if (wordPracticeRecordBtn) {
-                wordPracticeRecordBtn.disabled = false;
+                wordPracticeRecordBtn.disabled = Boolean(isPauseToken || isGapMarker);
             }
             if (wordPracticeStopBtn) {
                 wordPracticeStopBtn.disabled = true;
@@ -1125,9 +1156,9 @@
             modalStatus.innerText = window.WordLevelFeedback
                 ? window.WordLevelFeedback.formatWordStatus(normalizedStatus)
                 : (normalizedStatus || 'unknown');
-            if (normalizedStatus === 'correct') {
+            if (normalizedStatus === 'correct' || normalizedStatus === 'correct_pause') {
                 modalStatus.style.color = '#1f8a4c';
-            } else if (normalizedStatus === 'mispronounced') {
+            } else if (normalizedStatus === 'mispronounced' || normalizedStatus === 'short_pause' || normalizedStatus === 'long_pause') {
                 modalStatus.style.color = '#b76b00';
             } else if (normalizedStatus === 'inserted') {
                 modalStatus.style.color = '#0d477e';
@@ -1137,26 +1168,55 @@
                 modalStatus.style.color = '#6c757d';
             }
 
-            // Populate Phonemes
-            modalExpectedPhones.innerText = wordData.expected_phones || 'N/A';
-            modalObservedPhones.innerText = wordData.observed_phones || 'N/A';
-
-            // Populate Stress
-            if (wordData.stress_details) {
-                const ref = wordData.stress_details.ref_pattern || 'N/A';
-                const obs = wordData.stress_details.observed_pattern || 'N/A';
-                modalStressMatch.innerText = `${ref} → ${obs}`;
-                modalStressInfo.innerText = wordData.stress_feedback || wordData.stress_details.match_info || '';
+            if (isPauseToken || isGapMarker) {
+                const expectedRange = isGapMarker
+                    ? wordData.expected_range
+                    : (wordData.pause_eval && wordData.pause_eval.expected_range) || wordData.expected_range;
+                const actualDuration = isGapMarker
+                    ? wordData.duration
+                    : (wordData.pause_eval && (wordData.pause_eval.pause_duration ?? wordData.pause_eval.duration)) ?? wordData.duration;
+                modalExpectedPhones.innerText = window.WordLevelFeedback ? window.WordLevelFeedback.formatRange(expectedRange) : 'N/A';
+                modalObservedPhones.innerText = window.WordLevelFeedback ? window.WordLevelFeedback.formatSeconds(actualDuration) : 'N/A';
+                if (isGapMarker) {
+                    modalStressMatch.innerText = `${wordData.prev_word || '?'} → ${wordData.next_word || '?'}`;
+                    modalStressInfo.innerText = wordData.gap_feedback || '';
+                } else {
+                    modalStressMatch.innerText = `${wordData.pause_eval && wordData.pause_eval.prev_word ? wordData.pause_eval.prev_word : 'Prev'} → ${wordData.pause_eval && wordData.pause_eval.next_word ? wordData.pause_eval.next_word : 'Next'}`;
+                    modalStressInfo.innerText = (wordData.pause_eval && (wordData.pause_eval.feedback || wordData.pause_eval.timing_source)) || wordData.pause_feedback || '';
+                }
             } else {
-                const hasStressIssue = window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData);
-                modalStressMatch.innerText = hasStressIssue ? "⚠ Stress issue" : "N/A";
-                modalStressInfo.innerText = wordData.stress_feedback || "";
+                modalExpectedPhones.innerText = wordData.expected_phones || 'N/A';
+                modalObservedPhones.innerText = wordData.observed_phones || 'N/A';
+
+                if (wordData.stress_details) {
+                    const ref = wordData.stress_details.ref_pattern || 'N/A';
+                    const obs = wordData.stress_details.observed_pattern || 'N/A';
+                    modalStressMatch.innerText = `${ref} → ${obs}`;
+                    modalStressInfo.innerText = wordData.stress_feedback || wordData.stress_details.match_info || '';
+                } else {
+                    const hasStressIssue = window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData);
+                    modalStressMatch.innerText = hasStressIssue ? "⚠ Stress issue" : "N/A";
+                    modalStressInfo.innerText = wordData.stress_feedback || "";
+                }
             }
 
-            // Store data for playback
-            modalPlayBtn.onclick = () => playWordAudio(wordData.start, wordData.end);
+            const canPlaySegment = window.WordLevelFeedback
+                ? window.WordLevelFeedback.canOpenWordModal(wordData) && Number.isFinite(Number(wordData.start)) && Number.isFinite(Number(wordData.end))
+                : Number.isFinite(Number(wordData.start)) && Number.isFinite(Number(wordData.end));
+            modalPlayBtn.disabled = !canPlaySegment;
+            modalPlayBtn.style.opacity = canPlaySegment ? '1' : '0.6';
+            modalPlayBtn.onclick = () => {
+                if (canPlaySegment) {
+                    playWordAudio(wordData.start, wordData.end);
+                }
+            };
             if (modalTtsWord) {
-                modalTtsWord.onclick = () => playTTS(wordData.word);
+                modalTtsWord.disabled = Boolean(isPauseToken || isGapMarker);
+                modalTtsWord.onclick = () => {
+                    if (!isPauseToken && !isGapMarker) {
+                        playTTS(wordData.word);
+                    }
+                };
             }
 
             modalOverlay.style.display = 'flex';

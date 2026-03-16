@@ -412,38 +412,77 @@
 
         /* Interactive Word Styles */
         .interactive-word {
-            display: inline-block;
-            padding: 2px 4px;
-            margin: 2px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            margin: 4px;
             border-radius: 4px;
             cursor: help;
             position: relative;
             background: #fff;
-            border: 1px solid #ddd;
-            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-weight: bold;
+            color: #2d3d52;
+            transition: all 0.2s ease;
         }
 
         .interactive-word:hover {
-            background: #e3f2fd;
-            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
 
         .interactive-word.correct {
-            background: #d4edda;
-            border-color: #28a745;
+            background-color: #d4edda;
             color: #155724;
+            border-color: #c3e6cb;
         }
 
         .interactive-word.mispronounced {
-            background: #f8d7da;
-            border-color: #dc3545;
-            color: #721c24;
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #f0c36d;
         }
 
         .interactive-word.inserted {
-            background: #cce5ff;
-            border-color: #004085;
+            background-color: #cce5ff;
             color: #004085;
+            border-color: #b8daff;
+        }
+
+        .interactive-word.omitted {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+            text-decoration: line-through;
+            opacity: 0.55;
+        }
+
+        .interactive-word.pause-correct {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .interactive-word.pause-warn {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #f0c36d;
+        }
+
+        .interactive-word.pause-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .interactive-word.gap-marker {
+            min-width: 22px;
+            justify-content: center;
+            white-space: pre;
+            background-color: #cce5ff;
+            color: #004085;
+            border-color: #b8daff;
         }
 
         .interactive-word.grammar-error {
@@ -457,7 +496,7 @@
 
         .interactive-word.clickable:hover {
             transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         /* --- Word Click Modal --- */
@@ -743,6 +782,23 @@
             background: #6c757d;
         }
 
+        .status-correct_pause {
+            background: #28a745;
+        }
+
+        .status-short_pause,
+        .status-long_pause {
+            background: #fd7e14;
+        }
+
+        .status-missed_pause {
+            background: #dc3545;
+        }
+
+        .status-extra_gap {
+            background: #0f6ac9;
+        }
+
         .word-feedback-box {
             margin-top: 1rem;
             padding: 0.8rem 0.9rem;
@@ -882,8 +938,7 @@
                 <div class="accent-mini">
                     <label for="accent-selector">Accent</label>
                     <select id="accent-selector">
-                        <option value="US_ARPA">US (ARPA)</option>
-                        <option value="US_MFA">US (MFA)</option>
+                        <option value="US_MFA">USA</option>
                         <option value="UK">UK</option>
                         <option value="Indian">Indian</option>
                         <option value="Nigerian">Nigerian</option>
@@ -1222,7 +1277,9 @@
         const wordPracticeResult = document.getElementById('word-practice-result');
 
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
-        accentSelector.value = savedAccent;
+        const normalizedAccent = savedAccent === 'US_ARPA' ? 'US_MFA' : savedAccent;
+        accentSelector.value = normalizedAccent;
+        localStorage.setItem('selectedAccent', accentSelector.value);
         accentSelector.addEventListener('change', () => {
             localStorage.setItem('selectedAccent', accentSelector.value);
         });
@@ -1860,15 +1917,19 @@
 
             // Create interactive words
             const mfaWords = Array.isArray(transDetails.words) ? transDetails.words : [];
-            const displayRows = mfaWords.length
+            const baseRows = mfaWords.length
                 ? mfaWords
                 : String(transDetails.text || '').split(/\s+/).filter(Boolean).map((token) => ({ word: token }));
+            const displayRows = window.WordLevelFeedback
+                ? window.WordLevelFeedback.buildDisplayRowsWithGapMarkers(baseRows, result.speech_rate_scale)
+                : baseRows;
 
             displayRows.forEach((row) => {
-                const displayWord = String((row && row.word) || '').trim();
-                if (!displayWord) return;
-
                 const wordData = row || {};
+                const displayWord = typeof wordData.display_word === 'string'
+                    ? wordData.display_word
+                    : String(wordData.word || '');
+                if (!displayWord.trim() && !(window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData))) return;
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
 
@@ -1879,6 +1940,14 @@
                     wordSpan.classList.add('mispronounced');
                 } else if (wordData.status === 'inserted') {
                     wordSpan.classList.add('inserted');
+                } else if (wordData.status === 'omitted') {
+                    wordSpan.classList.add('omitted');
+                }
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData)) {
+                    wordSpan.classList.add('gap-marker');
+                } else if (window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData)) {
+                    const pauseVariant = window.WordLevelFeedback.pauseStatusVariant(wordData);
+                    if (pauseVariant) wordSpan.classList.add(pauseVariant);
                 }
 
                 // Stress error highlight (yellow border)
@@ -1907,6 +1976,30 @@
                     overlayHTML += `</div></div>`;
                 }
 
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData) && wordData.pause_eval) {
+                    overlayHTML += `
+                        <div class="overlay-section">
+                            <div class="overlay-title">Pause Analysis</div>
+                            <div class="overlay-content">
+                                <div>Ideal gap: ${window.WordLevelFeedback.formatRange(wordData.pause_eval.expected_range)}</div>
+                                <div>Actual gap: ${window.WordLevelFeedback.formatSeconds(wordData.pause_eval.pause_duration ?? wordData.pause_eval.duration)}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData)) {
+                    overlayHTML += `
+                        <div class="overlay-section">
+                            <div class="overlay-title">Gap Analysis</div>
+                            <div class="overlay-content">
+                                <div>Ideal gap: ${window.WordLevelFeedback.formatRange(wordData.expected_range)}</div>
+                                <div>Actual gap: ${window.WordLevelFeedback.formatSeconds(wordData.duration)}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 // Grammar issues
                 const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${displayWord}'`) || issue.includes(`'${displayWord}'`));
                 if (wordIssues.length > 0) {
@@ -1924,9 +2017,10 @@
                 wordSpan.appendChild(overlay);
 
                 // --- Click modal (play segment) ---
-                if (wordData.start !== undefined && wordData.end !== undefined) {
+                if (window.WordLevelFeedback && window.WordLevelFeedback.canOpenWordModal(wordData)) {
                     wordSpan.classList.add('clickable');
-                    wordSpan.onclick = () => openWordModal(wordData, word);
+                    wordSpan.title = `Click to inspect "${displayWord}"`;
+                    wordSpan.onclick = () => openWordModal(wordData, displayWord);
                 }
 
                 transcriptionBox.appendChild(wordSpan);
@@ -1935,7 +2029,7 @@
 
             if (wordInsights && window.WordLevelFeedback) {
                 const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
-                    mfaWords.length ? mfaWords : displayRows,
+                    mfaWords.length ? mfaWords : baseRows,
                     transDetails.word_feedback || null
                 );
                 wordInsights.textContent = summary.message;
@@ -2109,19 +2203,29 @@
         }
 
         function openWordModal(wordData, displayWord) {
-            document.getElementById('modal-word-title').textContent = displayWord || wordData.word || '?';
+            const isPauseToken = Boolean(window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData));
+            const isGapMarker = Boolean(window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData));
+            const modalLabel = isGapMarker
+                ? 'Gap'
+                : isPauseToken && window.WordLevelFeedback
+                    ? window.WordLevelFeedback.punctuationLabel(wordData.word)
+                    : (displayWord || wordData.word || '?');
+
+            document.getElementById('modal-word-title').textContent = modalLabel;
             document.getElementById('modal-timestamp').textContent =
                 `${(wordData.start || 0).toFixed(2)}s – ${(wordData.end || 0).toFixed(2)}s`;
-            currentModalWord = (displayWord || wordData.word || '').trim();
+            currentModalWord = isPauseToken || isGapMarker ? '' : (displayWord || wordData.word || '').trim();
             if (wordPracticeStatus) {
-                wordPracticeStatus.textContent = "Fast phoneme check (no MFA)";
+                wordPracticeStatus.textContent = isPauseToken || isGapMarker
+                    ? "Pause and gap markers do not use phoneme practice."
+                    : "Fast phoneme check (no MFA)";
                 wordPracticeStatus.style.color = "#5b6e84";
             }
             if (wordPracticeResult) {
                 wordPracticeResult.textContent = "";
             }
             if (wordPracticeRecordBtn) {
-                wordPracticeRecordBtn.disabled = false;
+                wordPracticeRecordBtn.disabled = Boolean(isPauseToken || isGapMarker);
             }
             if (wordPracticeStopBtn) {
                 wordPracticeStopBtn.disabled = true;
@@ -2129,20 +2233,48 @@
 
             // Status
             const statusEl = document.getElementById('modal-status');
-            statusEl.textContent = wordData.status || 'unknown';
-            statusEl.style.color = wordData.status === 'correct' ? '#28a745'
-                : wordData.status === 'inserted' ? '#004085'
-                    : '#dc3545';
+            const normalizedStatus = String(wordData.status || '').toLowerCase();
+            statusEl.textContent = window.WordLevelFeedback
+                ? window.WordLevelFeedback.formatWordStatus(normalizedStatus)
+                : (normalizedStatus || 'unknown');
+            statusEl.style.color = normalizedStatus === 'correct' || normalizedStatus === 'correct_pause' ? '#28a745'
+                : normalizedStatus === 'mispronounced' || normalizedStatus === 'short_pause' || normalizedStatus === 'long_pause' ? '#b76b00'
+                    : normalizedStatus === 'inserted' ? '#004085'
+                        : normalizedStatus === 'omitted' ? '#b3261e'
+                            : '#6c757d';
 
-            // Phonemes
-            document.getElementById('modal-expected').textContent = wordData.expected_phones || 'N/A';
-            document.getElementById('modal-observed').textContent = wordData.observed_phones || 'N/A';
+            if (isPauseToken || isGapMarker) {
+                const expectedRange = isGapMarker
+                    ? wordData.expected_range
+                    : (wordData.pause_eval && wordData.pause_eval.expected_range) || wordData.expected_range;
+                const actualDuration = isGapMarker
+                    ? wordData.duration
+                    : (wordData.pause_eval && (wordData.pause_eval.pause_duration ?? wordData.pause_eval.duration)) ?? wordData.duration;
+                document.getElementById('modal-expected').textContent = window.WordLevelFeedback ? window.WordLevelFeedback.formatRange(expectedRange) : 'N/A';
+                document.getElementById('modal-observed').textContent = window.WordLevelFeedback ? window.WordLevelFeedback.formatSeconds(actualDuration) : 'N/A';
+            } else {
+                document.getElementById('modal-expected').textContent = wordData.expected_phones || 'N/A';
+                document.getElementById('modal-observed').textContent = wordData.observed_phones || 'N/A';
+            }
 
-            // Play button
-            modalPlayBtn.onclick = () => playWordAudio(wordData.start, wordData.end);
+            const canPlaySegment = window.WordLevelFeedback
+                ? window.WordLevelFeedback.canOpenWordModal(wordData) && Number.isFinite(Number(wordData.start)) && Number.isFinite(Number(wordData.end))
+                : Number.isFinite(Number(wordData.start)) && Number.isFinite(Number(wordData.end));
+            modalPlayBtn.disabled = !canPlaySegment;
+            modalPlayBtn.style.opacity = canPlaySegment ? '1' : '0.6';
+            modalPlayBtn.onclick = () => {
+                if (canPlaySegment) {
+                    playWordAudio(wordData.start, wordData.end);
+                }
+            };
             if (modalTtsWord) {
                 const speakWord = (displayWord || wordData.word || '').trim();
-                modalTtsWord.onclick = () => playTTS(speakWord);
+                modalTtsWord.disabled = Boolean(isPauseToken || isGapMarker);
+                modalTtsWord.onclick = () => {
+                    if (!isPauseToken && !isGapMarker) {
+                        playTTS(speakWord);
+                    }
+                };
             }
 
             wordModal.style.display = 'flex';

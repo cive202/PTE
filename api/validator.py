@@ -50,8 +50,8 @@ HOST_PROJECT_ROOT = os.environ.get("PTE_HOST_PROJECT_ROOT")
 # - MFA_BASE_DIR (Host) -> /models (Container)
 # - MFA_RUNTIME_DIR (Host) -> /runtime (Container)
 DOCKER_IMAGE = MFA_DOCKER_IMAGE
-CACHE_SCHEMA_VERSION = "read_aloud_cache_v2"
-CACHE_PIPELINE_VERSION = "phase2_v1"
+CACHE_SCHEMA_VERSION = "read_aloud_cache_v3"
+CACHE_PIPELINE_VERSION = "phase2_v2"
 
 
 def _safe_int_env(value: Optional[str], default: int, minimum: int = 1, maximum: Optional[int] = None) -> int:
@@ -607,6 +607,84 @@ def calculate_pauses(word_timestamps, threshold=0.5):
             })
     return pauses
 
+
+def calculate_word_gaps(word_alignments, threshold=0.0):
+    """Calculate positive gaps between adjacent aligned words."""
+    gaps = []
+    if len(word_alignments) < 2:
+        return gaps
+
+    sorted_words = sorted(
+        [w for w in word_alignments if w.get("start") is not None and w.get("end") is not None],
+        key=lambda item: item.get("start", 0.0),
+    )
+
+    for current_word, next_word in zip(sorted_words, sorted_words[1:]):
+        current_end = current_word.get("end")
+        next_start = next_word.get("start")
+        if current_end is None or next_start is None:
+            continue
+
+        gap = next_start - current_end
+        if gap <= threshold:
+            continue
+
+        after_word = current_word.get("word") or current_word.get("value") or ""
+        before_word = next_word.get("word") or next_word.get("value") or ""
+        gaps.append(
+            {
+                "after_word": after_word,
+                "before_word": before_word,
+                "start": round(current_end, 3),
+                "end": round(next_start, 3),
+                "duration": round(gap, 3),
+                "source": "mfa",
+            }
+        )
+
+    return gaps
+
+
+def _resolve_asr_timing(word_timestamps, trans_index):
+    if trans_index is None or trans_index < 0 or trans_index >= len(word_timestamps):
+        return None
+    entry = word_timestamps[trans_index]
+    start = entry.get("start")
+    end = entry.get("end")
+    if start is None or end is None:
+        return None
+    return {
+        "word": entry.get("value") or entry.get("word") or "",
+        "start": start,
+        "end": end,
+        "source": "asr",
+    }
+
+
+def _resolve_pause_boundary_candidates(diff_analysis, final_results_map, pivot_index, word_timestamps):
+    prev_candidate = {"mfa": None, "asr": None, "word": "START"}
+    next_candidate = {"mfa": None, "asr": None, "word": ""}
+
+    for k in range(pivot_index - 1, -1, -1):
+        prev_item = final_results_map[k]
+        if not prev_item or is_punctuation(prev_item.get("word", "")):
+            continue
+        prev_candidate["word"] = prev_item.get("word") or ""
+        prev_candidate["index"] = k
+        prev_candidate["asr"] = _resolve_asr_timing(word_timestamps, prev_item.get("trans_index"))
+        break
+
+    for k in range(pivot_index + 1, len(diff_analysis)):
+        next_item = final_results_map[k]
+        if not next_item or is_punctuation(next_item.get("word", "")):
+            continue
+        next_candidate["word"] = next_item.get("word") or ""
+        next_candidate["index"] = k
+        next_candidate["asr"] = _resolve_asr_timing(word_timestamps, next_item.get("trans_index"))
+        break
+
+    return prev_candidate, next_candidate
+
 def transcribe_audio_with_details(audio_path):
     """
     Use real ASR service via pte_core.
@@ -637,6 +715,7 @@ def build_asr_only_result(
         "words": diff_analysis,
         "transcript": transcript,
         "pauses": [],
+        "mfa_word_gaps": [],
         "speech_rate_scale": round(speech_rate_scale, 2),
         "raw_word_timestamps": word_timestamps,
         "meta": {
@@ -1233,6 +1312,12 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         base_words = read_textgrid_words(base_tg)
         all_mfa_phones = read_textgrid_phones(base_tg)
         ref_to_mfa_map = build_ref_word_to_mfa_map(diff_analysis, base_words)
+        mfa_word_gaps = calculate_word_gaps(base_words, threshold=1e-4)
+
+        if len(base_words) >= 2:
+            mfa_speech_rate_scale = calculate_speech_rate_scale(base_words)
+            if mfa_speech_rate_scale > 0:
+                speech_rate_scale = mfa_speech_rate_scale
 
         print(f"[DEBUG] base_words count: {len(base_words)}")
         print(f"[DEBUG] base phones count: {len(all_mfa_phones)}")
@@ -1381,49 +1466,70 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 final_results_map[i] = item.copy()
                 
             res_entry = final_results_map[i]
+
+            if not is_punctuation(item['word']) and (
+                res_entry.get('start') is None or res_entry.get('end') is None
+            ):
+                asr_timing = _resolve_asr_timing(word_timestamps, res_entry.get('trans_index'))
+                if asr_timing:
+                    res_entry['start'] = round(asr_timing['start'], 3)
+                    res_entry['end'] = round(asr_timing['end'], 3)
             
             # If punctuation, evaluate pause
             if is_punctuation(item['word']):
-                # Find valid previous and next words
-                prev_word_idx = None
-                next_word_idx = None
-                prev_word_text = "START"
-                
-                # Check previous words in final_results_map
-                for k in range(i-1, -1, -1):
-                    prev_item = final_results_map[k]
-                    if prev_item and not is_punctuation(prev_item['word']):
-                        prev_word_idx = prev_item.get('trans_index')
-                        if prev_word_idx is not None and 0 <= prev_word_idx < len(word_timestamps):
-                            prev_word_text = (
-                                word_timestamps[prev_word_idx].get('value')
-                                or word_timestamps[prev_word_idx].get('word')
-                                or ""
-                            )
-                            break
-                
-                # Check next words
-                for k in range(i+1, len(diff_analysis)):
-                    next_item = final_results_map[k]
-                    if next_item and not is_punctuation(next_item['word']):
-                        candidate_idx = next_item.get('trans_index')
-                        if candidate_idx is not None and 0 <= candidate_idx < len(word_timestamps):
-                            next_word_idx = candidate_idx
-                            break
-                
+                prev_candidate, next_candidate = _resolve_pause_boundary_candidates(
+                    diff_analysis,
+                    final_results_map,
+                    i,
+                    word_timestamps,
+                )
+                prev_index = prev_candidate.get("index")
+                next_index = next_candidate.get("index")
+
+                if prev_index is not None:
+                    prev_candidate["mfa"] = ref_to_mfa_map.get(prev_index)
+                if next_index is not None:
+                    next_candidate["mfa"] = ref_to_mfa_map.get(next_index)
+
                 pause_duration = None
                 p_start = None
                 p_end = None
-                
+                pause_timing_source = None
+                prev_word_text = prev_candidate.get("word") or "START"
+
+                prev_mfa = prev_candidate.get("mfa")
+                next_mfa = next_candidate.get("mfa")
                 if (
-                    prev_word_idx is not None
-                    and next_word_idx is not None
-                    and prev_word_idx < len(word_timestamps)
-                    and next_word_idx < len(word_timestamps)
+                    prev_mfa
+                    and next_mfa
+                    and prev_mfa.get("end") is not None
+                    and next_mfa.get("start") is not None
                 ):
-                    p_start = word_timestamps[prev_word_idx]['end']
-                    p_end = word_timestamps[next_word_idx]['start']
+                    p_start = prev_mfa.get("end")
+                    p_end = next_mfa.get("start")
                     pause_duration = p_end - p_start
+                    pause_timing_source = "mfa"
+                    prev_word_text = prev_mfa.get("word") or prev_word_text
+                else:
+                    prev_asr = prev_candidate.get("asr")
+                    next_asr = next_candidate.get("asr")
+                    if (
+                        prev_asr
+                        and next_asr
+                        and prev_asr.get("end") is not None
+                        and next_asr.get("start") is not None
+                    ):
+                        p_start = prev_asr.get("end")
+                        p_end = next_asr.get("start")
+                        pause_duration = p_end - p_start
+                        pause_timing_source = "asr"
+                        prev_word_text = prev_asr.get("word") or prev_word_text
+
+                if pause_duration is not None and pause_duration < 0:
+                    pause_duration = None
+                    p_start = None
+                    p_end = None
+                    pause_timing_source = None
                 
                 p_eval = evaluate_pause(
                     punct=item['word'],
@@ -1434,10 +1540,18 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     prev_word=prev_word_text
                 )
                 p_eval['prev_word'] = prev_word_text
+                p_eval['next_word'] = next_candidate.get("word") or ""
                 p_eval['duration'] = round(pause_duration, 2) if pause_duration else 0.0
+                p_eval['timing_source'] = pause_timing_source or "unavailable"
                 pause_evals.append(p_eval)
                 res_entry['pause_eval'] = p_eval
                 res_entry['status'] = p_eval['status']
+                res_entry['start'] = p_start
+                res_entry['end'] = p_end
+                res_entry['duration'] = p_eval['duration']
+                res_entry['expected_range'] = p_eval.get('expected_range')
+                res_entry['pause_level'] = p_eval.get('pause_level')
+                res_entry['pause_feedback'] = p_eval.get('feedback')
 
         print(f"[DEBUG] Pause evaluation complete. Generating final result...")
         final_results = [r for r in final_results_map if r is not None]
@@ -1463,6 +1577,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             "words": final_results,
             "transcript": transcript,
             "pauses": pause_evals,
+            "mfa_word_gaps": mfa_word_gaps,
             "speech_rate_scale": round(speech_rate_scale, 2),
             "raw_word_timestamps": word_timestamps,
             "meta": {

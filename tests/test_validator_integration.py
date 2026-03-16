@@ -11,6 +11,14 @@ def _write_minimal_files(base_dir: Path):
     return str(audio_path), str(text_path)
 
 
+def _write_input_files(base_dir: Path, text: str):
+    audio_path = base_dir / "input.wav"
+    text_path = base_dir / "input.txt"
+    audio_path.write_bytes(b"RIFFFAKEAUDIO")
+    text_path.write_text(text, encoding="utf-8")
+    return str(audio_path), str(text_path)
+
+
 def _mock_asr_result():
     return {
         "text": "hello world",
@@ -25,6 +33,14 @@ def _mock_diff():
     return [
         {"word": "hello", "status": "correct", "ref_index": 0, "trans_index": 0},
         {"word": "world", "status": "correct", "ref_index": 1, "trans_index": 1},
+    ], "hello world"
+
+
+def _mock_diff_with_comma():
+    return [
+        {"word": "hello", "status": "correct", "ref_index": 0, "trans_index": 0},
+        {"word": ",", "status": "omitted", "ref_index": 1, "trans_index": None},
+        {"word": "world", "status": "correct", "ref_index": 2, "trans_index": 1},
     ], "hello world"
 
 
@@ -51,6 +67,7 @@ def test_align_and_validate_falls_back_to_asr_only(tmp_path, monkeypatch):
     assert result["summary"]["asr_only"] is True
     assert result["summary"]["total"] == 2
     assert result["summary"]["correct"] == 2
+    assert result["mfa_word_gaps"] == []
 
 
 def test_align_and_validate_uses_textgrid_when_available(tmp_path, monkeypatch):
@@ -137,6 +154,68 @@ def test_align_and_validate_reuses_cached_result(tmp_path, monkeypatch):
     second_result = [event for event in second_updates if event["type"] == "result"][-1]["data"]
     assert second_result["summary"]["cached"] is True
     assert second_result["meta"]["cache"]["hit"] is True
+
+
+def test_align_and_validate_prefers_mfa_for_pause_timing(tmp_path, monkeypatch):
+    mfa_base_dir = tmp_path / "mfa"
+    mfa_runtime_dir = tmp_path / "mfa_runtime"
+    (mfa_base_dir / "data").mkdir(parents=True)
+    mfa_runtime_dir.mkdir(parents=True)
+    audio_path, text_path = _write_input_files(tmp_path, "hello, world")
+
+    tg_path = tmp_path / "input.TextGrid"
+    tg_path.write_text(
+        'File type = "ooTextFile"\nObject class = "TextGrid"\nname = "words"\n',
+        encoding="utf-8",
+    )
+
+    asr_result = {
+        "text": "hello world",
+        "word_timestamps": [
+            {"value": "hello", "start": 0.0, "end": 0.3},
+            {"value": "world", "start": 1.1, "end": 1.4},
+        ],
+    }
+    base_words = [
+        {"word": "hello", "start": 0.0, "end": 0.5},
+        {"word": "world", "start": 0.7, "end": 1.0},
+    ]
+
+    monkeypatch.setattr(validator_module, "MFA_BASE_DIR", mfa_base_dir)
+    monkeypatch.setattr(validator_module, "MFA_RUNTIME_DIR", mfa_runtime_dir)
+    monkeypatch.setattr(validator_module, "transcribe_audio_with_details", lambda _path: asr_result)
+    monkeypatch.setattr(validator_module, "compare_text", lambda _ref, _hyp: _mock_diff_with_comma())
+    monkeypatch.setattr(validator_module, "read_textgrid_words", lambda _path: base_words)
+    monkeypatch.setattr(validator_module, "read_textgrid_phones", lambda _path: [])
+
+    def fake_run_single_alignment_gen(accent, _conf, _run_id, _docker_input_dir):
+        yield {"type": "result", "data": (accent, tg_path)}
+
+    def fake_analyze_word_pronunciation(item, *_args, **_kwargs):
+        analyzed = item.copy()
+        analyzed["status"] = item["status"]
+        return analyzed
+
+    monkeypatch.setattr(validator_module, "run_single_alignment_gen", fake_run_single_alignment_gen)
+    monkeypatch.setattr(validator_module, "analyze_word_pronunciation", fake_analyze_word_pronunciation)
+
+    updates = list(validator_module.align_and_validate_gen(audio_path, text_path, accents=["US_ARPA"]))
+    result = [event for event in updates if event["type"] == "result"][-1]["data"]
+
+    assert result["mfa_word_gaps"] == [
+        {
+            "after_word": "hello",
+            "before_word": "world",
+            "start": 0.5,
+            "end": 0.7,
+            "duration": 0.2,
+            "source": "mfa",
+        }
+    ]
+    assert result["pauses"][0]["timing_source"] == "mfa"
+    assert result["pauses"][0]["duration"] == 0.2
+    assert result["pauses"][0]["status"] == "correct_pause"
+    assert result["speech_rate_scale"] == 0.8
 
 
 def test_run_single_alignment_uses_configurable_num_jobs(tmp_path, monkeypatch):

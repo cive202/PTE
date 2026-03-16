@@ -503,20 +503,23 @@
 
         /* Hover Overlay Styles */
         .interactive-word {
-            display: inline-block;
-            padding: 2px 4px;
-            margin: 2px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            margin: 4px;
             border-radius: 4px;
             cursor: help;
             position: relative;
             background: #fff;
-            border: 1px solid #ddd;
-            transition: all 0.2s;
+            border: 2px solid transparent;
+            font-weight: bold;
+            transition: all 0.2s ease;
         }
 
         .interactive-word:hover {
-            background: #e3f2fd;
-            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
 
         .interactive-word.correct {
@@ -532,6 +535,41 @@
         }
 
         .interactive-word.inserted {
+            background: #dbeeff;
+            color: #0d477e;
+            border-color: #b7d8ff;
+        }
+
+        .interactive-word.omitted {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+            text-decoration: line-through;
+            opacity: 0.55;
+        }
+
+        .interactive-word.pause-correct {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .interactive-word.pause-warn {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #f0c36d;
+        }
+
+        .interactive-word.pause-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .interactive-word.gap-marker {
+            min-width: 22px;
+            justify-content: center;
+            white-space: pre;
             background: #dbeeff;
             color: #0d477e;
             border-color: #b7d8ff;
@@ -604,7 +642,8 @@
             text-align: left;
         }
 
-        .interactive-word:hover .word-overlay {
+        .interactive-word:hover .word-overlay,
+        .interactive-word.active .word-overlay {
             display: block;
         }
 
@@ -670,6 +709,23 @@
         .status-unknown {
             background: #6c757d;
         }
+
+        .status-correct_pause {
+            background: #28a745;
+        }
+
+        .status-short_pause,
+        .status-long_pause {
+            background: #fd7e14;
+        }
+
+        .status-missed_pause {
+            background: #dc3545;
+        }
+
+        .status-extra_gap {
+            background: #0f6ac9;
+        }
     </style>
 </head>
 
@@ -681,8 +737,7 @@
                 <div class="accent-mini">
                     <label for="accent-selector">Accent</label>
                     <select id="accent-selector">
-                        <option value="US_ARPA">US (ARPA)</option>
-                        <option value="US_MFA">US (MFA)</option>
+                        <option value="US_MFA">USA</option>
                         <option value="UK">UK</option>
                         <option value="Indian">Indian</option>
                         <option value="Nigerian">Nigerian</option>
@@ -917,7 +972,9 @@
         const timingHint = document.getElementById('timingHint');
 
         const savedAccent = localStorage.getItem('selectedAccent') || 'US_MFA';
-        accentSelector.value = savedAccent;
+        const normalizedAccent = savedAccent === 'US_ARPA' ? 'US_MFA' : savedAccent;
+        accentSelector.value = normalizedAccent;
+        localStorage.setItem('selectedAccent', accentSelector.value);
         accentSelector.addEventListener('change', () => {
             localStorage.setItem('selectedAccent', accentSelector.value);
         });
@@ -1530,15 +1587,19 @@
             }
 
             const mfaWords = Array.isArray(transDetails.words) ? transDetails.words : [];
-            const displayRows = mfaWords.length
+            const baseRows = mfaWords.length
                 ? mfaWords
                 : String(transDetails.text || '').split(/\s+/).filter(Boolean).map((token) => ({ word: token }));
+            const displayRows = window.WordLevelFeedback
+                ? window.WordLevelFeedback.buildDisplayRowsWithGapMarkers(baseRows, currentResult.speech_rate_scale)
+                : baseRows;
 
             displayRows.forEach((row) => {
-                const displayWord = String((row && row.word) || '').trim();
-                if (!displayWord) return;
-
                 const wordData = row || {};
+                const displayWord = typeof wordData.display_word === 'string'
+                    ? wordData.display_word
+                    : String(wordData.word || '');
+                if (!displayWord.trim() && !(window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData))) return;
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
                 wordSpan.textContent = displayWord;
@@ -1547,6 +1608,13 @@
                 if (normalizedStatus === 'correct') wordSpan.classList.add('correct');
                 if (normalizedStatus === 'mispronounced') wordSpan.classList.add('mispronounced');
                 if (normalizedStatus === 'inserted') wordSpan.classList.add('inserted');
+                if (normalizedStatus === 'omitted') wordSpan.classList.add('omitted');
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData)) {
+                    wordSpan.classList.add('gap-marker');
+                } else if (window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData)) {
+                    const pauseVariant = window.WordLevelFeedback.pauseStatusVariant(wordData);
+                    if (pauseVariant) wordSpan.classList.add(pauseVariant);
+                }
                 if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData)) {
                     wordSpan.classList.add('stress-error');
                 }
@@ -1581,6 +1649,30 @@
                     `;
                 }
 
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isPauseToken(wordData) && wordData.pause_eval) {
+                    overlayHTML += `
+                        <div class=\"overlay-section\">
+                            <div class=\"overlay-title\">Pause Analysis</div>
+                            <div class=\"overlay-content\">
+                                <div>Ideal gap: ${window.WordLevelFeedback.formatRange(wordData.pause_eval.expected_range)}</div>
+                                <div>Actual gap: ${window.WordLevelFeedback.formatSeconds(wordData.pause_eval.pause_duration ?? wordData.pause_eval.duration)}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (window.WordLevelFeedback && window.WordLevelFeedback.isGapMarker(wordData)) {
+                    overlayHTML += `
+                        <div class=\"overlay-section\">
+                            <div class=\"overlay-title\">Gap Analysis</div>
+                            <div class=\"overlay-content\">
+                                <div>Ideal gap: ${window.WordLevelFeedback.formatRange(wordData.expected_range)}</div>
+                                <div>Actual gap: ${window.WordLevelFeedback.formatSeconds(wordData.duration)}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 const wordIssues = grammarIssues.filter((issue) => issue.includes(`near '${displayWord}'`) || issue.includes(`'${displayWord}'`));
                 if (wordIssues.length > 0) {
                     wordSpan.classList.add('grammar-error');
@@ -1596,13 +1688,23 @@
                 overlay.className = 'word-overlay';
                 overlay.innerHTML = overlayHTML;
                 wordSpan.appendChild(overlay);
+                if (window.WordLevelFeedback && window.WordLevelFeedback.canOpenWordModal(wordData)) {
+                    wordSpan.classList.add('clickable');
+                    wordSpan.onclick = (event) => {
+                        event.stopPropagation();
+                        transcriptionBox.querySelectorAll('.interactive-word.active').forEach((node) => {
+                            if (node !== wordSpan) node.classList.remove('active');
+                        });
+                        wordSpan.classList.toggle('active');
+                    };
+                }
                 transcriptionBox.appendChild(wordSpan);
                 transcriptionBox.appendChild(document.createTextNode(' '));
             });
 
             if (wordInsights && window.WordLevelFeedback) {
                 const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
-                    mfaWords.length ? mfaWords : displayRows,
+                    mfaWords.length ? mfaWords : baseRows,
                     transDetails.word_feedback || null
                 );
                 wordInsights.textContent = summary.message;
@@ -1611,6 +1713,16 @@
             results.classList.add('show');
             showStatus(`Evaluation complete! Score: ${currentResult.score || 0}/90`, 'success');
         }
+
+        document.addEventListener('click', (event) => {
+            const transcriptionBox = document.getElementById('transcriptionText');
+            if (!transcriptionBox || transcriptionBox.contains(event.target)) {
+                return;
+            }
+            transcriptionBox.querySelectorAll('.interactive-word.active').forEach((node) => {
+                node.classList.remove('active');
+            });
+        });
 
         document.getElementById('btnShowIdeal').onclick = () => {
             if (!currentResult) return;

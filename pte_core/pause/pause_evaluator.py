@@ -121,5 +121,30 @@ def evaluate_pause(
     if is_after_repeated:
         result["penalty"] *= 1.5
         result["penalty"] = min(result["penalty"], 1.0)  # Cap at 1.0
-    
+
+    pause_status = result.get("status")
+    if pause_status == "correct_pause":
+        result["pause_level"] = "ok"
+        result["feedback"] = (
+            f"Pause is within the ideal {min_pause:.2f}-{max_pause:.2f}s range."
+        )
+    elif pause_status == "missed_pause":
+        result["pause_level"] = "error"
+        result["feedback"] = (
+            f"Pause missing. Aim for about {min_pause:.2f}-{max_pause:.2f}s here."
+        )
+    elif pause_status in {"short_pause", "long_pause"}:
+        result["pause_level"] = "warn"
+        direction = "shorter" if pause_status == "short_pause" else "longer"
+        actual = result.get("pause_duration")
+        if actual is None:
+            result["feedback"] = f"Pause is {direction} than the ideal {min_pause:.2f}-{max_pause:.2f}s range."
+        else:
+            result["feedback"] = (
+                f"Pause is {direction} than ideal: {actual:.2f}s vs {min_pause:.2f}-{max_pause:.2f}s."
+            )
+    else:
+        result["pause_level"] = "unknown"
+        result["feedback"] = "Pause timing unavailable."
+
     return result

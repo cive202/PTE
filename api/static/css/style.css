@@ -578,18 +578,21 @@ input:focus {
 }
 
 .dashboard-page .dashboard-layout {
-    max-width: 1320px;
+    max-width: 1440px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 196px;
+    grid-template-columns: minmax(100px, 1fr) minmax(0, 1080px) 196px;
     align-items: start;
     gap: 1.2rem;
+    justify-content: center;
 }
 
 .dashboard-main {
+    grid-column: 2;
     min-width: 0;
 }
 
 .quick-nav {
+    grid-column: 3;
     position: sticky;
     top: 50vh;
     transform: translateY(-50%);
@@ -659,7 +662,16 @@ input:focus {
     }
 
     .dashboard-page .dashboard-layout {
+        max-width: 1240px;
         grid-template-columns: minmax(0, 1fr) 180px;
+    }
+
+    .dashboard-main {
+        grid-column: 1;
+    }
+
+    .quick-nav {
+        grid-column: 2;
     }
 
     .quick-nav {

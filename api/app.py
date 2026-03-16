@@ -224,7 +224,7 @@ def _resolve_reading_task_type(task_slug: str) -> str:
     return READING_ROUTE_TO_TASK[normalized]
 
 
-def _mask_select_missing_word_transcript(transcript: str) -> str:
+def _mask_select_missing_word_transcript(transcript: str, missing_word: str | None = None) -> str:
     """
     Replace the final lexical word with a spoken beep cue so the answer is not
     directly present in audio for Select Missing Word.
@@ -232,6 +232,14 @@ def _mask_select_missing_word_transcript(transcript: str) -> str:
     text = str(transcript or "").strip()
     if not text:
         return text
+
+    missing_norm = _normalize_word_token(missing_word or "")
+    if missing_norm:
+        matches = list(re.finditer(r"[A-Za-z]+(?:'[A-Za-z]+)?", text))
+        for match in reversed(matches):
+            token = match.group(0)
+            if _normalize_word_token(token) == missing_norm:
+                return f"{text[:match.start()]}beep{text[match.end():]}"
 
     # Match final word plus optional trailing punctuation at end of string.
     match = re.search(r"([A-Za-z]+(?:'[A-Za-z]+)?)\s*([.!?…]*)\s*$", text)
@@ -244,6 +252,19 @@ def _mask_select_missing_word_transcript(transcript: str) -> str:
     if not prefix:
         return f"beep{trailing_punct}"
     return f"{prefix} beep{trailing_punct}"
+
+
+def _resolve_select_missing_word_answer(task: dict) -> str:
+    correct_id = str(task.get("correct_option", "")).strip().upper()
+    if not correct_id:
+        return ""
+    for option in task.get("options", []):
+        if not isinstance(option, dict):
+            continue
+        option_id = str(option.get("id", "")).strip().upper()
+        if option_id == correct_id:
+            return str(option.get("text", "")).strip()
+    return ""
 
 
 def _normalize_word_token(value: str) -> str:
@@ -1324,7 +1345,8 @@ def listening_audio(task_slug, item_id):
 
     # For Select Missing Word, do not speak the final answer word.
     if task_type == "select_missing_word":
-        transcript = _mask_select_missing_word_transcript(transcript)
+        missing_word = _resolve_select_missing_word_answer(task)
+        transcript = _mask_select_missing_word_transcript(transcript, missing_word)
         if not transcript:
             return jsonify({"error": "Task transcript is invalid for select missing word"}), 500
 
@@ -1345,7 +1367,10 @@ def listening_audio(task_slug, item_id):
         return jsonify({"error": f"TTS generation failed: {exc}"}), 500
 
     response = Response(audio_bytes, mimetype="audio/mpeg")
-    response.headers["Cache-Control"] = "public, max-age=86400"
+    if task_type == "select_missing_word":
+        response.headers["Cache-Control"] = "no-store"
+    else:
+        response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
 
