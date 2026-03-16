@@ -35,10 +35,43 @@
             color: #721c24;
         }
 
+        .word.mispronounced {
+            background-color: #ffe7bf;
+            color: #7a4a00;
+            border: 1px solid #f3bf65;
+        }
+
+        .word.inserted {
+            background-color: #dbeeff;
+            color: #0d477e;
+            border: 1px solid #b7d8ff;
+        }
+
+        .word.omitted {
+            background-color: #f8d7da;
+            color: #721c24;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
         .stress-error {
-            background-color: #fff3cd;
-            color: #856404;
-            border-bottom: 2px solid orange;
+            border-bottom: 2px solid #da6221;
+            box-shadow: inset 0 -2px 0 rgba(218, 98, 33, 0.2);
+        }
+
+        .word.stress-error::after {
+            content: "!";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 12px;
+            height: 12px;
+            margin-left: 4px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #fff;
+            background: #da6221;
         }
 
         .progress-bar {
@@ -397,6 +430,10 @@
                 </div>
 
                 <div id="status" style="margin-top: 1rem; font-weight: bold;"></div>
+                <div id="word-feedback"
+                    style="margin-top:0.65rem; padding:0.72rem 0.82rem; border:1px solid #d6e1ed; border-radius:10px; background:#f7fbff; color:#2a3d55; font-size:0.9rem;">
+                    Word-level feedback appears after pronunciation check.
+                </div>
 
                 <div id="transcription-box"
                     style="margin-top: 1rem; padding: 15px; background: #f1f3f5; border-radius: 8px; display: none;">
@@ -491,6 +528,7 @@
             <div id="modal-debug-info" style="margin-top: 1rem; font-size: 0.8em; color: #999; display:none;"></div>
         </div>
     </div>
+    <script src="/static/js/word_level_feedback.js"></script>
     <script>
         let activeTtsAudio = null;
         function setTtsLoading(button, isLoading) {
@@ -570,6 +608,7 @@
         const recIndicator = document.getElementById('recording-indicator');
         const transcriptionBox = document.getElementById('transcription-box');
         const transcriptText = document.getElementById('transcript-text');
+        const wordFeedbackBox = document.getElementById('word-feedback');
         const audioUploadedInfo = document.getElementById('audio-uploaded-info');
         const audioPlayback = document.getElementById('audio-playback');
         const recordedAudio = document.getElementById('recorded-audio');
@@ -655,6 +694,7 @@
                 refText.value = data.text;
                 topicSelectionPhase.style.display = 'none';
                 activePhase.style.display = 'block';
+                resetWordFeedback();
             } catch (e) {
                 console.error(e);
                 alert('Failed to load passage.');
@@ -667,6 +707,7 @@
             refText.value = '';
             topicSelectionPhase.style.display = 'none';
             activePhase.style.display = 'block';
+            resetWordFeedback();
         };
 
         btnChangeTopic.onclick = () => {
@@ -674,6 +715,12 @@
             topicSelectionPhase.style.display = 'block';
             resetUI();
         };
+
+        function resetWordFeedback() {
+            if (wordFeedbackBox) {
+                wordFeedbackBox.textContent = 'Word-level feedback appears after pronunciation check.';
+            }
+        }
 
         function resetUI() {
             resultsDiv.innerHTML = '';
@@ -685,6 +732,7 @@
             audioPlayback.style.display = 'none';
             progressContainer.style.display = 'none';
             btnCheck.disabled = true;
+            resetWordFeedback();
         }
 
         btnRecord.onclick = async () => {
@@ -694,6 +742,9 @@
                 audioUploadedInfo.textContent = '';
                 audioPlayback.style.display = 'none';
                 recordedAudio.src = "";
+                resetWordFeedback();
+                resultsDiv.innerHTML = '';
+                transcriptionBox.style.display = 'none';
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
@@ -752,6 +803,9 @@
                     statusDiv.innerText = "";
                     audioUploadedInfo.textContent = "Audio uploaded: " + file.name;
                     audioUploadedInfo.style.display = 'block';
+                    resetWordFeedback();
+                    resultsDiv.innerHTML = '';
+                    transcriptionBox.style.display = 'none';
 
                     // Auto-check for uploaded file too? Maybe better to let user click check
                     // checkPronunciation(); 
@@ -776,7 +830,9 @@
                 statusDiv.innerText = "Error: " + data.error;
                 return;
             }
-            const accuracy = (data.summary.correct / data.summary.total * 100).toFixed(1);
+            const totalWords = Number(data?.summary?.total || 0);
+            const correctWords = Number(data?.summary?.correct || 0);
+            const accuracy = totalWords > 0 ? ((correctWords / totalWords) * 100).toFixed(1) : '0.0';
             statusDiv.innerText = `✅ Analysis Complete! Accuracy: ${accuracy}%`;
             if (data.transcript) {
                 transcriptionBox.style.display = 'block';
@@ -788,30 +844,21 @@
                 span.innerText = w.word;
                 span.className = 'word';
 
-                let isPlayable = false;
                 if (w.start !== undefined && w.end !== undefined) {
-                    isPlayable = true;
                     span.classList.add('clickable');
                     span.title = `Click to listen (${w.start}s - ${w.end}s)`;
                     span.onclick = () => openWordModal(w);
                 }
 
-                if (w.status === 'correct') {
-                    span.className += ' correct';
-                    if (w.stress_error) span.className += ' stress-error';
-                } else if (w.status === 'omitted') {
-                    span.className += ' wrong';
-                    span.style.textDecoration = 'line-through';
-                    span.style.opacity = '0.5';
-                    // Omitted words aren't playable usually, unless we map them to silence? 
-                    // For now, only play if they have timestamps (which they shouldn't if omitted)
-                } else if (w.status === 'inserted') {
-                    span.className += ' wrong';
-                    span.style.backgroundColor = '#cce5ff';
-                    span.style.color = '#004085';
-                } else if (w.status === 'mispronounced') {
-                    span.className += ' stress-error';
-                    span.style.border = '1px solid orange';
+                const normalizedStatus = String(w.status || '').toLowerCase();
+                if (normalizedStatus === 'correct') span.classList.add('correct');
+                else if (normalizedStatus === 'mispronounced') span.classList.add('mispronounced');
+                else if (normalizedStatus === 'inserted') span.classList.add('inserted');
+                else if (normalizedStatus === 'omitted') span.classList.add('omitted');
+                else span.classList.add('wrong');
+
+                if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(w)) {
+                    span.classList.add('stress-error');
                 }
 
                 // Add pause indicator if available
@@ -842,6 +889,14 @@
                 resultsDiv.appendChild(span);
                 resultsDiv.appendChild(document.createTextNode(" "));
             });
+
+            if (wordFeedbackBox && window.WordLevelFeedback) {
+                const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
+                    Array.isArray(data.words) ? data.words : [],
+                    data.word_feedback || null
+                );
+                wordFeedbackBox.textContent = summary.message;
+            }
         }
 
         async function checkPronunciation() {
@@ -852,6 +907,7 @@
             resultsDiv.innerHTML = "";
             transcriptionBox.style.display = 'none';
             jsonOutput.innerText = "";
+            resetWordFeedback();
             // document.getElementById('textgrid-container').style.display = 'none'; // ID removed
             progressContainer.style.display = 'block';
             progressFill.style.width = '2%';
@@ -1065,13 +1121,20 @@
             }
 
             // Populate Status
-            modalStatus.innerText = wordData.status;
-            if (wordData.status === 'correct') {
-                modalStatus.style.color = 'green';
-            } else if (wordData.status === 'mispronounced') {
-                modalStatus.style.color = 'orange';
+            const normalizedStatus = String(wordData.status || '').toLowerCase();
+            modalStatus.innerText = window.WordLevelFeedback
+                ? window.WordLevelFeedback.formatWordStatus(normalizedStatus)
+                : (normalizedStatus || 'unknown');
+            if (normalizedStatus === 'correct') {
+                modalStatus.style.color = '#1f8a4c';
+            } else if (normalizedStatus === 'mispronounced') {
+                modalStatus.style.color = '#b76b00';
+            } else if (normalizedStatus === 'inserted') {
+                modalStatus.style.color = '#0d477e';
+            } else if (normalizedStatus === 'omitted') {
+                modalStatus.style.color = '#b3261e';
             } else {
-                modalStatus.style.color = 'red';
+                modalStatus.style.color = '#6c757d';
             }
 
             // Populate Phonemes
@@ -1083,10 +1146,11 @@
                 const ref = wordData.stress_details.ref_pattern || 'N/A';
                 const obs = wordData.stress_details.observed_pattern || 'N/A';
                 modalStressMatch.innerText = `${ref} → ${obs}`;
-                modalStressInfo.innerText = wordData.stress_details.match_info || '';
+                modalStressInfo.innerText = wordData.stress_feedback || wordData.stress_details.match_info || '';
             } else {
-                modalStressMatch.innerText = "N/A";
-                modalStressInfo.innerText = "";
+                const hasStressIssue = window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData);
+                modalStressMatch.innerText = hasStressIssue ? "⚠ Stress issue" : "N/A";
+                modalStressInfo.innerText = wordData.stress_feedback || "";
             }
 
             // Store data for playback

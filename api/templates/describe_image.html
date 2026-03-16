@@ -446,12 +446,6 @@
             color: #004085;
         }
 
-        .interactive-word.stress-error {
-            border-bottom: 3px solid #fd7e14;
-            background: #fff3cd;
-            color: #856404;
-        }
-
         .interactive-word.grammar-error {
             border-bottom: 2px wavy #f44336;
         }
@@ -729,12 +723,47 @@
             background: #28a745;
         }
 
+        .status-aligned {
+            background: #28a745;
+        }
+
         .status-mispronounced {
+            background: #dc3545;
+        }
+
+        .status-inserted {
+            background: #0f6ac9;
+        }
+
+        .status-omitted {
             background: #dc3545;
         }
 
         .status-unknown {
             background: #6c757d;
+        }
+
+        .word-feedback-box {
+            margin-top: 1rem;
+            padding: 0.8rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid #d6e1ed;
+            background: #f7fbff;
+        }
+
+        .word-feedback-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #3c516b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+
+        .word-feedback-text {
+            color: #2a3d55;
+            font-size: 0.92rem;
+            line-height: 1.45;
         }
 
         /* Audio Playback */
@@ -988,6 +1017,10 @@
             <div class="transcription-box">
                 <h4>📝 Your Transcription</h4>
                 <div id="transcriptionText"></div>
+                <div class="word-feedback-box">
+                    <div class="word-feedback-title">Word-Level Feedback</div>
+                    <div id="wordLevelInsights" class="word-feedback-text">Run an attempt to see stress and pronunciation guidance.</div>
+                </div>
             </div>
 
             <!-- Ideal Answer Section -->
@@ -1049,17 +1082,7 @@
                             style="font-family:monospace;">-</span>
                     </div>
                 </div>
-                <div>
-                    <strong>Stress:</strong>
-                    <div style="display: grid; grid-template-columns: 90px 1fr; gap: 4px; margin-top: 4px;">
-                        <span style="color:#666;">Pattern:</span>
-                        <span>
-                            <span id="modal-stress" style="font-family:monospace;">-</span>
-                            <span id="modal-stress-info" style="font-size:0.8em; color:#888; margin-left:5px;"></span>
-                        </span>
-                    </div>
                 </div>
-            </div>
 
             <button id="modal-play-btn" class="modal-play-btn">▶ Play Segment</button>
             <div
@@ -1077,6 +1100,7 @@
         </div>
     </div>
 
+    <script src="/static/js/word_level_feedback.js"></script>
     <script>
         let activeTtsAudio = null;
         function setTtsLoading(button, isLoading) {
@@ -1344,6 +1368,13 @@
             timingHint.textContent = `Press Start Recording to begin ${describeImageTiming.prep_seconds}s preparation.`;
             recordingIndicator.style.display = 'none';
             recordingStartEpochMs = null;
+        }
+
+        function resetWordInsights() {
+            const el = document.getElementById('wordLevelInsights');
+            if (el) {
+                el.textContent = 'Run an attempt to see stress and pronunciation guidance.';
+            }
         }
 
         function beginSpeakingCountdown() {
@@ -1630,6 +1661,7 @@
                 btnSubmit.disabled = true;
                 btnRerecord.style.display = 'none';
                 resetTimingPanel();
+                resetWordInsights();
                 prepareRecorderAndStartPrep();
             } catch (err) {
                 showStatus('Failed to load image: ' + err.message, 'error');
@@ -1650,6 +1682,7 @@
             btnSubmit.disabled = true;
             btnRerecord.style.display = 'none';
             resetTimingPanel();
+            resetWordInsights();
         };
 
         btnNewImage.onclick = () => loadNewImage();
@@ -1672,6 +1705,7 @@
                 btnRecord.disabled = false;
                 btnStop.disabled = true;
                 resetTimingPanel();
+                resetWordInsights();
                 showStatus('Preparation cancelled.', 'success');
                 return;
             }
@@ -1695,6 +1729,7 @@
             btnStop.disabled = true;
             btnRecord.disabled = false;
             resetTimingPanel();
+            resetWordInsights();
             prepareRecorderAndStartPrep();
             statusDiv.classList.remove('show');
         };
@@ -1801,9 +1836,13 @@
 
             // Render interactive transcription with MFA info
             const transcriptionBox = document.getElementById('transcriptionText');
-            const details = result.transcription_details || { text: result.transcription || "", words: [] };
+            const transDetails = result.transcription_details || { text: result.transcription || "", words: [] };
+            const wordInsights = document.getElementById('wordLevelInsights');
 
             transcriptionBox.innerHTML = '';
+            if (wordInsights) {
+                wordInsights.textContent = '';
+            }
 
             // Check grammar using LanguageTool via proxy
             let grammarIssues = [];
@@ -1811,7 +1850,7 @@
                 const grammarRes = await fetch('/api/grammar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: details.text })
+                    body: JSON.stringify({ text: transDetails.text })
                 });
                 const grammarData = await grammarRes.json();
                 grammarIssues = grammarData.matches || [];
@@ -1820,11 +1859,16 @@
             }
 
             // Create interactive words
-            const words = details.text.split(/\s+/);
-            words.forEach((word, idx) => {
-                if (!word) return;
+            const mfaWords = Array.isArray(transDetails.words) ? transDetails.words : [];
+            const displayRows = mfaWords.length
+                ? mfaWords
+                : String(transDetails.text || '').split(/\s+/).filter(Boolean).map((token) => ({ word: token }));
 
-                const wordData = details.words[idx] || {};
+            displayRows.forEach((row) => {
+                const displayWord = String((row && row.word) || '').trim();
+                if (!displayWord) return;
+
+                const wordData = row || {};
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
 
@@ -1838,18 +1882,14 @@
                 }
 
                 // Stress error highlight (yellow border)
-                if (wordData.stress_error) {
-                    wordSpan.classList.add('stress-error');
-                }
-
-                wordSpan.textContent = word;
+                wordSpan.textContent = displayWord;
 
                 // --- Hover overlay (tooltip) ---
                 let overlayHTML = `
                     <div class="overlay-section">
                         <div class="overlay-title">Word Analysis</div>
                         <div class="overlay-content">
-                            <div><span class="status-indicator status-${wordData.status || 'unknown'}"></span>Status: ${wordData.status || 'unknown'}</div>
+                            <div><span class="status-indicator status-${wordData.status || 'unknown'}"></span>Status: ${window.WordLevelFeedback ? window.WordLevelFeedback.formatWordStatus(wordData.status) : (wordData.status || 'unknown')}</div>
                             <div>Timing: ${(wordData.start !== undefined && wordData.start !== null) ? wordData.start.toFixed(2) : 'N/A'}s – ${(wordData.end !== undefined && wordData.end !== null) ? wordData.end.toFixed(2) : 'N/A'}s</div>
                         </div>
                     </div>
@@ -1864,13 +1904,11 @@
                         overlayHTML += `<div class="phone-display">Expected: ${wordData.expected_phones}</div>`;
                     if (wordData.observed_phones)
                         overlayHTML += `<div class="phone-display">Observed: ${wordData.observed_phones}</div>`;
-                    if (wordData.stress_error)
-                        overlayHTML += `<div style="color:#ff9800;font-size:0.8rem;margin-top:4px;">⚠ Stress error detected</div>`;
                     overlayHTML += `</div></div>`;
                 }
 
                 // Grammar issues
-                const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
+                const wordIssues = grammarIssues.filter(issue => issue.includes(`near '${displayWord}'`) || issue.includes(`'${displayWord}'`));
                 if (wordIssues.length > 0) {
                     wordSpan.classList.add('grammar-error');
                     overlayHTML += `
@@ -1894,6 +1932,14 @@
                 transcriptionBox.appendChild(wordSpan);
                 transcriptionBox.appendChild(document.createTextNode(' '));
             });
+
+            if (wordInsights && window.WordLevelFeedback) {
+                const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
+                    mfaWords.length ? mfaWords : displayRows,
+                    transDetails.word_feedback || null
+                );
+                wordInsights.textContent = summary.message;
+            }
 
             results.classList.add('show');
             showStatus(`Evaluation complete! Score: ${result.score}/90`, 'success');
@@ -2091,19 +2137,6 @@
             // Phonemes
             document.getElementById('modal-expected').textContent = wordData.expected_phones || 'N/A';
             document.getElementById('modal-observed').textContent = wordData.observed_phones || 'N/A';
-
-            // Stress
-            const stressEl = document.getElementById('modal-stress');
-            const stressInfo = document.getElementById('modal-stress-info');
-            if (wordData.stress_details) {
-                const ref = wordData.stress_details.ref_pattern || 'N/A';
-                const obs = wordData.stress_details.observed_pattern || 'N/A';
-                stressEl.textContent = `${ref} → ${obs}`;
-                stressInfo.textContent = wordData.stress_details.match_info || '';
-            } else {
-                stressEl.textContent = wordData.stress_error ? '⚠ Error' : 'N/A';
-                stressInfo.textContent = '';
-            }
 
             // Play button
             modalPlayBtn.onclick = () => playWordAudio(wordData.start, wordData.end);

@@ -96,6 +96,21 @@
             border-bottom: 2px solid orange;
         }
 
+        .word.stress-error::after {
+            content: "!";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 12px;
+            height: 12px;
+            margin-left: 4px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: #fff;
+            background: #da6221;
+        }
+
         #progress-bar {
             width: 0%;
             transition: width 0.3s ease-in-out;
@@ -426,6 +441,10 @@
                 <div id="results-container" style="margin-top: 2rem;">
                     <div id="status"></div>
                     <div id="metrics" style="margin-top: 0.5rem; font-weight: bold;"></div>
+                    <div id="word-feedback"
+                        style="margin-top:0.65rem; padding:0.72rem 0.82rem; border:1px solid #d6e1ed; border-radius:10px; background:#f7fbff; color:#2a3d55; font-size:0.9rem;">
+                        Word-level feedback appears after pronunciation check.
+                    </div>
                     <div id="results" style="margin-top: 1rem; line-height: 2;"></div>
                 </div>
 
@@ -506,6 +525,7 @@
         </div>
     </div>
 
+    <script src="/static/js/word_level_feedback.js"></script>
     <script>
         let activeTtsAudio = null;
         function setTtsLoading(button, isLoading) {
@@ -842,6 +862,7 @@
             sentenceDisplay.innerText = currentSentence;
             statusDiv.innerText = `Accuracy: ${(data.summary.correct / data.summary.total * 100).toFixed(1)}%`;
             metricsDiv.innerHTML = `Speech Rate: ${data.speech_rate_scale}x | Pause Penalty: ${data.summary.pause_penalty}`;
+            const wordFeedbackBox = document.getElementById('word-feedback');
 
             resultsDiv.innerHTML = "";
             data.words.forEach(w => {
@@ -853,7 +874,7 @@
                 let className = 'word';
                 if (w.status === 'correct') {
                     className += ' correct';
-                    if (w.stress_error) className += ' stress-error';
+                    if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(w)) className += ' stress-error';
                 } else if (w.status === 'inserted') {
                     className += ' inserted';
                 } else if (w.status === 'omitted') {
@@ -870,7 +891,9 @@
 
                 let tooltip = [];
                 if (w.observed_phones) tooltip.push(`Observed: ${w.observed_phones}`);
-                if (w.stress_error) tooltip.push('Stressed Incorrectly');
+                if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(w)) {
+                    tooltip.push(w.stress_feedback || 'Stress needs attention');
+                }
 
                 if (tooltip.length > 0) span.setAttribute('data-tooltip', tooltip.join('\n'));
 
@@ -883,6 +906,14 @@
                 container.appendChild(span);
                 resultsDiv.appendChild(container);
             });
+
+            if (wordFeedbackBox && window.WordLevelFeedback) {
+                const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
+                    Array.isArray(data.words) ? data.words : [],
+                    data.word_feedback || null
+                );
+                wordFeedbackBox.textContent = summary.message;
+            }
 
             // Populate Debug View (remove textgrid_content from JSON)
             const jsonOutput = document.getElementById('json-output');
@@ -1069,10 +1100,11 @@
                 const ref = wordData.stress_details.ref_pattern || 'N/A';
                 const obs = wordData.stress_details.observed_pattern || 'N/A';
                 modalStressMatch.innerText = `${ref} → ${obs}`;
-                modalStressInfo.innerText = wordData.stress_details.match_info || '';
+                modalStressInfo.innerText = wordData.stress_feedback || wordData.stress_details.match_info || '';
             } else {
-                modalStressMatch.innerText = "N/A";
-                modalStressInfo.innerText = "";
+                const hasStressIssue = window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData);
+                modalStressMatch.innerText = hasStressIssue ? "⚠ Stress issue" : "N/A";
+                modalStressInfo.innerText = wordData.stress_feedback || "";
             }
 
             // Store data for playback

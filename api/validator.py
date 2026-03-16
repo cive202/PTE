@@ -899,6 +899,42 @@ def analyze_word_pronunciation(
                 print(f"Stress analysis failed for {ref_word}: {e}")
 
             res_entry['stress_score'] = round(stress_score, 3)
+            stress_details = res_entry.get('stress_details', {}) if isinstance(res_entry.get('stress_details'), dict) else {}
+            stress_match_info = str(stress_details.get('match_info', '') or '').strip()
+            stress_match_lc = stress_match_info.lower()
+
+            stress_unknown = any(
+                phrase in stress_match_lc
+                for phrase in (
+                    "insufficient phone evidence",
+                    "no reference pattern",
+                    "audio load error",
+                    "error:",
+                )
+            )
+            stress_error = False
+            if not stress_unknown:
+                stress_error = (
+                    stress_score < 0.85
+                    or "mismatch" in stress_match_lc
+                    or "no vowels detected" in stress_match_lc
+                )
+                if "perfect match" in stress_match_lc or "acceptable variation" in stress_match_lc:
+                    stress_error = False
+
+            if stress_unknown:
+                stress_level = "unknown"
+                stress_feedback = "Stress could not be measured reliably for this word."
+            elif stress_error:
+                stress_level = "error" if stress_score < 0.7 else "warn"
+                stress_feedback = stress_match_info or "Stress pattern differs from expected emphasis."
+            else:
+                stress_level = "ok"
+                stress_feedback = stress_match_info or "Stress pattern is acceptable."
+
+            res_entry['stress_error'] = bool(stress_error)
+            res_entry['stress_level'] = stress_level
+            res_entry['stress_feedback'] = stress_feedback
 
             # --- C. Combined Score ---
             accuracy_score = float(res_entry.get('accuracy_score', fallback_accuracy))
@@ -912,6 +948,74 @@ def analyze_word_pronunciation(
             return res_entry
 
     return res_entry
+
+
+def build_word_level_feedback(words):
+    """Aggregate explainable word-level feedback for UI summaries."""
+    rows = [row for row in (words or []) if isinstance(row, dict)]
+    if not rows:
+        return {
+            "counts": {
+                "total_words": 0,
+                "correct": 0,
+                "mispronounced": 0,
+                "inserted": 0,
+                "omitted": 0,
+                "stress_issues": 0,
+            },
+            "highlights": [],
+            "message": "No word-level pronunciation details available.",
+        }
+
+    counts = {
+        "total_words": len(rows),
+        "correct": 0,
+        "mispronounced": 0,
+        "inserted": 0,
+        "omitted": 0,
+        "stress_issues": 0,
+    }
+    stress_focus_words = []
+
+    for row in rows:
+        status = str(row.get("status", "")).lower()
+        if status == "correct":
+            counts["correct"] += 1
+        elif status == "mispronounced":
+            counts["mispronounced"] += 1
+        elif status == "inserted":
+            counts["inserted"] += 1
+        elif status == "omitted":
+            counts["omitted"] += 1
+
+        if row.get("stress_error"):
+            counts["stress_issues"] += 1
+            word = str(row.get("word", "")).strip()
+            if word and word.lower() not in {item.lower() for item in stress_focus_words}:
+                stress_focus_words.append(word)
+
+    highlights = []
+    if counts["stress_issues"] > 0:
+        focus_sample = ", ".join(stress_focus_words[:3])
+        if focus_sample:
+            highlights.append(f"Stress issues found in {counts['stress_issues']} word(s): {focus_sample}.")
+        else:
+            highlights.append(f"Stress issues found in {counts['stress_issues']} word(s).")
+    if counts["mispronounced"] > 0:
+        highlights.append(f"{counts['mispronounced']} word(s) need clearer pronunciation.")
+    if counts["omitted"] > 0 or counts["inserted"] > 0:
+        highlights.append(
+            f"Content alignment issues: {counts['omitted']} omitted, {counts['inserted']} inserted."
+        )
+
+    if not highlights:
+        highlights.append("Word-level pronunciation and stress look consistent.")
+
+    return {
+        "counts": counts,
+        "highlights": highlights,
+        "message": " ".join(highlights),
+    }
 
 def align_and_validate_gen(audio_path, text_path, accents=None):
     """
@@ -1379,10 +1483,15 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             "summary": {
                 "total": len(final_results),
                 "correct": sum(1 for w in final_results if w['status'] == 'correct'),
+                "mispronounced": sum(1 for w in final_results if w.get('status') == 'mispronounced'),
+                "inserted": sum(1 for w in final_results if w.get('status') == 'inserted'),
+                "omitted": sum(1 for w in final_results if w.get('status') == 'omitted'),
+                "stress_issues": sum(1 for w in final_results if w.get('stress_error')),
                 "pause_penalty": round(total_pause_penalty, 3),
                 "pause_count": len([p for p in pause_evals if p['status'] != 'correct_pause']),
                 "cached": False,
-            }
+            },
+            "word_feedback": build_word_level_feedback(final_results),
         }
 
         if cache_key and _result_cache_enabled():

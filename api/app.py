@@ -473,6 +473,7 @@ def run_image_evaluation_job(job_id, image_id, audio_path):
             'words': mfa_words,
             'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {},
             'word_timestamps': word_timestamps,
+            'word_feedback': mfa_result.get('word_feedback', {}) if mfa_result else {},
         }
         
         IMAGE_JOB_STORE[job_id]['status'] = 'complete'
@@ -525,6 +526,7 @@ def run_lecture_evaluation_job(job_id, lecture_id, audio_path):
             'words': mfa_words,
             'mfa_summary': mfa_result.get('summary', {}) if mfa_result else {},
             'word_timestamps': word_timestamps,
+            'word_feedback': mfa_result.get('word_feedback', {}) if mfa_result else {},
         }
         
         LECTURE_JOB_STORE[job_id]['status'] = 'complete'

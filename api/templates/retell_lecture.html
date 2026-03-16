@@ -152,6 +152,11 @@
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls button {
+            min-width: 150px;
         }
 
         .filter-shell {
@@ -325,6 +330,10 @@
             .timing-panel {
                 grid-template-columns: 1fr;
             }
+
+            .controls button {
+                width: 100%;
+            }
         }
 
         button {
@@ -339,33 +348,6 @@
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-        }
-
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: #2980b9;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-success:hover:not(:disabled) {
-            background: #229954;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: #7f8c8d;
         }
 
         .recording-indicator {
@@ -449,7 +431,7 @@
         .score-display {
             text-align: center;
             padding: 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f6ac9 0%, #138496 100%);
             color: white;
             border-radius: 12px;
             margin-bottom: 1.5rem;
@@ -537,8 +519,70 @@
             border-color: #2196f3;
         }
 
+        .interactive-word.correct {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .interactive-word.mispronounced {
+            background: #ffe7bf;
+            color: #7a4a00;
+            border-color: #f3bf65;
+        }
+
+        .interactive-word.inserted {
+            background: #dbeeff;
+            color: #0d477e;
+            border-color: #b7d8ff;
+        }
+
+        .interactive-word.stress-error {
+            border-bottom: 2px solid #da6221;
+            box-shadow: inset 0 -2px 0 rgba(218, 98, 33, 0.2);
+        }
+
+        .interactive-word.stress-error::after {
+            content: "!";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 13px;
+            height: 13px;
+            margin-left: 4px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: #da6221;
+            vertical-align: middle;
+        }
+
         .interactive-word.grammar-error {
             border-bottom: 2px wavy #f44336;
+        }
+
+        .word-feedback-box {
+            margin-top: 1rem;
+            padding: 0.8rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid #d6e1ed;
+            background: #f7fbff;
+        }
+
+        .word-feedback-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #3c516b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+
+        .word-feedback-text {
+            color: #2a3d55;
+            font-size: 0.92rem;
+            line-height: 1.45;
         }
 
         .word-overlay {
@@ -594,6 +638,38 @@
             text-transform: uppercase;
             margin-bottom: 3px;
         }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-correct {
+            background: #28a745;
+        }
+
+        .status-aligned {
+            background: #28a745;
+        }
+
+        .status-mispronounced {
+            background: #fd7e14;
+        }
+
+        .status-inserted {
+            background: #0f6ac9;
+        }
+
+        .status-omitted {
+            background: #dc3545;
+        }
+
+        .status-unknown {
+            background: #6c757d;
+        }
     </style>
 </head>
 
@@ -629,7 +705,7 @@
             <ol style="margin: 0.5rem 0 0 0; padding-left: 1.5rem;">
                 <li>Listen to the audio lecture completely</li>
                 <li>Preparation starts automatically after the lecture ends</li>
-                <li>You can start speaking early or wait for auto-start</li>
+                <li>Press "Start Recording" during preparation or wait for auto-start</li>
                 <li>Recording auto-stops at the response time limit</li>
                 <li>Click "Submit" to get your score</li>
             </ol>
@@ -642,7 +718,7 @@
                     <option value="all">All Categories</option>
                 </select>
             </div>
-            <button id="btnLoadLecture" class="btn-secondary">Load Random</button>
+            <button id="btnLoadLecture" class="btn secondary">Load Random</button>
         </div>
         <div id="topicCount" class="topic-count">Loading topics...</div>
         <div id="topicGrid" class="topic-grid-cards"></div>
@@ -677,11 +753,11 @@
             </div>
 
             <div class="controls">
-                <button id="btnRecord" class="btn-primary" disabled>🎤 Start Recording</button>
-                <button id="btnStop" class="btn-secondary" disabled>⏹ Stop Recording</button>
-                <button id="btnRerecord" class="btn-secondary" style="display:none;">🔄 Re-record</button>
-                <button id="btnSubmit" class="btn-success" disabled>✓ Submit Summary</button>
-                <button id="btnNewLecture" class="btn-secondary">🔄 New Lecture</button>
+                <button id="btnRecord" class="btn primary" disabled>🎤 Start Recording</button>
+                <button id="btnStop" class="btn danger" disabled>⏹ Stop Recording</button>
+                <button id="btnRerecord" class="btn secondary" style="display:none;">🔄 Re-record</button>
+                <button id="btnSubmit" class="btn success" disabled>✓ Submit Summary</button>
+                <button id="btnNewLecture" class="btn secondary">🔄 New Lecture</button>
                 <div class="recording-indicator" id="recordingIndicator">
                     <div class="pulse"></div>
                     Recording...
@@ -742,12 +818,15 @@
             <div class="transcription-box">
                 <h4>📝 Your Transcription</h4>
                 <p id="transcriptionText"></p>
+                <div class="word-feedback-box">
+                    <div class="word-feedback-title">Word-Level Feedback</div>
+                    <div id="wordLevelInsights" class="word-feedback-text">Run an attempt to see stress and pronunciation guidance.</div>
+                </div>
             </div>
 
             <!-- Ideal Answer Section -->
             <div id="idealAnswerSection" style="margin-top: 1.5rem;">
-                <button id="btnShowIdeal"
-                    style="padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">
+                <button id="btnShowIdeal" class="btn primary">
                     📖 Show Transcript
                 </button>
 
@@ -777,6 +856,7 @@
     </div>
 
     <script src="/static/js/tts_preset_controls.js"></script>
+    <script src="/static/js/word_level_feedback.js"></script>
     <script>
         let mediaRecorder;
         let activeRecordingStream = null;
@@ -967,6 +1047,10 @@
                 pollInterval = null;
             }
             setRecordButton(true);
+            const wordInsights = document.getElementById('wordLevelInsights');
+            if (wordInsights) {
+                wordInsights.textContent = 'Run an attempt to see stress and pronunciation guidance.';
+            }
         }
 
         function resetLectureState() {
@@ -1427,6 +1511,10 @@
             const transcriptionBox = document.getElementById('transcriptionText');
             const transDetails = currentResult.transcription_details || { text: currentResult.transcription || '', words: [] };
             transcriptionBox.innerHTML = '';
+            const wordInsights = document.getElementById('wordLevelInsights');
+            if (wordInsights) {
+                wordInsights.textContent = '';
+            }
 
             let grammarIssues = [];
             try {
@@ -1441,25 +1529,59 @@
                 grammarIssues = [];
             }
 
-            const words = String(transDetails.text || '').split(/\s+/);
-            words.forEach((word, idx) => {
-                if (!word) return;
-                const wordData = transDetails.words[idx] || {};
+            const mfaWords = Array.isArray(transDetails.words) ? transDetails.words : [];
+            const displayRows = mfaWords.length
+                ? mfaWords
+                : String(transDetails.text || '').split(/\s+/).filter(Boolean).map((token) => ({ word: token }));
+
+            displayRows.forEach((row) => {
+                const displayWord = String((row && row.word) || '').trim();
+                if (!displayWord) return;
+
+                const wordData = row || {};
                 const wordSpan = document.createElement('span');
                 wordSpan.className = 'interactive-word';
-                wordSpan.textContent = word;
+                wordSpan.textContent = displayWord;
+
+                const normalizedStatus = String(wordData.status || '').toLowerCase();
+                if (normalizedStatus === 'correct') wordSpan.classList.add('correct');
+                if (normalizedStatus === 'mispronounced') wordSpan.classList.add('mispronounced');
+                if (normalizedStatus === 'inserted') wordSpan.classList.add('inserted');
+                if (window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData)) {
+                    wordSpan.classList.add('stress-error');
+                }
 
                 let overlayHTML = `
                     <div class=\"overlay-section\">
                         <div class=\"overlay-title\">Word Analysis</div>
                         <div class=\"overlay-content\">
-                            <div><span class=\"status-indicator status-${wordData.status || 'unknown'}\"></span>Status: ${wordData.status || 'unknown'}</div>
+                            <div><span class=\"status-indicator status-${wordData.status || 'unknown'}\"></span>Status: ${window.WordLevelFeedback ? window.WordLevelFeedback.formatWordStatus(wordData.status) : (wordData.status || 'unknown')}</div>
                             <div>Timing: ${(wordData.start !== undefined && wordData.start !== null) ? wordData.start.toFixed(2) : 'N/A'}s - ${(wordData.end !== undefined && wordData.end !== null) ? wordData.end.toFixed(2) : 'N/A'}s</div>
                         </div>
                     </div>
                 `;
 
-                const wordIssues = grammarIssues.filter((issue) => issue.includes(`near '${word}'`) || issue.includes(`'${word}'`));
+                if (wordData.expected_phones || wordData.observed_phones || wordData.stress_details) {
+                    const stressScore = typeof wordData.stress_score === 'number'
+                        ? `${Math.round(wordData.stress_score * 100)}%`
+                        : 'N/A';
+                    const stressInfo = (wordData.stress_feedback
+                        || (wordData.stress_details && wordData.stress_details.match_info)
+                        || '').toString();
+                    overlayHTML += `
+                        <div class=\"overlay-section\">
+                            <div class=\"overlay-title\">Pronunciation + Stress</div>
+                            <div class=\"overlay-content\">
+                                ${wordData.expected_phones ? `<div>Expected: ${wordData.expected_phones}</div>` : ''}
+                                ${wordData.observed_phones ? `<div>Observed: ${wordData.observed_phones}</div>` : ''}
+                                <div>Stress score: ${stressScore}</div>
+                                ${stressInfo ? `<div>Stress: ${stressInfo}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const wordIssues = grammarIssues.filter((issue) => issue.includes(`near '${displayWord}'`) || issue.includes(`'${displayWord}'`));
                 if (wordIssues.length > 0) {
                     wordSpan.classList.add('grammar-error');
                     overlayHTML += `
@@ -1477,6 +1599,14 @@
                 transcriptionBox.appendChild(wordSpan);
                 transcriptionBox.appendChild(document.createTextNode(' '));
             });
+
+            if (wordInsights && window.WordLevelFeedback) {
+                const summary = window.WordLevelFeedback.summarizeWordLevelFeedback(
+                    mfaWords.length ? mfaWords : displayRows,
+                    transDetails.word_feedback || null
+                );
+                wordInsights.textContent = summary.message;
+            }
 
             results.classList.add('show');
             showStatus(`Evaluation complete! Score: ${currentResult.score || 0}/90`, 'success');
