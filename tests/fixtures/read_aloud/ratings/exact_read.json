@@ -1,0 +1,16 @@
+{
+  "id": "exact_read",
+  "dimension_bands": {
+    "pronunciation_accuracy": [95, 100],
+    "completeness": [95, 100],
+    "stress": [50, 100],
+    "prosody": [80, 100],
+    "fluency": [80, 100]
+  },
+  "expected_counts": {
+    "omitted_words_max": 0,
+    "inserted_words_max": 0,
+    "mispronounced_words_max": 0
+  },
+  "notes": "Strong clean read should score near ceiling on pronunciation and completeness."
+}

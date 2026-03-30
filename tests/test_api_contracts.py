@@ -92,6 +92,14 @@ def test_check_stream_ndjson_contract(client, monkeypatch):
             "data": {
                 "words": [],
                 "summary": {"total": 0, "correct": 0, "pause_penalty": 0, "pause_count": 0},
+                "scores": {
+                    "overall_accuracy": {"score": 0, "max": 100, "percent": 0},
+                    "pronunciation_accuracy": {"score": 0, "max": 100, "percent": 0},
+                    "completeness": {"score": 0, "max": 100, "percent": 0},
+                    "stress": {"score": 0, "max": 100, "percent": 0},
+                    "prosody": {"score": 0, "max": 100, "percent": 0},
+                    "fluency": {"score": 0, "max": 100, "percent": 0},
+                },
             },
         }
 
@@ -112,6 +120,8 @@ def test_check_stream_ndjson_contract(client, monkeypatch):
     assert events[0]["type"] == "progress"
     assert events[-1]["type"] == "result"
     assert "summary" in events[-1]["data"]
+    assert "scores" in events[-1]["data"]
+    assert "overall_accuracy" in events[-1]["data"]["scores"]
 
 
 def test_swt_task_contract(client):

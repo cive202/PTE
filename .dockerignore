@@ -1,16 +1,23 @@
 .git
 .gitignore
+.env
+.env.*
 .cache
 venv
+.venv
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 *.log
+.pytest_cache
+.mypy_cache
+.ruff_cache
 
 # Large runtime/model data should be mounted, not baked into image
 data
 PTE_MFA_TESTER_DOCKER
+nltk_data
 
 # Non-runtime content
 docs

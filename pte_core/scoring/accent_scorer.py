@@ -1,5 +1,4 @@
 import panphon
-import numpy as np
 import difflib
 from typing import List, Dict, Tuple, Optional
 
@@ -310,4 +309,36 @@ class AccentTolerantScorer:
             'accuracy': round(base_accuracy, 1),
             'phoneme_scores': [round(s, 2) for s in phoneme_scores],
             'alignment': aligned_pairs
+        }
+
+    def score_word_variants(
+        self,
+        expected_variants: List[List[str]],
+        spoken_phonemes: List[str],
+        accent: str = 'Non-Native English',
+    ) -> dict:
+        """Score against multiple valid expected pronunciations and keep the best match."""
+        if not expected_variants:
+            return {
+                'accuracy': 0.0,
+                'phoneme_scores': [],
+                'alignment': [],
+                'expected_variant': [],
+                'expected_variants_count': 0,
+            }
+
+        best_result = None
+        for variant in expected_variants:
+            candidate = self.score_word(variant, spoken_phonemes, accent)
+            candidate['expected_variant'] = list(variant)
+            candidate['expected_variants_count'] = len(expected_variants)
+            if best_result is None or candidate.get('accuracy', 0.0) > best_result.get('accuracy', 0.0):
+                best_result = candidate
+
+        return best_result or {
+            'accuracy': 0.0,
+            'phoneme_scores': [],
+            'alignment': [],
+            'expected_variant': [],
+            'expected_variants_count': len(expected_variants),
         }

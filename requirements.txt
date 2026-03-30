@@ -35,6 +35,9 @@ python-multipart>=0.0.9
 # Data Science
 scikit-learn>=1.0.0
 
+# Testing / local validation
+pytest>=8.0.0
+
 # Grammar and ASR service dependencies
 language-tool-python>=2.7.1
 nemo_toolkit[asr]

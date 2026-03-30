@@ -19,11 +19,15 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from pte_core.asr.voice2text import voice2text
 from pte_core.pause.pause_evaluator import evaluate_pause
+from pte_core.pause.boundary import estimate_boundary_realization
 from pte_core.pause.hesitation import apply_hesitation_clustering, aggregate_pause_penalty
+from pte_core.pause.rules import BASE_INTER_WORD_GAP_RANGE, MAX_PUNCTUATION_PENALTY
 from pte_core.pause.speech_rate import calculate_speech_rate_scale
 from read_aloud.alignment.normalizer import PAUSE_PUNCTUATION, is_punctuation
+from read_aloud.alignment.content_matcher import compare_text as compare_text_impl
 from pte_core.asr.phoneme_recognition import call_phoneme_service
 from pte_core.scoring.pronunciation import per, label_from_per, analyze_phoneme_errors
+from pte_core.scoring.stress_policy import classify_stress_result
 from pte_core.scoring.stress import get_syllable_stress_score, get_syllable_stress_details
 from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from src.shared.paths import (
@@ -51,7 +55,9 @@ HOST_PROJECT_ROOT = os.environ.get("PTE_HOST_PROJECT_ROOT")
 # - MFA_RUNTIME_DIR (Host) -> /runtime (Container)
 DOCKER_IMAGE = MFA_DOCKER_IMAGE
 CACHE_SCHEMA_VERSION = "read_aloud_cache_v3"
-CACHE_PIPELINE_VERSION = "phase2_v2"
+CACHE_PIPELINE_VERSION = "phase3_v4"
+WORD_PHONEME_WEIGHT = 0.90
+WORD_STRESS_WEIGHT = 0.10
 
 
 def _safe_int_env(value: Optional[str], default: int, minimum: int = 1, maximum: Optional[int] = None) -> int:
@@ -489,6 +495,254 @@ def build_ref_word_to_mfa_map(diff_analysis, base_words):
             seen_counts[key] = used + 1
     return mapped
 
+
+def _clamp_percent(value):
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        numeric = 0.0
+    return round(max(0.0, min(100.0, numeric)), 1)
+
+
+def _average(values):
+    clean = []
+    for value in values or []:
+        try:
+            clean.append(float(value))
+        except (TypeError, ValueError):
+            continue
+    if not clean:
+        return None
+    return sum(clean) / len(clean)
+
+
+def _is_expected_lexical_word(row):
+    if not isinstance(row, dict):
+        return False
+    token = row.get("word", "")
+    return row.get("ref_index") is not None and not is_punctuation(token)
+
+
+def _is_inserted_lexical_word(row):
+    if not isinstance(row, dict):
+        return False
+    token = row.get("word", "")
+    return row.get("ref_index") is None and not is_punctuation(token) and str(row.get("status", "")).lower() == "inserted"
+
+
+def _is_penalized_inserted_lexical_word(row):
+    if not _is_inserted_lexical_word(row):
+        return False
+    return str(row.get("alignment_op", "")).lower() != "sub_ins"
+
+
+def _resolve_expected_word_status(row):
+    if not isinstance(row, dict):
+        return row
+    if not _is_expected_lexical_word(row):
+        if _is_inserted_lexical_word(row):
+            row["content_status"] = "inserted"
+        return row
+
+    support = str(row.get("content_support") or ("match" if row.get("trans_index") is not None else "unsupported")).lower()
+    row["content_support"] = support
+    current_status = str(row.get("status", "")).lower()
+
+    try:
+        combined_score = float(row.get("combined_score", 0.0))
+    except (TypeError, ValueError):
+        combined_score = 0.0
+
+    try:
+        accuracy_score = float(row.get("accuracy_score", 0.0))
+    except (TypeError, ValueError):
+        accuracy_score = 0.0
+
+    has_scoring_signal = row.get("combined_score") is not None or row.get("accuracy_score") is not None
+
+    observed_phones = str(row.get("observed_phones") or "").strip()
+    acoustic_evidence = bool(observed_phones)
+
+    if support == "contradicted":
+        content_status = "omitted"
+        row["content_miscue"] = "replacement"
+    elif not has_scoring_signal and current_status == "correct":
+        content_status = "realized"
+    elif support == "match":
+        content_status = "realized"
+    elif combined_score >= 0.62 or accuracy_score >= 70.0:
+        content_status = "realized"
+    elif combined_score >= 0.45 and acoustic_evidence:
+        content_status = "realized"
+    else:
+        content_status = "omitted"
+
+    row["content_status"] = content_status
+
+    if not has_scoring_signal and current_status in {"correct", "mispronounced", "omitted"}:
+        row["status"] = current_status
+    elif content_status == "omitted":
+        row["status"] = "omitted"
+    elif combined_score < 0.55:
+        row["status"] = "mispronounced"
+    else:
+        row["status"] = "correct"
+
+    return row
+
+
+def _count_extra_gaps(mfa_word_gaps, speech_rate_scale):
+    if not mfa_word_gaps:
+        return 0
+    scale = speech_rate_scale if speech_rate_scale and speech_rate_scale > 0 else 1.0
+    _, max_gap = BASE_INTER_WORD_GAP_RANGE
+    ideal_max_gap = max_gap * scale
+    return sum(1 for gap in mfa_word_gaps if (gap.get("duration") or 0.0) > ideal_max_gap)
+
+
+def build_read_aloud_scores(words, pause_evals, total_pause_penalty, speech_rate_scale, mfa_word_gaps):
+    rows = [row for row in (words or []) if isinstance(row, dict)]
+    expected_rows = [row for row in rows if _is_expected_lexical_word(row)]
+    inserted_rows = [row for row in rows if _is_penalized_inserted_lexical_word(row)]
+
+    pronunciation_values = []
+    stress_values = []
+    reliable_stress_values = []
+
+    omitted_count = 0
+    realized_count = 0
+    mispronounced_count = 0
+
+    for row in expected_rows:
+        status = str(row.get("status", "")).lower()
+        content_status = str(row.get("content_status") or ("omitted" if status == "omitted" else "realized")).lower()
+        if content_status == "omitted":
+            omitted_count += 1
+        else:
+            realized_count += 1
+
+        if status == "mispronounced":
+            mispronounced_count += 1
+
+        combined_score = row.get("combined_score")
+        if content_status != "omitted":
+            if combined_score is not None:
+                try:
+                    pronunciation_values.append(float(combined_score) * 100.0)
+                except (TypeError, ValueError):
+                    pass
+            elif status == "correct":
+                pronunciation_values.append(100.0)
+            elif status == "mispronounced":
+                pronunciation_values.append(35.0)
+
+        stress_score = row.get("stress_score")
+        if stress_score is not None:
+            try:
+                stress_percent = float(stress_score) * 100.0
+                stress_values.append(stress_percent)
+                if row.get("stress_reliable"):
+                    reliable_stress_values.append(stress_percent)
+            except (TypeError, ValueError):
+                pass
+
+    pronunciation_percent = _average(pronunciation_values)
+    if pronunciation_percent is None:
+        if expected_rows:
+            pronunciation_percent = ((len(expected_rows) - mispronounced_count) / len(expected_rows)) * 100.0
+        else:
+            pronunciation_percent = 0.0
+
+    completeness_denominator = len(expected_rows) or 1
+    completeness_percent = ((realized_count - len(inserted_rows)) / completeness_denominator) * 100.0
+
+    pause_quality_values = []
+    for pause in pause_evals or []:
+        try:
+            penalty = float(pause.get("penalty", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            penalty = 0.0
+        boundary = pause.get("boundary_realization") if isinstance(pause.get("boundary_realization"), dict) else {}
+        try:
+            boundary_score = float(pause.get("boundary_realization_score", boundary.get("score", 0.0)) or 0.0)
+        except (TypeError, ValueError):
+            boundary_score = 0.0
+        quality = max(0.0, min(1.0, 1.0 - penalty + (0.1 * boundary_score)))
+        if str(pause.get("status", "")).lower() == "weak_pause_but_good_boundary":
+            quality = max(quality, 0.75)
+        pause_quality_values.append(quality * 100.0)
+
+    prosody_percent = _average(pause_quality_values)
+    if prosody_percent is None:
+        prosody_percent = 100.0
+
+    extra_gap_count = _count_extra_gaps(mfa_word_gaps, speech_rate_scale)
+    pause_penalty_ratio = 0.0
+    if MAX_PUNCTUATION_PENALTY > 0:
+        pause_penalty_ratio = min(max(float(total_pause_penalty or 0.0) / MAX_PUNCTUATION_PENALTY, 0.0), 1.0)
+    extra_gap_ratio = min(extra_gap_count / max(1, len(expected_rows)), 1.0)
+    fluency_percent = (1.0 - pause_penalty_ratio) * 100.0
+    fluency_percent -= min(25.0, extra_gap_ratio * 100.0)
+
+    stress_percent = _average(reliable_stress_values) or _average(stress_values) or 50.0
+
+    pronunciation_percent = _clamp_percent(pronunciation_percent)
+    completeness_percent = _clamp_percent(completeness_percent)
+    stress_percent = _clamp_percent(stress_percent)
+    prosody_percent = _clamp_percent(prosody_percent)
+    fluency_percent = _clamp_percent(fluency_percent)
+
+    return {
+        "overall_accuracy": {
+            "score": pronunciation_percent,
+            "max": 100,
+            "percent": pronunciation_percent,
+            "basis": "pronunciation_only",
+            "note": "Pause timing, punctuation, and random gaps do not reduce this accuracy score.",
+        },
+        "pronunciation_accuracy": {
+            "score": pronunciation_percent,
+            "max": 100,
+            "percent": pronunciation_percent,
+            "expected_words": len(expected_rows),
+            "realized_words": realized_count,
+            "mispronounced_words": mispronounced_count,
+            "weighting": {
+                "phoneme_accuracy": int(WORD_PHONEME_WEIGHT * 100),
+                "stress": int(WORD_STRESS_WEIGHT * 100),
+            },
+        },
+        "completeness": {
+            "score": completeness_percent,
+            "max": 100,
+            "percent": completeness_percent,
+            "expected_words": len(expected_rows),
+            "realized_words": realized_count,
+            "omitted_words": omitted_count,
+            "inserted_words": len(inserted_rows),
+        },
+        "stress": {
+            "score": stress_percent,
+            "max": 100,
+            "percent": stress_percent,
+            "reliable_words": len(reliable_stress_values),
+            "measured_words": len(stress_values),
+        },
+        "prosody": {
+            "score": prosody_percent,
+            "max": 100,
+            "percent": prosody_percent,
+            "pause_events": len(pause_evals or []),
+        },
+        "fluency": {
+            "score": fluency_percent,
+            "max": 100,
+            "percent": fluency_percent,
+            "pause_penalty": round(float(total_pause_penalty or 0.0), 3),
+            "extra_gap_count": extra_gap_count,
+        },
+    }
+
 # --- ASR Logic ---
 
 def transcribe_audio(audio_path):
@@ -503,90 +757,8 @@ def transcribe_audio(audio_path):
         return ""
 
 def compare_text(reference_text, transcription):
-    """
-    Compare reference text with transcription using difflib.
-    Returns a list of word objects with status: 'correct', 'omitted', 'inserted', 'substituted'.
-    Preserves punctuation marks (,.) for pause scoring.
-    """
-    def tokenize(text, preserve_pause_punct=True):
-        if not preserve_pause_punct:
-            return [w.strip(".,!?;:\"").lower() for w in text.split()]
-        
-        # Split by whitespace, then separate trailing pause punctuation
-        tokens = []
-        for word in text.split():
-            clean_word = word.lower()
-            # Check for any punctuation in our set at the end of the word
-            found_punct = None
-            word_part = clean_word
-            
-            # Simple check for trailing punctuation
-            if clean_word and clean_word[-1] in PAUSE_PUNCTUATION:
-                found_punct = clean_word[-1]
-                word_part = clean_word[:-1]
-            
-            # Strip other non-pause punctuation
-            word_part = word_part.strip("!?;:\"") # Clean leading/trailing
-            word_part = re.sub(r"[^a-z0-9']+", "", word_part) # Only keep alphanumeric + apostrophe
-            
-            if word_part:
-                tokens.append(word_part)
-            if found_punct:
-                tokens.append(found_punct)
-        return [t for t in tokens if t]
-
-    ref_words = tokenize(reference_text)
-    trans_words = tokenize(transcription, preserve_pause_punct=False) # Transcriptions usually don't have punct
-    
-    matcher = difflib.SequenceMatcher(None, ref_words, trans_words)
-    diff_results = []
-    
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == 'equal':
-            # Words match
-            for k, l in zip(range(i1, i2), range(j1, j2)):
-                diff_results.append({
-                    "word": ref_words[k],
-                    "status": "correct",
-                    "ref_index": k,
-                    "trans_index": l
-                })
-        elif tag == 'replace':
-            # Substitution (Mismatch)
-            for k in range(i1, i2):
-                diff_results.append({
-                    "word": ref_words[k],
-                    "status": "omitted",
-                    "ref_index": k,
-                    "trans_index": None
-                })
-            for l in range(j1, j2):
-                diff_results.append({
-                    "word": trans_words[l],
-                    "status": "inserted",
-                    "ref_index": None,
-                    "trans_index": l
-                })
-        elif tag == 'delete':
-            # Words in Ref but not in Trans (Omitted)
-            for k in range(i1, i2):
-                diff_results.append({
-                    "word": ref_words[k],
-                    "status": "omitted",
-                    "ref_index": k,
-                    "trans_index": None
-                })
-        elif tag == 'insert':
-            # Words in Trans but not in Ref (Inserted)
-            for l in range(j1, j2):
-                diff_results.append({
-                    "word": trans_words[l],
-                    "status": "inserted",
-                    "ref_index": None,
-                    "trans_index": l
-                })
-                
-    return diff_results, " ".join(trans_words)
+    """Compatibility wrapper for the read-aloud content matcher."""
+    return compare_text_impl(reference_text, transcription)
 
 def calculate_pauses(word_timestamps, threshold=0.5):
     """
@@ -707,10 +879,38 @@ def build_asr_only_result(
     mfa_runner_mode=None,
     mfa_num_jobs=None,
     cache_key=None,
+    analysis_outputs=None,
 ):
     """Build a consistent ASR-only fallback payload."""
     correct_count = sum(1 for w in diff_analysis if w['status'] == 'correct' and not is_punctuation(w['word']))
     total_words = sum(1 for w in diff_analysis if not is_punctuation(w['word']))
+    summary = {
+        "total": total_words,
+        "correct": correct_count,
+        "pause_penalty": 0,
+        "pause_count": 0,
+        "asr_only": True,
+        "note": note,
+        "cached": False,
+        "lexical_total": total_words,
+        "expected_words": total_words,
+        "realized_words": correct_count,
+        "omitted_words": sum(
+            1 for w in diff_analysis
+            if _is_expected_lexical_word(w) and str(w.get("status", "")).lower() == "omitted"
+        ),
+        "inserted_words": sum(1 for w in diff_analysis if _is_penalized_inserted_lexical_word(w)),
+        "replacement_words": sum(
+            1 for w in diff_analysis
+            if _is_expected_lexical_word(w) and str(w.get("content_support", "")).lower() == "contradicted"
+        ),
+        "mispronounced_words": sum(
+            1 for w in diff_analysis
+            if _is_expected_lexical_word(w) and str(w.get("status", "")).lower() == "mispronounced"
+        ),
+        "stress_issues": 0,
+        "extra_gap_count": 0,
+    }
     return {
         "words": diff_analysis,
         "transcript": transcript,
@@ -731,15 +931,16 @@ def build_asr_only_result(
                 "pipeline": CACHE_PIPELINE_VERSION,
             },
         },
-        "summary": {
-            "total": total_words,
-            "correct": correct_count,
-            "pause_penalty": 0,
-            "pause_count": 0,
-            "asr_only": True,
-            "note": note,
-            "cached": False,
-        },
+        "summary": summary,
+        "scores": build_read_aloud_scores(
+            diff_analysis,
+            pause_evals=[],
+            total_pause_penalty=0.0,
+            speech_rate_scale=speech_rate_scale,
+            mfa_word_gaps=[],
+        ),
+        "word_feedback": build_word_level_feedback(diff_analysis),
+        "analysis_outputs": analysis_outputs or {},
     }
 
 def run_single_alignment_gen(accent, conf, run_id, docker_input_dir, error_sink=None):
@@ -869,6 +1070,12 @@ def analyze_word_pronunciation(
     Analyze a single word pronunciation using cached MFA structures when available.
     """
     res_entry = item.copy()
+    if _is_expected_lexical_word(res_entry):
+        res_entry["content_support"] = str(
+            res_entry.get("content_support")
+            or ("match" if res_entry.get("trans_index") is not None else "unsupported")
+        ).lower()
+        res_entry["content_status"] = "pending"
 
     # PRIORITY 1: Use occurrence-aware MFA word match
     s, e = None, None
@@ -899,27 +1106,62 @@ def analyze_word_pronunciation(
             try:
                 obs_ph = call_phoneme_service(audio_path, s, e)
                 res_entry['observed_phones'] = " ".join(obs_ph)
+                res_entry['wav2vec_observed_phones'] = " ".join(obs_ph)
+                res_entry['observed_phones_source'] = "wav2vec"
             except Exception:
                 res_entry['observed_phones'] = ""
+                res_entry['wav2vec_observed_phones'] = ""
+                res_entry['observed_phones_source'] = "unavailable"
+            res_entry['content_status'] = 'inserted'
             return res_entry
 
-        # Correct word: full analysis
-        if item['status'] == 'correct':
+        # Expected lexical word: full analysis
+        if item.get('ref_index') is not None:
             ref_word = item['word']
-            fallback_accuracy = 60.0  # Neutral fallback: not perfect, not auto-fail
+            content_support = str(
+                res_entry.get('content_support')
+                or ('match' if item.get('trans_index') is not None else 'unsupported')
+            ).lower()
+            fallback_accuracy = 60.0 if content_support == 'match' else 45.0
 
             # --- A. Phoneme Analysis ---
             try:
-                ref_ph = builder.word_to_phonemes(ref_word)
-                obs_ph = [p.get('label', '') for p in word_phone_intervals if p.get('label')]
+                if hasattr(builder, "word_to_pronunciation_variants"):
+                    ref_variants = builder.word_to_pronunciation_variants(ref_word)
+                else:
+                    ref_variants = [builder.word_to_phonemes(ref_word)]
+                ref_ph = list(ref_variants[0]) if ref_variants else []
+                mfa_obs_ph = [p.get('label', '') for p in word_phone_intervals if p.get('label')]
 
-                if not obs_ph:
-                    obs_ph = call_phoneme_service(audio_path, s, e)
-
+                res_entry['expected_phone_variants'] = [" ".join(variant) for variant in ref_variants]
+                res_entry['expected_phone_variant_count'] = len(ref_variants)
                 res_entry['expected_phones'] = " ".join(ref_ph)
+                res_entry['mfa_observed_phones'] = " ".join(mfa_obs_ph)
+                res_entry['wav2vec_observed_phones'] = ""
+
+                # Read Aloud is a known-text task. Prefer MFA-aligned phones when available
+                # and only use the independent wav2vec probe as fallback when MFA phone
+                # evidence is missing for the word segment.
+                obs_ph = list(mfa_obs_ph)
+                if obs_ph:
+                    res_entry['observed_phones_source'] = "mfa_alignment_primary"
+                else:
+                    try:
+                        obs_ph = call_phoneme_service(audio_path, s, e)
+                    except Exception:
+                        obs_ph = []
+                    if obs_ph:
+                        res_entry['wav2vec_observed_phones'] = " ".join(obs_ph)
+                        res_entry['observed_phones_source'] = "wav2vec_fallback"
+                    else:
+                        res_entry['observed_phones_source'] = "unavailable"
 
                 if obs_ph:
-                    word_score_obj = scorer.score_word(ref_ph, obs_ph, accent)
+                    if hasattr(scorer, "score_word_variants"):
+                        word_score_obj = scorer.score_word_variants(ref_variants, obs_ph, accent)
+                    else:
+                        word_score_obj = scorer.score_word(ref_ph, obs_ph, accent)
+                    chosen_variant = list(word_score_obj.get('expected_variant') or ref_ph)
                     accuracy = float(word_score_obj.get('accuracy', fallback_accuracy))
                     per_equivalent = 1.0 - (accuracy / 100.0)
 
@@ -927,11 +1169,15 @@ def analyze_word_pronunciation(
                     res_entry['phoneme_analysis'] = word_score_obj.get('alignment', [])
                     res_entry['observed_phones'] = " ".join(obs_ph)
                     res_entry['accuracy_score'] = accuracy
+                    res_entry['expected_phones'] = " ".join(chosen_variant)
+                    res_entry['pronunciation_variant_used'] = " ".join(chosen_variant)
                 else:
                     res_entry['per'] = round(1.0 - (fallback_accuracy / 100.0), 3)
                     res_entry['accuracy_score'] = fallback_accuracy
                     res_entry['analysis_confidence'] = "low"
                     res_entry['analysis_note'] = "No phonemes detected for this segment."
+                    res_entry['observed_phones_source'] = "unavailable"
+                    res_entry['observed_phones'] = ""
 
             except Exception as e:
                 print(f"Phoneme analysis failed for {ref_word}: {e}")
@@ -939,6 +1185,11 @@ def analyze_word_pronunciation(
                 res_entry['accuracy_score'] = fallback_accuracy
                 res_entry['analysis_confidence'] = "low"
                 res_entry['analysis_note'] = "Phoneme analysis unavailable due to processing error."
+                res_entry.setdefault('mfa_observed_phones', "")
+                res_entry.setdefault('wav2vec_observed_phones', "")
+                res_entry.setdefault('observed_phones_source', "error")
+                res_entry.setdefault('expected_phone_variants', [])
+                res_entry.setdefault('expected_phone_variant_count', 0)
 
             # --- B. Stress Analysis ---
             stress_score = 0.5  # Neutral default instead of perfect
@@ -979,59 +1230,95 @@ def analyze_word_pronunciation(
 
             res_entry['stress_score'] = round(stress_score, 3)
             stress_details = res_entry.get('stress_details', {}) if isinstance(res_entry.get('stress_details'), dict) else {}
-            stress_match_info = str(stress_details.get('match_info', '') or '').strip()
-            stress_match_lc = stress_match_info.lower()
-
-            stress_unknown = any(
-                phrase in stress_match_lc
-                for phrase in (
-                    "insufficient phone evidence",
-                    "no reference pattern",
-                    "audio load error",
-                    "error:",
-                )
-            )
-            stress_error = False
-            if not stress_unknown:
-                stress_error = (
-                    stress_score < 0.85
-                    or "mismatch" in stress_match_lc
-                    or "no vowels detected" in stress_match_lc
-                )
-                if "perfect match" in stress_match_lc or "acceptable variation" in stress_match_lc:
-                    stress_error = False
-
-            if stress_unknown:
-                stress_level = "unknown"
-                stress_feedback = "Stress could not be measured reliably for this word."
-            elif stress_error:
-                stress_level = "error" if stress_score < 0.7 else "warn"
-                stress_feedback = stress_match_info or "Stress pattern differs from expected emphasis."
-            else:
-                stress_level = "ok"
-                stress_feedback = stress_match_info or "Stress pattern is acceptable."
-
-            res_entry['stress_error'] = bool(stress_error)
-            res_entry['stress_level'] = stress_level
-            res_entry['stress_feedback'] = stress_feedback
+            stress_policy = classify_stress_result(stress_score, stress_details)
+            res_entry['stress_reliable'] = bool(stress_policy['stress_reliable'])
+            res_entry['stress_error'] = bool(stress_policy['stress_error'])
+            res_entry['stress_level'] = stress_policy['stress_level']
+            res_entry['stress_feedback'] = stress_policy['stress_feedback']
 
             # --- C. Combined Score ---
             accuracy_score = float(res_entry.get('accuracy_score', fallback_accuracy))
-            combined_score_val = (0.7 * accuracy_score) + (0.3 * stress_score * 100)
+            combined_score_val = (
+                (WORD_PHONEME_WEIGHT * accuracy_score)
+                + (WORD_STRESS_WEIGHT * stress_score * 100)
+            )
             combined_score = combined_score_val / 100.0
             res_entry['combined_score'] = round(combined_score, 3)
-
-            if combined_score < 0.55:
-                res_entry['status'] = 'mispronounced'
-
-            return res_entry
+            return _resolve_expected_word_status(res_entry)
 
     return res_entry
 
 
+def _build_word_comparison_rows(words):
+    rows = []
+    for row in words or []:
+        if not isinstance(row, dict) or is_punctuation(row.get("word", "")):
+            continue
+        rows.append(
+            {
+                "word": row.get("word", ""),
+                "status": row.get("status", ""),
+                "start": row.get("start"),
+                "end": row.get("end"),
+                "expected_phones": row.get("expected_phones", ""),
+                "observed_phones": row.get("observed_phones", ""),
+                "observed_phones_source": row.get("observed_phones_source", ""),
+                "mfa_observed_phones": row.get("mfa_observed_phones", ""),
+                "wav2vec_observed_phones": row.get("wav2vec_observed_phones", ""),
+                "accuracy_score": row.get("accuracy_score"),
+                "stress_score": row.get("stress_score"),
+                "combined_score": row.get("combined_score"),
+                "content_support": row.get("content_support"),
+                "content_status": row.get("content_status"),
+                "pronunciation_variant_used": row.get("pronunciation_variant_used"),
+            }
+        )
+    return rows
+
+
+def _build_analysis_outputs(
+    reference_text,
+    asr_result,
+    diff_analysis,
+    base_words=None,
+    all_mfa_phones=None,
+    mfa_word_gaps=None,
+    accent_tgs=None,
+    final_results=None,
+):
+    comparison_rows = _build_word_comparison_rows(final_results or diff_analysis or [])
+    wav2vec_rows = [
+        row for row in comparison_rows
+        if row.get("wav2vec_observed_phones") or row.get("observed_phones_source") == "wav2vec"
+    ]
+    return {
+        "parakeet": {
+            "reference_text": reference_text,
+            "transcript": asr_result.get("text", "") if isinstance(asr_result, dict) else "",
+            "asr_result": asr_result if isinstance(asr_result, dict) else {},
+            "diff_analysis": diff_analysis if isinstance(diff_analysis, list) else [],
+        },
+        "mfa": {
+            "words": base_words or [],
+            "phones": all_mfa_phones or [],
+            "word_gaps": mfa_word_gaps or [],
+            "accents_with_textgrid": sorted((accent_tgs or {}).keys()),
+        },
+        "wav2vec": {
+            "word_probes": wav2vec_rows,
+        },
+        "final": {
+            "word_level_comparison": comparison_rows,
+        },
+    }
+
+
 def build_word_level_feedback(words):
     """Aggregate explainable word-level feedback for UI summaries."""
-    rows = [row for row in (words or []) if isinstance(row, dict)]
+    rows = [
+        row for row in (words or [])
+        if isinstance(row, dict) and not is_punctuation(row.get("word", ""))
+    ]
     if not rows:
         return {
             "counts": {
@@ -1058,13 +1345,14 @@ def build_word_level_feedback(words):
 
     for row in rows:
         status = str(row.get("status", "")).lower()
+        content_status = str(row.get("content_status") or "").lower()
         if status == "correct":
             counts["correct"] += 1
         elif status == "mispronounced":
             counts["mispronounced"] += 1
-        elif status == "inserted":
+        elif status == "inserted" and _is_penalized_inserted_lexical_word(row):
             counts["inserted"] += 1
-        elif status == "omitted":
+        elif status == "omitted" or content_status == "omitted":
             counts["omitted"] += 1
 
         if row.get("stress_error"):
@@ -1084,7 +1372,7 @@ def build_word_level_feedback(words):
         highlights.append(f"{counts['mispronounced']} word(s) need clearer pronunciation.")
     if counts["omitted"] > 0 or counts["inserted"] > 0:
         highlights.append(
-            f"Content alignment issues: {counts['omitted']} omitted, {counts['inserted']} inserted."
+            f"Completeness issues: {counts['omitted']} omitted, {counts['inserted']} inserted."
         )
 
     if not highlights:
@@ -1162,6 +1450,12 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
         reason = "MFA disabled by PTE_SKIP_MFA." if mfa_disabled else docker_reason
         print(f"[DEBUG] Skipping MFA: {reason}")
         yield {"type": "progress", "percent": 30, "message": "MFA unavailable; using ASR fallback."}
+        analysis_outputs = _build_analysis_outputs(
+            reference_text,
+            asr_result,
+            diff_analysis,
+            final_results=diff_analysis,
+        )
         yield {
             "type": "result",
             "data": build_asr_only_result(
@@ -1174,6 +1468,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 mfa_runner_mode=mfa_runner_mode,
                 mfa_num_jobs=mfa_num_jobs,
                 cache_key=cache_key,
+                analysis_outputs=analysis_outputs,
             ),
         }
         return
@@ -1302,6 +1597,12 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                         mfa_runner_mode=mfa_runner_mode,
                         mfa_num_jobs=mfa_num_jobs,
                         cache_key=cache_key,
+                        analysis_outputs=_build_analysis_outputs(
+                            reference_text,
+                            asr_result,
+                            diff_analysis,
+                            final_results=diff_analysis,
+                        ),
                     ),
                 }
             except BaseException as e:
@@ -1370,7 +1671,7 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
             if is_punctuation(item['word']):
                 # Handle punctuation/pauses separately in main thread
                 continue
-            if item['status'] in ('correct', 'inserted') or item.get('trans_index') is not None:
+            if item.get('ref_index') is not None or item['status'] == 'inserted' or item.get('trans_index') is not None:
                  items_to_process.append((i, item))
             else:
                  # Omitted or others without trans_index, just copy
@@ -1499,6 +1800,11 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
 
                 prev_mfa = prev_candidate.get("mfa")
                 next_mfa = next_candidate.get("mfa")
+                boundary_realization = {
+                    "score": 0.0,
+                    "classification": "none",
+                    "reason": "unavailable",
+                }
                 if (
                     prev_mfa
                     and next_mfa
@@ -1530,6 +1836,10 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     p_start = None
                     p_end = None
                     pause_timing_source = None
+
+                if prev_mfa:
+                    prev_word_phones = get_phone_intervals_for_word(prev_mfa, all_mfa_phones)
+                    boundary_realization = estimate_boundary_realization(prev_word_phones, all_mfa_phones)
                 
                 p_eval = evaluate_pause(
                     punct=item['word'],
@@ -1537,24 +1847,33 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     prev_end=p_start,
                     next_start=p_end,
                     speech_rate_scale=speech_rate_scale,
-                    prev_word=prev_word_text
+                    prev_word=prev_word_text,
+                    boundary_realization_score=boundary_realization.get("score", 0.0),
                 )
                 p_eval['prev_word'] = prev_word_text
                 p_eval['next_word'] = next_candidate.get("word") or ""
                 p_eval['duration'] = round(pause_duration, 2) if pause_duration else 0.0
                 p_eval['timing_source'] = pause_timing_source or "unavailable"
+                p_eval['silent_pause_duration'] = round(pause_duration, 2) if pause_duration else 0.0
+                p_eval['boundary_realization'] = boundary_realization
                 pause_evals.append(p_eval)
                 res_entry['pause_eval'] = p_eval
                 res_entry['status'] = p_eval['status']
                 res_entry['start'] = p_start
                 res_entry['end'] = p_end
                 res_entry['duration'] = p_eval['duration']
+                res_entry['silent_pause_duration'] = p_eval['silent_pause_duration']
+                res_entry['boundary_realization'] = boundary_realization
                 res_entry['expected_range'] = p_eval.get('expected_range')
                 res_entry['pause_level'] = p_eval.get('pause_level')
                 res_entry['pause_feedback'] = p_eval.get('feedback')
 
         print(f"[DEBUG] Pause evaluation complete. Generating final result...")
-        final_results = [r for r in final_results_map if r is not None]
+        final_results = [
+            _resolve_expected_word_status(r.copy()) if isinstance(r, dict) else r
+            for r in final_results_map
+            if r is not None
+        ]
         print(f"[DEBUG] final_results count: {len(final_results)}")
         
         # Apply hesitation clustering to pauses
@@ -1571,6 +1890,24 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                     textgrid_content = f.read()
         except Exception as e:
             print(f"Failed to read TextGrid for debug: {e}")
+
+        scores = build_read_aloud_scores(
+            final_results,
+            pause_evals=pause_evals,
+            total_pause_penalty=total_pause_penalty,
+            speech_rate_scale=speech_rate_scale,
+            mfa_word_gaps=mfa_word_gaps,
+        )
+        expected_word_count = sum(1 for w in final_results if _is_expected_lexical_word(w))
+        omitted_word_count = sum(
+            1 for w in final_results
+            if _is_expected_lexical_word(w) and str(w.get('content_status') or w.get('status') or '').lower() == 'omitted'
+        )
+        inserted_word_count = sum(1 for w in final_results if _is_penalized_inserted_lexical_word(w))
+        replacement_word_count = sum(
+            1 for w in final_results
+            if _is_expected_lexical_word(w) and str(w.get('content_support') or '').lower() == 'contradicted'
+        )
 
         result_payload = {
             "textgrid_content": textgrid_content,
@@ -1599,14 +1936,36 @@ def align_and_validate_gen(audio_path, text_path, accents=None):
                 "total": len(final_results),
                 "correct": sum(1 for w in final_results if w['status'] == 'correct'),
                 "mispronounced": sum(1 for w in final_results if w.get('status') == 'mispronounced'),
-                "inserted": sum(1 for w in final_results if w.get('status') == 'inserted'),
-                "omitted": sum(1 for w in final_results if w.get('status') == 'omitted'),
+                "inserted": inserted_word_count,
+                "omitted": omitted_word_count,
+                "replacements": replacement_word_count,
                 "stress_issues": sum(1 for w in final_results if w.get('stress_error')),
                 "pause_penalty": round(total_pause_penalty, 3),
                 "pause_count": len([p for p in pause_evals if p['status'] != 'correct_pause']),
+                "lexical_total": expected_word_count + inserted_word_count,
+                "expected_words": expected_word_count,
+                "realized_words": max(expected_word_count - omitted_word_count, 0),
+                "omitted_words": omitted_word_count,
+                "inserted_words": inserted_word_count,
+                "mispronounced_words": sum(
+                    1 for w in final_results
+                    if _is_expected_lexical_word(w) and w.get('status') == 'mispronounced'
+                ),
+                "extra_gap_count": scores.get("fluency", {}).get("extra_gap_count", 0),
                 "cached": False,
             },
+            "scores": scores,
             "word_feedback": build_word_level_feedback(final_results),
+            "analysis_outputs": _build_analysis_outputs(
+                reference_text,
+                asr_result,
+                diff_analysis,
+                base_words=base_words,
+                all_mfa_phones=all_mfa_phones,
+                mfa_word_gaps=mfa_word_gaps,
+                accent_tgs=accent_tgs,
+                final_results=final_results,
+            ),
         }
 
         if cache_key and _result_cache_enabled():

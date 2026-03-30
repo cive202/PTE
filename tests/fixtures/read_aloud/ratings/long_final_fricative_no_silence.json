@@ -1,0 +1,8 @@
+{
+  "id": "long_final_fricative_no_silence",
+  "dimension_bands": {
+    "prosody": [70, 100],
+    "fluency": [65, 100]
+  },
+  "notes": "Boundary realization without a strong silent pause should not be treated as catastrophic fluency failure."
+}

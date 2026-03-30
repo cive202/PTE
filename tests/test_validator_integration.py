@@ -265,3 +265,177 @@ def test_run_single_alignment_uses_configurable_num_jobs(tmp_path, monkeypatch):
     assert "--num_jobs" in captured["cmd"]
     num_jobs_index = captured["cmd"].index("--num_jobs")
     assert captured["cmd"][num_jobs_index + 1] == "3"
+
+
+def test_analyze_word_pronunciation_prefers_mfa_phones_when_available(tmp_path, monkeypatch):
+    audio_path, _ = _write_minimal_files(tmp_path)
+
+    item = {
+        "word": "canada",
+        "status": "correct",
+        "ref_index": 0,
+        "trans_index": 0,
+        "content_support": "match",
+    }
+    word_timestamps = [{"value": "canada", "start": 0.0, "end": 0.6}]
+    matched_word = {"word": "canada", "start": 0.0, "end": 0.6}
+    all_mfa_phones = [
+        {"label": "k", "start": 0.0, "end": 0.1},
+        {"label": "æ", "start": 0.1, "end": 0.2},
+        {"label": "n", "start": 0.2, "end": 0.3},
+        {"label": "ə", "start": 0.3, "end": 0.4},
+        {"label": "d", "start": 0.4, "end": 0.5},
+        {"label": "ə", "start": 0.5, "end": 0.6},
+    ]
+
+    class FakeBuilder:
+        def word_to_pronunciation_variants(self, _word):
+            return [["k", "ae1", "n", "ah0", "d", "ah0"]]
+
+        def get_stress_pattern(self, _word):
+            return "100"
+
+    class FakeScorer:
+        def score_word_variants(self, expected_variants, spoken_phonemes, accent):
+            assert spoken_phonemes == ["k", "æ", "n", "ə", "d", "ə"]
+            return {
+                "accuracy": 92.0,
+                "alignment": [],
+                "expected_variant": expected_variants[0],
+            }
+
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("wav2vec phoneme probe should not run when MFA phones exist")
+
+    monkeypatch.setattr(validator_module, "call_phoneme_service", fail_if_called)
+    monkeypatch.setattr(
+        validator_module,
+        "get_syllable_stress_details",
+        lambda *_args, **_kwargs: {
+            "score": 1.0,
+            "match_info": "Perfect match",
+            "confidence": 0.9,
+        },
+    )
+
+    result = validator_module.analyze_word_pronunciation(
+        item,
+        word_timestamps,
+        audio_path,
+        matched_word,
+        all_mfa_phones,
+        FakeBuilder(),
+        FakeScorer(),
+        "Non-Native English",
+    )
+
+    assert result["observed_phones_source"] == "mfa_alignment_primary"
+    assert result["observed_phones"] == "k æ n ə d ə"
+    assert result["wav2vec_observed_phones"] == ""
+
+
+def test_analyze_word_pronunciation_uses_wav2vec_only_when_mfa_is_missing(tmp_path, monkeypatch):
+    audio_path, _ = _write_minimal_files(tmp_path)
+
+    item = {
+        "word": "canada",
+        "status": "correct",
+        "ref_index": 0,
+        "trans_index": 0,
+        "content_support": "match",
+    }
+    word_timestamps = [{"value": "canada", "start": 0.0, "end": 0.6}]
+
+    class FakeBuilder:
+        def word_to_pronunciation_variants(self, _word):
+            return [["k", "ae1", "n", "ah0", "d", "ah0"]]
+
+        def get_stress_pattern(self, _word):
+            return "100"
+
+    class FakeScorer:
+        def score_word_variants(self, expected_variants, spoken_phonemes, accent):
+            assert spoken_phonemes == ["k", "a", "n", "ə", "d", "a"]
+            return {
+                "accuracy": 88.0,
+                "alignment": [],
+                "expected_variant": expected_variants[0],
+            }
+
+    monkeypatch.setattr(
+        validator_module,
+        "call_phoneme_service",
+        lambda *_args, **_kwargs: ["k", "a", "n", "ə", "d", "a"],
+    )
+
+    result = validator_module.analyze_word_pronunciation(
+        item,
+        word_timestamps,
+        audio_path,
+        None,
+        [],
+        FakeBuilder(),
+        FakeScorer(),
+        "Non-Native English",
+    )
+
+    assert result["observed_phones_source"] == "wav2vec_fallback"
+    assert result["observed_phones"] == "k a n ə d a"
+    assert result["wav2vec_observed_phones"] == "k a n ə d a"
+
+
+def test_contradicted_expected_word_becomes_omitted_even_with_strong_acoustic_fit():
+    resolved = validator_module._resolve_expected_word_status(
+        {
+            "word": "exploration",
+            "ref_index": 10,
+            "trans_index": 10,
+            "status": "correct",
+            "content_support": "contradicted",
+            "asr_word": "expression",
+            "combined_score": 0.81,
+            "accuracy_score": 81.0,
+            "observed_phones": "eh k s p l ah r ey sh ah n",
+        }
+    )
+
+    assert resolved["content_status"] == "omitted"
+    assert resolved["status"] == "omitted"
+    assert resolved["content_miscue"] == "replacement"
+
+
+def test_substitution_insert_does_not_double_penalize_completeness():
+    scores = validator_module.build_read_aloud_scores(
+        words=[
+            {
+                "word": "travel",
+                "ref_index": 0,
+                "status": "correct",
+                "content_status": "realized",
+                "combined_score": 0.9,
+                "accuracy_score": 90.0,
+            },
+            {
+                "word": "exploration",
+                "ref_index": 1,
+                "status": "omitted",
+                "content_status": "omitted",
+                "content_support": "contradicted",
+            },
+            {
+                "word": "expression",
+                "ref_index": None,
+                "status": "inserted",
+                "content_status": "inserted",
+                "alignment_op": "sub_ins",
+            },
+        ],
+        pause_evals=[],
+        total_pause_penalty=0.0,
+        speech_rate_scale=1.0,
+        mfa_word_gaps=[],
+    )
+
+    assert scores["completeness"]["omitted_words"] == 1
+    assert scores["completeness"]["inserted_words"] == 0
+    assert scores["completeness"]["percent"] == 50.0

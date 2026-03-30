@@ -51,3 +51,7 @@ HESITATION_CLUSTER_WINDOW = 2.0  # seconds
 
 # Maximum total punctuation penalty contribution to fluency score
 MAX_PUNCTUATION_PENALTY = 0.3  # Cap total contribution
+
+# Boundary realization heuristic threshold used when silent pause is weak but
+# phrase-final lengthening suggests the speaker still marked a boundary.
+BOUNDARY_REALIZATION_THRESHOLD = 0.6

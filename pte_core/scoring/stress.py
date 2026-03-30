@@ -117,7 +117,8 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
             "score": 1.0,
             "syllables": observed_vowels,
             "ref_pattern": reference_stress_pattern,
-            "match_info": "No reference pattern"
+            "match_info": "No reference pattern",
+            "confidence": 0.0,
         }
 
         if not reference_stress_pattern:
@@ -129,11 +130,13 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
         if obs_len == 0:
             result["score"] = 0.0
             result["match_info"] = "No vowels detected"
+            result["confidence"] = 0.2
             return result
             
         if ref_len != obs_len:
             result["score"] = 0.8
             result["match_info"] = f"Syllable count mismatch (expected {ref_len}, got {obs_len})"
+            result["confidence"] = 0.4
             return result
             
         # 4. Scoring Logic
@@ -142,6 +145,7 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
         except ValueError:
             # No primary stress in ref?
             result["match_info"] = "No primary stress in reference"
+            result["confidence"] = 0.3
             return result
             
         # Find vowel with max intensity
@@ -164,6 +168,22 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
                 observed_pattern_list[i] = '1'
         
         result['observed_pattern'] = "".join(observed_pattern_list)
+
+        if len(observed_vowels) == 1:
+            result["confidence"] = 0.4
+            result["match_info"] = "Single syllable word; lexical stress not diagnostic"
+            return result
+
+        ranked_intensities = sorted((v["intensity"] for v in observed_vowels), reverse=True)
+        top = ranked_intensities[0] if ranked_intensities else 0.0
+        second = ranked_intensities[1] if len(ranked_intensities) > 1 else 0.0
+        margin_ratio = top / max(second, 1e-6)
+        if margin_ratio < 1.10:
+            result["confidence"] = 0.55
+        elif margin_ratio < 1.25:
+            result["confidence"] = 0.7
+        else:
+            result["confidence"] = 0.9
                 
         # Relaxed Logic: Accept 2 (Secondary Stress) as valid max stress if 1 is expected
         # or if existing logic matches
@@ -188,7 +208,8 @@ def get_syllable_stress_details(audio_path, start_time, end_time, phonemes_with_
             "score": 1.0,
             "syllables": [],
             "ref_pattern": reference_stress_pattern,
-            "match_info": f"Error: {str(e)}"
+            "match_info": f"Error: {str(e)}",
+            "confidence": 0.0,
         }
 
 def get_syllable_stress_score(audio_path, start_time, end_time, phonemes_with_times, reference_stress_pattern):

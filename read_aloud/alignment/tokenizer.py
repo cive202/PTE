@@ -1,10 +1,44 @@
-"""Reference text tokenization for alignment."""
+"""Reference and transcript tokenization for alignment."""
 from __future__ import annotations
 
 import re
 from typing import List
 
-from .normalizer import normalize_token, PAUSE_PUNCTUATION
+from .normalizer import PAUSE_PUNCTUATION
+
+
+_WORD_OR_PUNCT_RE = re.compile(r"[A-Za-z0-9]+(?:[-'’`´][A-Za-z0-9]+)*|[.,;:!?]")
+_APOSTROPHE_TRANSLATION = str.maketrans({
+    "’": "'",
+    "`": "'",
+    "´": "'",
+})
+_HYPHEN_TRANSLATION = str.maketrans({
+    "‐": "-",
+    "‑": "-",
+    "–": "-",
+    "—": "-",
+})
+
+
+def _canonicalize_surface(text: str) -> str:
+    text = text.translate(_APOSTROPHE_TRANSLATION)
+    text = text.translate(_HYPHEN_TRANSLATION)
+    return text
+
+
+def _split_lexical_token(token: str) -> List[str]:
+    """Normalize a lexical token and split hyphen variants into separate words."""
+    normalized = token.lower().strip()
+    normalized = _canonicalize_surface(normalized)
+    parts = normalized.split("-")
+
+    out: List[str] = []
+    for part in parts:
+        cleaned = re.sub(r"[^a-z0-9']+", "", part)
+        if cleaned:
+            out.append(cleaned)
+    return out
 
 
 def tokenize_reference(text: str) -> List[str]:
@@ -19,27 +53,29 @@ def tokenize_reference(text: str) -> List[str]:
         List of tokens (words and punctuation marks)
     """
     tokens = []
-    # Split on whitespace first
-    raw = re.split(r"\s+", text.strip())
-    
-    for word in raw:
-        if not word:
+    raw = _WORD_OR_PUNCT_RE.findall(_canonicalize_surface(text))
+
+    for token in raw:
+        if token in PAUSE_PUNCTUATION:
+            tokens.append(token)
             continue
-        
-        # Collect trailing punctuation
-        trailing_punct = []
-        while word and word[-1] in PAUSE_PUNCTUATION:
-            trailing_punct.append(word[-1])
-            word = word[:-1]
-        
-        # Add the word part (if any)
-        if word:
-            normalized = normalize_token(word)
-            if normalized:
-                tokens.append(normalized)
-        
-        # Add trailing punctuation in order (reverse since we collected from end)
-        for punct in reversed(trailing_punct):
-            tokens.append(punct)
-    
+        tokens.extend(_split_lexical_token(token))
+
+    return tokens
+
+
+def tokenize_transcript(text: str) -> List[str]:
+    """Tokenize transcript text for lexical comparison.
+
+    Transcript punctuation is ignored as lexical evidence.
+    Hyphenated variants are split into separate lexical tokens.
+    """
+    tokens: List[str] = []
+    raw = _WORD_OR_PUNCT_RE.findall(_canonicalize_surface(text))
+
+    for token in raw:
+        if token in PAUSE_PUNCTUATION:
+            continue
+        tokens.extend(_split_lexical_token(token))
+
     return tokens

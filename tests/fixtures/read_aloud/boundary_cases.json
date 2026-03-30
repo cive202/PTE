@@ -1,0 +1,16 @@
+[
+  {
+    "id": "clean_comma_pause",
+    "punctuation": ",",
+    "pause_duration": 0.32,
+    "speech_rate_scale": 1.0,
+    "notes": "Healthy silent comma pause inside the current heuristic range."
+  },
+  {
+    "id": "long_final_fricative_no_silence",
+    "punctuation": ",",
+    "pause_duration": 0.0,
+    "speech_rate_scale": 1.0,
+    "notes": "Represents a phrase boundary marked by final-fricative lengthening but little or no silence. Current code will treat this as a short or missed pause, but the future boundary model should soften that outcome."
+  }
+]

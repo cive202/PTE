@@ -66,7 +66,7 @@ from api.reading_evaluator import (
     evaluate_multiple_choice_single as evaluate_reading_multiple_choice_single,
     evaluate_fill_in_the_blanks_dropdown,
 )
-from pte_core.asr.phoneme_recognition import call_phoneme_service
+from pte_core.asr.phoneme_recognition import call_phoneme_service, call_phoneme_service_raw
 from pte_core.scoring.accent_scorer import AccentTolerantScorer
 from api.file_utils import (
     get_paired_paths,
@@ -100,6 +100,16 @@ REPEAT_SENTENCE_AUDIO_DIR = os.fspath(SHARED_REPEAT_SENTENCE_AUDIO_DIR)
 REPEAT_SENTENCE_JSON = os.fspath(REPEAT_SENTENCE_REFERENCE_FILE)
 READ_ALOUD_JSON = os.fspath(READ_ALOUD_REFERENCE_FILE)
 ensure_runtime_dirs()
+
+
+@app.after_request
+def disable_browser_cache_for_live_ui(response):
+    mimetype = (response.mimetype or "").lower()
+    if mimetype in {"text/html", "application/javascript", "text/javascript"}:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 # ============================================================================
 # JOB QUEUE SYSTEM
@@ -362,6 +372,7 @@ def _persist_attempt_payload(audio_path, payload, filename):
         analysis_dir = attempt_dir / "analysis"
         analysis_dir.mkdir(parents=True, exist_ok=True)
         target = analysis_dir / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "w", encoding="utf-8") as out_file:
             json.dump(payload, out_file, ensure_ascii=False, indent=2)
     except Exception:
@@ -373,9 +384,11 @@ def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_
         return
 
     _persist_attempt_payload(audio_path, analysis_payload, filename)
+    _persist_attempt_payload(audio_path, analysis_payload, f"final/{Path(filename).name}")
 
     try:
         attempt_dir = Path(audio_path).resolve().parent
+        analysis_root = attempt_dir / "analysis"
         words = analysis_payload.get("words", [])
         if isinstance(words, list):
             phoneme_rows = []
@@ -390,12 +403,25 @@ def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_
                 _persist_attempt_payload(
                     audio_path,
                     {"count": len(phoneme_rows), "words": phoneme_rows},
-                    "phoneme_data.json",
+                    "final/phoneme_data.json",
                 )
+
+        analysis_outputs = analysis_payload.get("analysis_outputs")
+        if isinstance(analysis_outputs, dict):
+            section_filenames = {
+                "parakeet": "parakeet/asr_debug.json",
+                "mfa": "mfa/alignment_debug.json",
+                "wav2vec": "wav2vec/word_probes.json",
+                "final": "final/word_level_comparison.json",
+            }
+            for section, target_name in section_filenames.items():
+                payload = analysis_outputs.get(section)
+                if isinstance(payload, dict):
+                    _persist_attempt_payload(audio_path, payload, target_name)
 
         textgrid_content = analysis_payload.get("textgrid_content")
         if textgrid_content:
-            mfa_dir = attempt_dir / "mfa"
+            mfa_dir = analysis_root / "mfa"
             mfa_dir.mkdir(parents=True, exist_ok=True)
             (mfa_dir / "input.TextGrid").write_text(textgrid_content, encoding="utf-8")
 
@@ -405,7 +431,7 @@ def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_
             if source_root:
                 source_path = Path(source_root)
                 if source_path.exists() and source_path.is_dir():
-                    target_root = attempt_dir / "mfa"
+                    target_root = analysis_root / "mfa" / "docker_output"
                     target_root.mkdir(parents=True, exist_ok=True)
                     for accent_dir in source_path.iterdir():
                         if not accent_dir.is_dir():
@@ -416,6 +442,155 @@ def _persist_attempt_artifacts(audio_path, analysis_payload, filename="analysis_
                         shutil.copytree(accent_dir, destination)
     except Exception:
         pass
+
+
+def _build_ui_result_payload(payload):
+    """Trim the streamed result to fields the Read Aloud UI actually renders."""
+    if not isinstance(payload, dict):
+        return payload
+    allowed_keys = {
+        "words",
+        "transcript",
+        "speech_rate_scale",
+        "summary",
+        "scores",
+        "word_feedback",
+        "error",
+    }
+    return {key: payload.get(key) for key in allowed_keys if key in payload}
+
+
+def _safe_float(value):
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_wav2vec_debug_payload(audio_path, words):
+    """Collect per-word wav2vec phones for offline comparison artifacts only."""
+    probes = []
+    skipped = []
+    raw_responses = []
+
+    for row in words or []:
+        if not isinstance(row, dict):
+            continue
+
+        word = str(row.get("word") or "").strip()
+        status = str(row.get("status") or "").strip().lower()
+        start = _safe_float(row.get("start"))
+        end = _safe_float(row.get("end"))
+
+        if not word:
+            continue
+
+        if "pause" in status:
+            skipped_item = {"word": word, "status": status, "reason": "pause_marker"}
+            skipped.append(skipped_item)
+            continue
+
+        if start is None or end is None or end <= start:
+            skipped_item = {"word": word, "status": status, "reason": "missing_segment_timestamps"}
+            skipped.append(skipped_item)
+            continue
+
+        raw_service_response = call_phoneme_service_raw(audio_path, start, end)
+        wav2vec_phones = raw_service_response.get("phonemes", []) if isinstance(raw_service_response, dict) else []
+        probes.append(
+            {
+                "word": word,
+                "status": status,
+                "start": round(start, 3),
+                "end": round(end, 3),
+                "expected_phones": row.get("expected_phones") or "",
+                "mfa_observed_phones": row.get("mfa_observed_phones") or "",
+                "scoring_observed_phones": row.get("observed_phones") or "",
+                "scoring_source": row.get("observed_phones_source") or "",
+                "wav2vec_observed_phones": " ".join(wav2vec_phones),
+                "wav2vec_phone_count": len(wav2vec_phones),
+            }
+        )
+        raw_responses.append(
+            {
+                "word": word,
+                "status": status,
+                "start": round(start, 3),
+                "end": round(end, 3),
+                "service_response": raw_service_response,
+            }
+        )
+
+    return {
+        "status": "complete",
+        "count": len(probes),
+        "skipped": skipped,
+        "word_probes": probes,
+        "raw_word_responses": raw_responses,
+    }
+
+
+def _persist_wav2vec_debug_payload(audio_path, payload):
+    if not isinstance(payload, dict):
+        return
+    words = payload.get("words")
+    if not isinstance(words, list):
+        return
+
+    try:
+        _persist_attempt_payload(
+            audio_path,
+            {"status": "running", "count": 0, "skipped": [], "word_probes": []},
+            "wav2vec/word_probes.json",
+        )
+        debug_payload = _build_wav2vec_debug_payload(audio_path, words)
+        _persist_attempt_payload(audio_path, debug_payload, "wav2vec/word_probes.json")
+        _persist_attempt_payload(
+            audio_path,
+            {
+                "status": debug_payload.get("status"),
+                "count": debug_payload.get("count"),
+                "raw_word_responses": debug_payload.get("raw_word_responses", []),
+                "skipped": debug_payload.get("skipped", []),
+            },
+            "wav2vec/raw_word_responses.json",
+        )
+    except Exception as exc:
+        _persist_attempt_payload(
+            audio_path,
+            {
+                "status": "error",
+                "count": 0,
+                "skipped": [],
+                "word_probes": [],
+                "error": str(exc),
+            },
+            "wav2vec/word_probes.json",
+        )
+        _persist_attempt_payload(
+            audio_path,
+            {
+                "status": "error",
+                "count": 0,
+                "raw_word_responses": [],
+                "skipped": [],
+                "error": str(exc),
+            },
+            "wav2vec/raw_word_responses.json",
+        )
+
+
+def _schedule_wav2vec_debug_payload(audio_path, payload):
+    if not KEEP_UPLOAD_ARTIFACTS:
+        return
+    thread = threading.Thread(
+        target=_persist_wav2vec_debug_payload,
+        args=(audio_path, payload),
+        daemon=True,
+    )
+    thread.start()
 
 
 def _persist_writing_result(task_slug, payload):
@@ -1825,7 +2000,11 @@ def check_stream():
             from api.validator import align_and_validate_gen
             for update in align_and_validate_gen(audio_path, text_path, accents=[accent]):
                 if isinstance(update, dict) and update.get("type") == "result":
-                    _persist_attempt_artifacts(audio_path, update.get("data"), filename="check_stream_result.json")
+                    full_payload = update.get("data")
+                    _persist_attempt_artifacts(audio_path, full_payload, filename="check_stream_result.json")
+                    _schedule_wav2vec_debug_payload(audio_path, full_payload)
+                    update = dict(update)
+                    update["data"] = _build_ui_result_payload(full_payload)
                 yield json.dumps(update) + "\n"
                 
         except Exception as e:
@@ -2141,4 +2320,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
-    app.run(debug=True, host='0.0.0.0', port=args.port)
+    debug_enabled = str(
+        os.environ.get("PTE_API_DEBUG", os.environ.get("FLASK_DEBUG", ""))
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    app.run(
+        debug=debug_enabled,
+        use_reloader=debug_enabled,
+        host='0.0.0.0',
+        port=args.port,
+    )

@@ -112,7 +112,7 @@
     function pauseStatusVariant(word) {
         const status = String(word && word.status || '').trim().toLowerCase();
         if (status === 'correct_pause') return 'pause-correct';
-        if (status === 'short_pause' || status === 'long_pause') return 'pause-warn';
+        if (status === 'short_pause' || status === 'long_pause' || status === 'weak_pause_but_good_boundary') return 'pause-warn';
         if (status === 'missed_pause') return 'pause-error';
         return '';
     }
@@ -150,7 +150,13 @@
     }
 
     function buildDisplayRowsWithGapMarkers(words, speechRateScale) {
-        const rows = Array.isArray(words) ? words : [];
+        const rows = Array.isArray(words)
+            ? words.filter((word) => {
+                const status = String(word && word.status || '').toLowerCase();
+                const alignmentOp = String(word && word.alignment_op || '').toLowerCase();
+                return !(status === 'inserted' && alignmentOp === 'sub_ins');
+            })
+            : [];
         if (!rows.length) {
             return [];
         }
@@ -172,6 +178,9 @@
         if (!word || typeof word !== 'object') {
             return false;
         }
+        if (word.stress_reliable === false) {
+            return false;
+        }
         if (word.stress_error === true) {
             return true;
         }
@@ -190,8 +199,52 @@
         return info.includes('mismatch') || info.includes('no vowels');
     }
 
+    function isLexicalWord(word) {
+        if (!word || typeof word !== 'object') {
+            return false;
+        }
+        if (isGapMarker(word) || isPauseToken(word)) {
+            return false;
+        }
+        return true;
+    }
+
+    function resolvePrimaryAccuracy(result) {
+        const score = toNumber(
+            result && result.scores && result.scores.overall_accuracy && result.scores.overall_accuracy.percent
+        );
+        if (score !== null) {
+            return roundTo(score, 1);
+        }
+        const pronunciation = toNumber(
+            result && result.scores && result.scores.pronunciation_accuracy && result.scores.pronunciation_accuracy.percent
+        );
+        if (pronunciation !== null) {
+            return roundTo(pronunciation, 1);
+        }
+        const lexicalTotal = toNumber(result && result.summary && result.summary.lexical_total);
+        const correct = toNumber(result && result.summary && result.summary.correct);
+        if (lexicalTotal !== null && lexicalTotal > 0 && correct !== null) {
+            return roundTo((correct / lexicalTotal) * 100, 1);
+        }
+        const total = toNumber(result && result.summary && result.summary.total);
+        if (total !== null && total > 0 && correct !== null) {
+            return roundTo((correct / total) * 100, 1);
+        }
+        return 0.0;
+    }
+
     function summarizeWordLevelFeedback(words, backendFeedback) {
-        const rows = Array.isArray(words) ? words : [];
+        const rows = Array.isArray(words)
+            ? words.filter((word) => {
+                if (!isLexicalWord(word)) {
+                    return false;
+                }
+                const status = String(word && word.status || '').toLowerCase();
+                const alignmentOp = String(word && word.alignment_op || '').toLowerCase();
+                return !(status === 'inserted' && alignmentOp === 'sub_ins');
+            })
+            : [];
         const counts = {
             total_words: rows.length,
             correct: 0,
@@ -206,12 +259,12 @@
 
         rows.forEach((word) => {
             const status = String(word && word.status || '').toLowerCase();
+            const contentStatus = String(word && word.content_status || '').toLowerCase();
+            const alignmentOp = String(word && word.alignment_op || '').toLowerCase();
             if (status === 'correct') counts.correct += 1;
             if (status === 'mispronounced') counts.mispronounced += 1;
-            if (status === 'inserted') counts.inserted += 1;
-            if (status === 'omitted') counts.omitted += 1;
-            if (status === 'short_pause' || status === 'long_pause' || status === 'missed_pause') counts.pause_issues += 1;
-            if (status === 'extra_gap' || isGapMarker(word)) counts.long_gaps += 1;
+            if (status === 'inserted' && alignmentOp !== 'sub_ins') counts.inserted += 1;
+            if (status === 'omitted' || contentStatus === 'omitted') counts.omitted += 1;
 
             if (inferStressIssue(word)) {
                 counts.stress_issues += 1;
@@ -238,13 +291,7 @@
             highlights.push(`${counts.mispronounced} word(s) need clearer pronunciation.`);
         }
         if (counts.omitted > 0 || counts.inserted > 0) {
-            highlights.push(`Alignment issues: ${counts.omitted} omitted, ${counts.inserted} inserted.`);
-        }
-        if (counts.pause_issues > 0) {
-            highlights.push(`${counts.pause_issues} punctuation pause(s) need better timing.`);
-        }
-        if (counts.long_gaps > 0) {
-            highlights.push(`${counts.long_gaps} extra gap(s) were longer than the ideal word-to-word limit.`);
+            highlights.push(`Completeness issues: ${counts.omitted} omitted, ${counts.inserted} inserted.`);
         }
         if (!highlights.length) {
             highlights.push('Word-level pronunciation and stress look consistent.');
@@ -279,5 +326,6 @@
         punctuationLabel,
         summarizeWordLevelFeedback,
         formatWordStatus,
+        resolvePrimaryAccuracy,
     };
 })(window);

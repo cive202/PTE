@@ -1,0 +1,14 @@
+{
+  "id": "inserted_noise_token",
+  "dimension_bands": {
+    "pronunciation_accuracy": [75, 100],
+    "completeness": [60, 95],
+    "stress": [40, 100],
+    "prosody": [60, 100],
+    "fluency": [60, 100]
+  },
+  "expected_counts": {
+    "inserted_words_min": 1
+  },
+  "notes": "Clear lexical noise insertion should reduce completeness without collapsing pronunciation accuracy."
+}

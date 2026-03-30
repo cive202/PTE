@@ -7,6 +7,7 @@ class PhonemeReferenceBuilder:
         self.cmu = cmu_dict()
         self.g2p = G2p()
         self.cache = {}
+        self.variant_cache = {}
 
     def get_stress_pattern(self, word: str):
         """Get stress pattern string (e.g. '010') for a word."""
@@ -35,14 +36,19 @@ class PhonemeReferenceBuilder:
         
         return pattern if pattern else None
 
-    def word_to_phonemes(self, word: str):
+    def word_to_pronunciation_variants(self, word: str):
         w = re.sub(r"[^a-zA-Z']+", "", word).lower()
         if not w:
-            return ["ah"]
-        if w in self.cache:
-            return self.cache[w]
+            return [["ah"]]
+        if w in self.variant_cache:
+            return self.variant_cache[w]
+
+        variants = []
         if w in self.cmu:
-            phones = [p.lower() for p in self.cmu[w][0]]
+            for pronunciation in self.cmu[w]:
+                phones = [p.lower() for p in pronunciation]
+                if phones:
+                    variants.append(phones)
         else:
             seq = self.g2p(w)
             phones = []
@@ -51,8 +57,26 @@ class PhonemeReferenceBuilder:
                     phones.append(t.lower())
             if not phones:
                 phones = ["ah"]
-        self.cache[w] = phones
-        return phones
+            variants.append(phones)
+
+        deduped = []
+        seen = set()
+        for variant in variants:
+            key = tuple(variant)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(list(variant))
+
+        if not deduped:
+            deduped = [["ah"]]
+
+        self.variant_cache[w] = deduped
+        self.cache[w] = deduped[0]
+        return deduped
+
+    def word_to_phonemes(self, word: str):
+        return list(self.word_to_pronunciation_variants(word)[0])
 
     def sentence_to_phonemes(self, text: str):
         tokens = re.findall(r"[A-Za-z']+|[.,;:!?]", text)

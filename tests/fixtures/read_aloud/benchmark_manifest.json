@@ -1,0 +1,30 @@
+[
+  {
+    "id": "exact_read",
+    "source_fixture": "content_cases.json",
+    "source_case_id": "exact_read",
+    "rating_file": "ratings/exact_read.json",
+    "category": "baseline_exact_read"
+  },
+  {
+    "id": "hyphen_variant",
+    "source_fixture": "content_cases.json",
+    "source_case_id": "hyphen_variant",
+    "rating_file": "ratings/hyphen_variant.json",
+    "category": "normalization"
+  },
+  {
+    "id": "inserted_noise_token",
+    "source_fixture": "content_cases.json",
+    "source_case_id": "inserted_noise_token",
+    "rating_file": "ratings/inserted_noise_token.json",
+    "category": "content_insertions"
+  },
+  {
+    "id": "long_final_fricative_no_silence",
+    "source_fixture": "boundary_cases.json",
+    "source_case_id": "long_final_fricative_no_silence",
+    "rating_file": "ratings/long_final_fricative_no_silence.json",
+    "category": "boundary_realization"
+  }
+]

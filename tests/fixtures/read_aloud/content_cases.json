@@ -1,0 +1,32 @@
+[
+  {
+    "id": "exact_read",
+    "reference": "You don't have to spend a lot of time in the kitchen on weekends, say nutrition experts.",
+    "transcript": "you don't have to spend a lot of time in the kitchen on weekends say nutrition experts",
+    "notes": "Baseline exact lexical read with transcript punctuation removed."
+  },
+  {
+    "id": "transcript_punctuation_only",
+    "reference": "Hello, world.",
+    "transcript": "hello , world .",
+    "notes": "Standalone punctuation in transcript should not create empty inserted tokens."
+  },
+  {
+    "id": "hyphen_variant",
+    "reference": "the use of time saving appliances",
+    "transcript": "the use of time-saving appliances",
+    "notes": "Hyphen variants should not create false content mismatches."
+  },
+  {
+    "id": "inserted_noise_token",
+    "reference": "home chefs who promote smart cooking habits",
+    "transcript": "home chefs safs who promote smart cooking habits",
+    "notes": "Clear lexical insertions should still be preserved as inserted tokens."
+  },
+  {
+    "id": "inserted_article",
+    "reference": "to reduce stress",
+    "transcript": "to reduce the stress",
+    "notes": "A real article insertion should remain visible as inserted content."
+  }
+]

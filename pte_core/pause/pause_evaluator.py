@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 
 from .rules import (
     BASE_PAUSE_THRESHOLDS,
+    BOUNDARY_REALIZATION_THRESHOLD,
     MISSED_PAUSE_PENALTIES,
     MAX_PAUSE_DURATION,
     FUNCTION_WORDS,
@@ -19,7 +20,8 @@ def evaluate_pause(
     next_start: Optional[float],
     speech_rate_scale: float = 1.0,
     prev_word: Optional[str] = None,
-    is_after_repeated: bool = False
+    is_after_repeated: bool = False,
+    boundary_realization_score: float = 0.0,
 ) -> Dict[str, Any]:
     """Evaluate pause at a punctuation mark with PTE-style penalty scoring.
     
@@ -54,6 +56,7 @@ def evaluate_pause(
         "expected_range": (min_pause, max_pause),
         "start": prev_end,
         "end": next_start,
+        "boundary_realization_score": max(0.0, min(1.0, float(boundary_realization_score or 0.0))),
     }
     
     # Calculate penalty based on PTE scoring logic
@@ -69,6 +72,15 @@ def evaluate_pause(
         else:
             result["penalty"] = MISSED_PAUSE_PENALTIES.get(punct, 0.3)
         
+    elif (
+        boundary_realization_score >= BOUNDARY_REALIZATION_THRESHOLD
+        and pause_duration < min_pause
+    ):
+        result["status"] = "weak_pause_but_good_boundary"
+        result["pause_duration"] = pause_duration
+        base_penalty = 0.08 if punct in {".", "!", "?"} else 0.03
+        relief = min(0.05, (boundary_realization_score - BOUNDARY_REALIZATION_THRESHOLD) * 0.1)
+        result["penalty"] = max(0.0, base_penalty - relief)
     elif pause_duration < min_pause:
         # Short pause: soft floor to ignore small deviations
         result["status"] = "short_pause"
@@ -127,6 +139,14 @@ def evaluate_pause(
         result["pause_level"] = "ok"
         result["feedback"] = (
             f"Pause is within the ideal {min_pause:.2f}-{max_pause:.2f}s range."
+        )
+    elif pause_status == "weak_pause_but_good_boundary":
+        result["pause_level"] = "warn"
+        actual = result.get("pause_duration")
+        result["feedback"] = (
+            "Boundary was signaled, but the silent gap was shorter than ideal."
+            if actual is None
+            else f"Boundary was signaled, but the silent gap was short: {actual:.2f}s vs {min_pause:.2f}-{max_pause:.2f}s."
         )
     elif pause_status == "missed_pause":
         result["pause_level"] = "error"

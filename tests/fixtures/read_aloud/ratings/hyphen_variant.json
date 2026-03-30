@@ -1,0 +1,15 @@
+{
+  "id": "hyphen_variant",
+  "dimension_bands": {
+    "pronunciation_accuracy": [90, 100],
+    "completeness": [95, 100],
+    "stress": [40, 100],
+    "prosody": [70, 100],
+    "fluency": [70, 100]
+  },
+  "expected_counts": {
+    "omitted_words_max": 0,
+    "inserted_words_max": 0
+  },
+  "notes": "Hyphen and spacing variants should not create false completeness loss."
+}

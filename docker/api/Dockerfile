@@ -9,9 +9,11 @@ WORKDIR /app
 # ffmpeg: audio conversion in api/app.py
 # docker-cli: required for MFA `docker run` calls from API container
 # libsndfile1: required by librosa/soundfile
+# g++: required for packages with C++ extensions such as texterrors
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     docker-cli \
+    g++ \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 

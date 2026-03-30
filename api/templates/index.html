@@ -855,10 +855,12 @@
                 statusDiv.innerText = "Error: " + data.error;
                 return;
             }
-            const totalWords = Number(data?.summary?.total || 0);
-            const correctWords = Number(data?.summary?.correct || 0);
-            const accuracy = totalWords > 0 ? ((correctWords / totalWords) * 100).toFixed(1) : '0.0';
-            statusDiv.innerText = `✅ Analysis Complete! Accuracy: ${accuracy}%`;
+            const pronunciationAccuracy = window.WordLevelFeedback
+                ? window.WordLevelFeedback.resolvePrimaryAccuracy(data)
+                : 0.0;
+            const completeness = Number(data?.scores?.completeness?.percent ?? 0).toFixed(1);
+            const fluency = Number(data?.scores?.fluency?.percent ?? 0).toFixed(1);
+            statusDiv.innerText = `✅ Analysis Complete! Pronunciation Accuracy: ${Number(pronunciationAccuracy).toFixed(1)}% | Completeness: ${completeness}% | Fluency: ${fluency}%`;
             if (data.transcript) {
                 transcriptionBox.style.display = 'block';
                 transcriptText.innerText = data.transcript;
@@ -966,33 +968,77 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
+                let hasFinalResult = false;
 
+                const processLine = (line) => {
+                    if (!line.trim()) {
+                        return;
+                    }
+                    const data = JSON.parse(line);
+                    if (data.type === 'progress') {
+                        progressFill.style.width = data.percent + '%';
+                        progressText.innerText = `${data.percent}% - ${data.message}`;
+                        return;
+                    }
+                    if (data.type === 'result') {
+                        hasFinalResult = true;
+                        progressFill.style.width = '100%';
+                        progressText.innerText = '✅ Complete!';
+                        setTimeout(() => displayResult(data.data), 500);
+                        return;
+                    }
+                    if (data.type === 'error') {
+                        throw new Error(data.message || 'Unknown server error');
+                    }
+                };
+
+                const processBufferedLines = () => {
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        processLine(line);
+                        if (hasFinalResult) {
+                            return;
+                        }
+                    }
+                };
+
+                streamLoop:
                 while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+                    let chunk;
+                    try {
+                        chunk = await reader.read();
+                    } catch (streamErr) {
+                        try {
+                            processBufferedLines();
+                            if (!hasFinalResult && buffer.trim()) {
+                                processLine(buffer);
+                                buffer = '';
+                            }
+                        } catch (bufferErr) {
+                            console.error('Error parsing buffered stream chunk', bufferErr);
+                        }
+                        if (hasFinalResult) {
+                            break;
+                        }
+                        throw streamErr;
+                    }
+
+                    const { done, value } = chunk;
+                    if (done) {
+                        buffer += decoder.decode();
+                        processBufferedLines();
+                        if (!hasFinalResult && buffer.trim()) {
+                            processLine(buffer);
+                            buffer = '';
+                        }
+                        break;
+                    }
 
                     buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Keep the last partial line
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.type === 'progress') {
-                                progressFill.style.width = data.percent + '%';
-                                progressText.innerText = `${data.percent}% - ${data.message}`;
-                            } else if (data.type === 'result') {
-                                progressFill.style.width = '100%';
-                                progressText.innerText = '✅ Complete!';
-                                setTimeout(() => displayResult(data.data), 500);
-                            } else if (data.type === 'error') {
-                                progressContainer.style.display = 'none';
-                                statusDiv.innerText = "Error: " + data.message;
-                            }
-                        } catch (e) {
-                            console.error('Error parsing JSON chunk', e);
-                        }
+                    processBufferedLines();
+                    if (hasFinalResult) {
+                        break streamLoop;
                     }
                 }
             } catch (err) {
@@ -1182,7 +1228,23 @@
                     modalStressInfo.innerText = wordData.gap_feedback || '';
                 } else {
                     modalStressMatch.innerText = `${wordData.pause_eval && wordData.pause_eval.prev_word ? wordData.pause_eval.prev_word : 'Prev'} → ${wordData.pause_eval && wordData.pause_eval.next_word ? wordData.pause_eval.next_word : 'Next'}`;
-                    modalStressInfo.innerText = (wordData.pause_eval && (wordData.pause_eval.feedback || wordData.pause_eval.timing_source)) || wordData.pause_feedback || '';
+                    const boundaryScore = Number(
+                        (wordData.pause_eval && (
+                            wordData.pause_eval.boundary_realization_score
+                            ?? (wordData.pause_eval.boundary_realization && wordData.pause_eval.boundary_realization.score)
+                        )) ?? 0
+                    ).toFixed(2);
+                    const silentGap = window.WordLevelFeedback
+                        ? window.WordLevelFeedback.formatSeconds(
+                            (wordData.pause_eval && (
+                                wordData.pause_eval.silent_pause_duration
+                                ?? wordData.pause_eval.pause_duration
+                                ?? wordData.pause_eval.duration
+                            )) ?? wordData.duration
+                        )
+                        : 'N/A';
+                    const feedback = (wordData.pause_eval && (wordData.pause_eval.feedback || wordData.pause_eval.timing_source)) || wordData.pause_feedback || '';
+                    modalStressInfo.innerText = `${feedback} Silent gap: ${silentGap}. Boundary score: ${boundaryScore}.`;
                 }
             } else {
                 modalExpectedPhones.innerText = wordData.expected_phones || 'N/A';
@@ -1192,11 +1254,23 @@
                     const ref = wordData.stress_details.ref_pattern || 'N/A';
                     const obs = wordData.stress_details.observed_pattern || 'N/A';
                     modalStressMatch.innerText = `${ref} → ${obs}`;
-                    modalStressInfo.innerText = wordData.stress_feedback || wordData.stress_details.match_info || '';
+                    const variantUsed = wordData.pronunciation_variant_used
+                        ? ` Variant used: ${wordData.pronunciation_variant_used}.`
+                        : '';
+                    const contentStatus = wordData.content_status
+                        ? ` Content: ${wordData.content_status}.`
+                        : '';
+                    modalStressInfo.innerText = `${wordData.stress_feedback || wordData.stress_details.match_info || ''}${variantUsed}${contentStatus}`;
                 } else {
                     const hasStressIssue = window.WordLevelFeedback && window.WordLevelFeedback.inferStressIssue(wordData);
                     modalStressMatch.innerText = hasStressIssue ? "⚠ Stress issue" : "N/A";
-                    modalStressInfo.innerText = wordData.stress_feedback || "";
+                    const variantUsed = wordData.pronunciation_variant_used
+                        ? ` Variant used: ${wordData.pronunciation_variant_used}.`
+                        : '';
+                    const contentStatus = wordData.content_status
+                        ? ` Content: ${wordData.content_status}.`
+                        : '';
+                    modalStressInfo.innerText = `${wordData.stress_feedback || ""}${variantUsed}${contentStatus}`;
                 }
             }
 
